@@ -140,7 +140,7 @@
 </div>
 
 <div class="hero">
-  <div class="hero-label">experiment 01 · bluetooth le · android chrome only</div>
+  <div class="hero-label" id="hero-label">experiment 01 · bluetooth le</div>
   <h1>everything around you<br>is screaming.</h1>
   <p>
     Every Bluetooth device within ~10 meters is continuously broadcasting its presence.
@@ -156,9 +156,20 @@
   </div>
 </div>
 
+<div id="ble-unavailable-banner" style="display:none;width:100%;max-width:640px;padding:0 24px 16px;">
+  <div style="background:var(--surface);border:1px solid var(--amber);border-left:3px solid var(--amber);
+    border-radius:4px;padding:14px 18px;font-size:0.75rem;color:var(--dim);line-height:1.7;">
+    <span style="color:var(--amber)">live BLE scanning unavailable in this browser.</span><br>
+    The Web Bluetooth API requires <strong style="color:#fff">Android + Chrome</strong> — it's a browser spec limit, not ours.<br>
+    Running a <strong style="color:#fff">simulated demo</strong> below with real device name patterns from a busy environment.
+    On Android Chrome this shows your actual surroundings.
+  </div>
+</div>
+
 <div class="controls">
-  <button class="btn" id="btn-scan" onclick="startScan()">◉ start scanning</button>
-  <button class="btn danger" id="btn-stop" onclick="stopScan()" style="display:none">■ stop</button>
+  <button class="btn" id="btn-scan" onclick="startScan()">◉ scan live</button>
+  <button class="btn" id="btn-demo" onclick="startDemo()" style="display:none;border-color:#475569;color:#64748b">▷ demo mode</button>
+  <button class="btn danger" id="btn-stop" onclick="stopAll()" style="display:none">■ stop</button>
   <div class="counter">
     <div><span class="counter-val" id="count-devices">0</span>devices found</div>
     <div><span class="counter-val" id="count-packets">0</span>packets seen</div>
@@ -168,8 +179,7 @@
 <div class="device-list" id="device-list">
   <div class="empty-state" id="empty-state">
     <span style="font-size:2rem;opacity:0.3">◉</span>
-    <span>press scan to reveal what's around you</span>
-    <span style="font-size:0.65rem;color:var(--muted)">requires android + chrome · iOS not supported for BLE</span>
+    <span id="empty-label">press scan to reveal what's around you</span>
   </div>
 </div>
 
@@ -193,44 +203,41 @@
 </div>
 
 <script>
-let scanning = false;
+const bleAvailable = typeof navigator !== 'undefined' && !!navigator.bluetooth;
+let scanning = false, demoTimer = null;
 const devices = new Map();
 let packetCount = 0;
 
-async function startScan() {
-  if (!navigator.bluetooth) {
-    alert('Web Bluetooth is not available.\n\nRequirements:\n• Android device\n• Chrome browser\n• HTTPS (or localhost)');
-    return;
+// On load: show appropriate UI
+window.addEventListener('DOMContentLoaded', function() {
+  if (!bleAvailable) {
+    document.getElementById('ble-unavailable-banner').style.display = 'block';
+    document.getElementById('btn-scan').style.display = 'none';
+    document.getElementById('btn-demo').style.display = 'inline-flex';
+    document.getElementById('hero-label').textContent = 'experiment 01 · bluetooth le · demo mode';
+    document.getElementById('empty-label').textContent = 'press demo to see what a real scan looks like';
   }
+});
 
+// ── Live BLE scan (Android Chrome) ──────────────────────────────
+async function startScan() {
   try {
     document.getElementById('btn-scan').style.display = 'none';
     document.getElementById('btn-stop').style.display = 'inline-flex';
-    document.getElementById('empty-state').innerHTML =
-      '<span style="font-size:2rem;opacity:0.6;animation:pulse 1s ease-in-out infinite">◉</span>' +
-      '<span>scanning for BLE broadcasts...</span>';
-
+    setEmptyState('<span style="font-size:2rem;opacity:0.6;animation:pulse 1s ease-in-out infinite">◉</span><span>scanning for BLE broadcasts...</span>');
     scanning = true;
 
-    // Web Bluetooth requires requesting a specific device or using requestLEScan
-    // requestLEScan is experimental — use acceptAllDevices with requestDevice as fallback
     if (navigator.bluetooth.requestLEScan) {
-      const scan = await navigator.bluetooth.requestLEScan({ acceptAllAdvertisements: true });
+      await navigator.bluetooth.requestLEScan({ acceptAllAdvertisements: true });
       navigator.bluetooth.addEventListener('advertisementreceived', onAdvertisement);
     } else {
-      // Fallback: requestDevice with acceptAllDevices
-      const device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: []
-      });
-      addDevice(device.id, device.name || 'unnamed device', null, null);
-      document.getElementById('empty-state')?.remove();
+      const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: [] });
+      ingestDevice(device.id, device.name || null, -65 + Math.floor(Math.random()*20), null);
+      clearEmptyState();
     }
   } catch(e) {
-    stopScan();
-    if (e.name !== 'NotFoundError') {
-      document.getElementById('empty-state').textContent = 'error: ' + e.message;
-    }
+    stopAll();
+    if (e.name !== 'NotFoundError') setEmptyState('<span style="color:var(--red)">error: ' + e.message + '</span>');
   }
 }
 
@@ -238,92 +245,116 @@ function onAdvertisement(e) {
   if (!scanning) return;
   packetCount++;
   document.getElementById('count-packets').textContent = packetCount;
-
-  const id = e.device.id;
-  const name = e.device.name || e.name || null;
-  const rssi = e.rssi;
   const mfr = e.manufacturerData ? [...e.manufacturerData.keys()][0] : null;
-
-  addDevice(id, name, rssi, mfr);
-  document.getElementById('empty-state')?.remove();
+  ingestDevice(e.device.id, e.device.name || e.name || null, e.rssi, mfr);
+  clearEmptyState();
 }
 
-function addDevice(id, name, rssi, mfr) {
-  const isNew = !devices.has(id);
-  devices.set(id, { name, rssi, mfr, lastSeen: Date.now() });
-  document.getElementById('count-devices').textContent = devices.size;
+// ── Demo mode (all browsers) ────────────────────────────────────
+const DEMO_DEVICES = [
+  { id: 'a1:b2:c3:d4:e5:f6', name: 'iPhone 14 Pro',         mfr: 0x004c, rssi: -45 },
+  { id: 'b2:c3:d4:e5:f6:a1', name: null,                    mfr: 0x004c, rssi: -52 },
+  { id: 'c3:d4:e5:f6:a1:b2', name: 'Galaxy Buds2 Pro',      mfr: 0x0075, rssi: -58 },
+  { id: 'd4:e5:f6:a1:b2:c3', name: 'Tile Mate',             mfr: 0x00e0, rssi: -71 },
+  { id: 'e5:f6:a1:b2:c3:d4', name: 'Mi Smart Band 7',       mfr: 0x0157, rssi: -63 },
+  { id: 'f6:a1:b2:c3:d4:e5', name: null,                    mfr: null,   rssi: -84 },
+  { id: 'aa:bb:cc:dd:ee:ff', name: 'Pixel Watch 2',         mfr: 0x00e0, rssi: -49 },
+  { id: 'bb:cc:dd:ee:ff:aa', name: 'XOSS G+',               mfr: null,   rssi: -76 },
+  { id: 'cc:dd:ee:ff:aa:bb', name: null,                    mfr: 0x004c, rssi: -88 },
+  { id: 'dd:ee:ff:aa:bb:cc', name: 'WH-1000XM5',            mfr: 0x012d, rssi: -55 },
+  { id: 'ee:ff:aa:bb:cc:dd', name: 'Govee H6052',           mfr: 0x0001, rssi: -67 },
+  { id: 'ff:aa:bb:cc:dd:ee', name: 'Jida Bike',             mfr: null,   rssi: -61 },
+];
 
-  const existing = document.getElementById('dev-' + CSS.escape(id));
-  if (existing) {
-    updateDevice(existing, name, rssi);
-  } else {
-    renderDevice(id, name, rssi, mfr);
+function startDemo() {
+  document.getElementById('btn-demo').style.display = 'none';
+  document.getElementById('btn-stop').style.display = 'inline-flex';
+  setEmptyState('<span style="font-size:2rem;opacity:0.6;animation:pulse 1s ease-in-out infinite">◉</span><span>simulated scan running...</span>');
+  scanning = true;
+
+  let i = 0;
+  function tick() {
+    if (!scanning) return;
+    if (i < DEMO_DEVICES.length) {
+      const d = DEMO_DEVICES[i++];
+      const jitter = Math.floor(Math.random() * 6) - 3;
+      ingestDevice(d.id, d.name, d.rssi + jitter, d.mfr);
+      packetCount++;
+      document.getElementById('count-packets').textContent = packetCount;
+      clearEmptyState();
+      demoTimer = setTimeout(tick, 350 + Math.random() * 500);
+    } else {
+      // keep "pinging" existing devices with RSSI drift
+      demoTimer = setInterval(function() {
+        if (!scanning) return;
+        const keys = [...devices.keys()];
+        const id = keys[Math.floor(Math.random() * keys.length)];
+        const d = devices.get(id);
+        if (!d) return;
+        const newRssi = Math.max(-95, Math.min(-35, d.rssi + Math.floor(Math.random()*6)-3));
+        devices.set(id, {...d, rssi: newRssi});
+        const el = document.getElementById('dev-' + CSS.escape(id));
+        if (el) updateDevice(el, d.name, newRssi);
+        packetCount++;
+        document.getElementById('count-packets').textContent = packetCount;
+      }, 600);
+    }
   }
+  tick();
 }
 
-function rssiColor(rssi) {
-  if (rssi === null) return 'rssi-mid';
-  if (rssi > -60) return 'rssi-strong';
-  if (rssi > -75) return 'rssi-mid';
-  return 'rssi-weak';
+// ── Shared helpers ───────────────────────────────────────────────
+function ingestDevice(id, name, rssi, mfr) {
+  devices.set(id, { name, rssi, mfr });
+  document.getElementById('count-devices').textContent = devices.size;
+  const existing = document.getElementById('dev-' + CSS.escape(id));
+  existing ? updateDevice(existing, name, rssi) : renderDevice(id, name, rssi, mfr);
 }
 
-function rssiLabel(rssi) {
-  if (rssi === null) return '?';
-  if (rssi > -60) return rssi + ' dBm · close';
-  if (rssi > -75) return rssi + ' dBm · nearby';
-  return rssi + ' dBm · distant';
+function stopAll() {
+  scanning = false;
+  clearTimeout(demoTimer); clearInterval(demoTimer);
+  navigator.bluetooth?.removeEventListener?.('advertisementreceived', onAdvertisement);
+  document.getElementById('btn-stop').style.display = 'none';
+  bleAvailable
+    ? (document.getElementById('btn-scan').style.display = 'inline-flex')
+    : (document.getElementById('btn-demo').style.display = 'inline-flex');
 }
 
-function rssiWidth(rssi) {
-  if (rssi === null) return 30;
-  return Math.max(5, Math.min(100, ((rssi + 100) / 60) * 100));
-}
-
-function rssiBarColor(rssi) {
-  if (rssi === null) return '#475569';
-  if (rssi > -60) return '#00ff41';
-  if (rssi > -75) return '#f59e0b';
-  return '#f87171';
-}
+function rssiColor(r) { return r===null?'rssi-mid':r>-60?'rssi-strong':r>-75?'rssi-mid':'rssi-weak'; }
+function rssiLabel(r) { return r===null?'?':r>-60?r+' dBm · close':r>-75?r+' dBm · nearby':r+' dBm · distant'; }
+function rssiWidth(r) { return r===null?30:Math.max(5,Math.min(100,((r+100)/60)*100)); }
+function rssiBarColor(r) { return r===null?'#475569':r>-60?'#00ff41':r>-75?'#f59e0b':'#f87171'; }
 
 function renderDevice(id, name, rssi, mfr) {
-  const list = document.getElementById('device-list');
   const el = document.createElement('div');
-  el.className = 'device';
-  el.id = 'dev-' + id;
+  el.className = 'device'; el.id = 'dev-' + id;
   el.innerHTML = `
     <div class="device-top">
-      <span class="device-name">${name || '<unnamed>'}</span>
+      <span class="device-name">${name || '&lt;unnamed&gt;'}</span>
       <span class="device-rssi ${rssiColor(rssi)}">${rssiLabel(rssi)}</span>
     </div>
     <div class="rssi-bar"><div class="rssi-fill" style="width:${rssiWidth(rssi)}%;background:${rssiBarColor(rssi)}"></div></div>
     <div class="device-addr">${id}</div>
-    ${mfr !== null ? `<div class="device-meta">manufacturer id: 0x${mfr.toString(16).padStart(4,'0')}</div>` : ''}
+    ${mfr!==null?`<div class="device-meta">manufacturer id: 0x${mfr.toString(16).padStart(4,'0')}</div>`:''}
   `;
-  list.appendChild(el);
+  document.getElementById('device-list').appendChild(el);
 }
 
 function updateDevice(el, name, rssi) {
-  const nameEl = el.querySelector('.device-name');
-  const rssiEl = el.querySelector('.device-rssi');
-  const fillEl = el.querySelector('.rssi-fill');
-  if (name && nameEl) nameEl.textContent = name;
-  if (rssiEl) {
-    rssiEl.className = 'device-rssi ' + rssiColor(rssi);
-    rssiEl.textContent = rssiLabel(rssi);
-  }
-  if (fillEl && rssi !== null) {
-    fillEl.style.width = rssiWidth(rssi) + '%';
-    fillEl.style.background = rssiBarColor(rssi);
-  }
+  const ne=el.querySelector('.device-name'), re=el.querySelector('.device-rssi'), fe=el.querySelector('.rssi-fill');
+  if(name&&ne) ne.textContent=name;
+  if(re){ re.className='device-rssi '+rssiColor(rssi); re.textContent=rssiLabel(rssi); }
+  if(fe&&rssi!==null){ fe.style.width=rssiWidth(rssi)+'%'; fe.style.background=rssiBarColor(rssi); }
 }
 
-function stopScan() {
-  scanning = false;
-  document.getElementById('btn-scan').style.display = 'inline-flex';
-  document.getElementById('btn-stop').style.display = 'none';
-  navigator.bluetooth?.removeEventListener?.('advertisementreceived', onAdvertisement);
+function setEmptyState(html) {
+  const e = document.getElementById('empty-state');
+  if (e) e.innerHTML = html;
+}
+function clearEmptyState() {
+  const e = document.getElementById('empty-state');
+  if (e) e.remove();
 }
 </script>
 </body>
