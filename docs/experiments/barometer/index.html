@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Floor altimeter — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.alt-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 0 12px;
+}
+.floor-big {
+  font-size: clamp(4rem, 18vw, 6rem);
+  font-weight: 400;
+  color: var(--cyan);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  transition: color 0.3s;
+}
+.floor-label { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.12em; text-transform: uppercase; }
+.floor-status { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 4px; }
+
+.pressure-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pressure-reading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.pressure-key { font-size: 0.65rem; color: var(--dim); }
+.pressure-val { font-size: 0.88rem; color: var(--text); }
+
+.chart-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.chart-wrap canvas { width: 100%; display: block; }
+
+.action-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>floor altimeter</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment 09 · barometer</div>
+      <div class="exp-title">your phone knows<br>which floor you're on.</div>
+      <div class="exp-desc">
+        Air pressure drops by about 1.2 hPa for every 10 metres of altitude.
+        That's roughly 1 hPa per floor. Your phone's barometric sensor is sensitive
+        enough to detect this — and sensitive enough to detect you walking up a flight of stairs.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>every ride-hailing app tracks which floor of a building you're on.</strong>
+      Uber, Lyft, and Google Maps use the barometer to know whether you're in the lobby
+      or on the 12th floor — so the car meets you at the right entrance.
+      Insurance apps use the same data to detect whether you're in a hospital.
+      None of this requires GPS. Altitude works indoors where GPS doesn't.
+    </div>
+
+    <div class="action-row">
+      <button class="exp-btn" id="btn-start" onclick="startBaro()">◉ start sensor</button>
+      <button class="exp-btn ghost" id="btn-zero" onclick="setBaseline()" style="display:none">⊙ set ground floor</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopBaro()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="alt-display">
+      <div class="floor-big" id="floor-num">—</div>
+      <div class="floor-label">estimated floor</div>
+      <div class="floor-status" id="floor-status" style="color:var(--dim)">waiting · tap start sensor</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-hpa">—</span><span class="stat-lbl">hPa</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-alt">—</span><span class="stat-lbl">rel. altitude m</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-delta">—</span><span class="stat-lbl">trend hPa/s</span></div>
+    </div>
+
+    <div class="pressure-wrap">
+      <div class="pressure-reading">
+        <span class="pressure-key">current pressure</span>
+        <span class="pressure-val" id="val-current">—</span>
+      </div>
+      <div class="pressure-reading">
+        <span class="pressure-key">baseline (ground floor)</span>
+        <span class="pressure-val" id="val-baseline">not set · press "set ground floor"</span>
+      </div>
+      <div class="pressure-reading">
+        <span class="pressure-key">altitude change</span>
+        <span class="pressure-val" id="val-altchange">—</span>
+      </div>
+    </div>
+
+    <div class="chart-wrap" style="aspect-ratio:3/1">
+      <canvas id="pressure-chart"></canvas>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does this work?</summary>
+        <p>Atmospheric pressure decreases predictably with altitude — the barometric formula.
+        Near sea level, each 8.5 m of altitude corresponds to roughly 1 hPa of pressure drop.
+        A typical floor is 3–4 m, so that's about 0.35–0.45 hPa per floor.</p>
+        <p>Modern phone barometers have a resolution of 0.01–0.06 hPa — enough to detect
+        a single floor change. They update at 1–50 Hz depending on the device.
+        The sensor is used by Apple's iPhone to track floors climbed in the Health app.</p>
+        <p>The <code>Barometer</code> API (part of the Generic Sensor API) is available in Chrome on Android.
+        If unavailable, a prompt will appear. On iOS, pressure data is not directly exposed to web apps.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let sensor = null, running = false, rafId = null;
+let baseline = null;
+let pressureHistory = [];
+const HISTORY = 120;
+let lastPressure = null, lastTime = null;
+
+const chart = document.getElementById('pressure-chart');
+const chartCtx = chart.getContext('2d');
+
+function resizeChart() {
+  const r = chart.parentElement.getBoundingClientRect();
+  chart.width = r.width * devicePixelRatio;
+  chart.height = r.height * devicePixelRatio;
+}
+resizeChart();
+window.addEventListener('resize', resizeChart);
+
+function startBaro() {
+  if (typeof Barometer !== 'undefined') {
+    try {
+      sensor = new Barometer({ frequency: 5 });
+      sensor.addEventListener('reading', onReading);
+      sensor.addEventListener('error', e => showError(e.error.message));
+      sensor.start();
+      running = true;
+      showRunning();
+      rafId = requestAnimationFrame(renderLoop);
+      return;
+    } catch(e) { showError(e.message); return; }
+  }
+
+  // DeviceOrientationEvent doesn't give pressure
+  // Try AbsolutePressureSensor alias
+  if (typeof AbsolutePressureSensor !== 'undefined') {
+    try {
+      sensor = new AbsolutePressureSensor({ frequency: 5 });
+      sensor.addEventListener('reading', onReading);
+      sensor.start();
+      running = true;
+      showRunning();
+      rafId = requestAnimationFrame(renderLoop);
+      return;
+    } catch(e) {}
+  }
+
+  showError('Barometer API not available in this browser. Try Chrome on Android.');
+}
+
+function showRunning() {
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-zero').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'inline-flex';
+  document.getElementById('floor-status').textContent = 'press "set ground floor" when on ground level';
+  document.getElementById('floor-status').style.color = 'var(--amber)';
+}
+
+function showError(msg) {
+  document.getElementById('floor-status').textContent = msg;
+  document.getElementById('floor-status').style.color = 'var(--red)';
+}
+
+function stopBaro() {
+  running = false;
+  if (sensor) { try { sensor.stop(); } catch(e){} }
+  if (rafId) cancelAnimationFrame(rafId);
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-zero').style.display = 'none';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('floor-status').textContent = 'stopped';
+  document.getElementById('floor-status').style.color = 'var(--dim)';
+}
+
+function setBaseline() {
+  if (lastPressure !== null) {
+    baseline = lastPressure;
+    document.getElementById('val-baseline').textContent = baseline.toFixed(2) + ' hPa (ground = floor 1)';
+    document.getElementById('floor-status').textContent = 'baseline set · now walk to a different floor';
+    document.getElementById('floor-status').style.color = 'var(--green)';
+  }
+}
+
+function onReading() {
+  if (!sensor || !running) return;
+  const p = sensor.pressure;
+  if (p == null) return;
+
+  // trend
+  const now = Date.now();
+  let delta = 0;
+  if (lastPressure !== null && lastTime !== null) {
+    const dt = (now - lastTime) / 1000;
+    if (dt > 0) delta = (p - lastPressure) / dt;
+  }
+  lastPressure = p;
+  lastTime = now;
+
+  pressureHistory.push(p);
+  if (pressureHistory.length > HISTORY) pressureHistory.shift();
+
+  updateDisplay(p, delta);
+}
+
+function updateDisplay(p, delta) {
+  document.getElementById('stat-hpa').textContent = p.toFixed(2);
+  document.getElementById('val-current').textContent = p.toFixed(2) + ' hPa';
+  document.getElementById('stat-delta').textContent = (delta >= 0 ? '+' : '') + (delta * 1000).toFixed(2) + ' mPa/s';
+
+  if (baseline !== null) {
+    const deltaPa = p - baseline;
+    // 1 hPa ≈ 8.5m altitude (inverted: higher pressure = lower altitude)
+    const altM = -(deltaPa) * 8.5;
+    // floor: assume 3.3m per floor
+    const floor = Math.round(altM / 3.3) + 1;
+    document.getElementById('floor-num').textContent = floor > 0 ? floor : floor;
+    document.getElementById('stat-alt').textContent = (altM >= 0 ? '+' : '') + altM.toFixed(1);
+    document.getElementById('val-altchange').textContent =
+      (altM >= 0 ? '+' : '') + altM.toFixed(1) + ' m  (floor ' + floor + ')';
+
+    const floorEl = document.getElementById('floor-num');
+    floorEl.style.color = Math.abs(floor - 1) >= 3 ? 'var(--red)' :
+                          Math.abs(floor - 1) >= 1 ? 'var(--amber)' : 'var(--cyan)';
+
+    const rising = delta < -0.05;  // pressure drops as we go up
+    const falling = delta > 0.05;
+    document.getElementById('floor-status').textContent =
+      rising  ? 'ascending — going up' :
+      falling ? 'descending — going down' :
+                'stationary on floor ' + floor;
+    document.getElementById('floor-status').style.color = 'var(--green)';
+  }
+}
+
+function renderLoop() {
+  if (!running) return;
+  rafId = requestAnimationFrame(renderLoop);
+  if (pressureHistory.length < 2) return;
+
+  const W = chart.width / devicePixelRatio;
+  const H = chart.height / devicePixelRatio;
+  chartCtx.clearRect(0, 0, W, H);
+
+  const min = Math.min(...pressureHistory);
+  const max = Math.max(...pressureHistory);
+  const range = Math.max(max - min, 0.5);
+  const pad = range * 0.2;
+  const yMin = min - pad, yMax = max + pad;
+
+  // baseline line
+  if (baseline !== null && baseline >= yMin && baseline <= yMax) {
+    const by = H * 0.1 + (H * 0.8) * (1 - (baseline - yMin) / (yMax - yMin));
+    chartCtx.setLineDash([4, 4]);
+    chartCtx.strokeStyle = 'rgba(100,116,139,0.4)';
+    chartCtx.lineWidth = 1;
+    chartCtx.beginPath();
+    chartCtx.moveTo(0, by); chartCtx.lineTo(W, by); chartCtx.stroke();
+    chartCtx.setLineDash([]);
+    chartCtx.fillStyle = 'rgba(100,116,139,0.6)';
+    chartCtx.font = '9px monospace';
+    chartCtx.fillText('ground', 4, by - 3);
+  }
+
+  // pressure line
+  chartCtx.beginPath();
+  pressureHistory.forEach((p, i) => {
+    const x = (i / (pressureHistory.length - 1)) * W;
+    const y = H * 0.1 + (H * 0.8) * (1 - (p - yMin) / (yMax - yMin));
+    i === 0 ? chartCtx.moveTo(x, y) : chartCtx.lineTo(x, y);
+  });
+  const lastY = H * 0.1 + (H * 0.8) * (1 - (pressureHistory[pressureHistory.length-1] - yMin) / (yMax - yMin));
+  const g = chartCtx.createLinearGradient(0, 0, W, 0);
+  g.addColorStop(0, 'rgba(34,211,238,0.2)');
+  g.addColorStop(1, 'rgba(34,211,238,1)');
+  chartCtx.strokeStyle = g;
+  chartCtx.lineWidth = 1.5;
+  chartCtx.stroke();
+
+  // fill
+  chartCtx.lineTo(W, H); chartCtx.lineTo(0, H); chartCtx.closePath();
+  const fg = chartCtx.createLinearGradient(0, 0, 0, H);
+  fg.addColorStop(0, 'rgba(34,211,238,0.15)');
+  fg.addColorStop(1, 'rgba(34,211,238,0)');
+  chartCtx.fillStyle = fg;
+  chartCtx.fill();
+
+  // labels
+  chartCtx.fillStyle = 'rgba(100,116,139,0.6)';
+  chartCtx.font = '9px monospace';
+  chartCtx.fillText(yMax.toFixed(1) + ' hPa', 4, H * 0.12);
+  chartCtx.fillText(yMin.toFixed(1) + ' hPa', 4, H * 0.92);
+}
+</script>
+</body>
+</html>

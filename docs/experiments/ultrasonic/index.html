@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Ultrasonic — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.ultra-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 0 12px;
+}
+.ultra-val {
+  font-size: clamp(2.6rem, 11vw, 3.8rem);
+  font-weight: 400;
+  color: var(--amber);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  transition: color 0.3s;
+}
+.ultra-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.ultra-status { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+.signal-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.signal-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 11px 14px;
+}
+.signal-row.detected {
+  border-color: var(--amber);
+  background: rgba(245,158,11,0.06);
+  animation: fadein 0.3s ease;
+}
+@keyframes fadein { from{opacity:0.3} to{opacity:1} }
+.signal-freq { color: var(--amber); font-size: 0.78rem; width: 68px; flex-shrink: 0; }
+.signal-bar-wrap { flex: 1; height: 5px; background: var(--border); border-radius: 2px; }
+.signal-bar { height: 100%; border-radius: 2px; background: var(--amber); transition: width 0.15s; }
+.signal-name { color: var(--dim); font-size: 0.62rem; flex-shrink: 0; width: 100px; text-align: right; }
+
+.spec-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.spec-wrap canvas { width: 100%; display: block; }
+.spec-label {
+  position: absolute; top: 8px; left: 12px;
+  font-size: 0.58rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--dim);
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>ultrasonic</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment 06 · microphone</div>
+      <div class="exp-title">signals you<br>can't hear.</div>
+      <div class="exp-desc">
+        Above 17 kHz, human hearing falls off — but microphones don't.
+        Ultrasonic beacons are embedded in TV ads, retail stores, and websites
+        to track you across all your devices at once. Your phone hears them.
+        So does this.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>your TV is telling your phone when you're home.</strong>
+      A technique called ultrasonic cross-device tracking (uXDT) hides beacons in TV ads.
+      Your phone's microphone — even if the screen is off — hears the beacon and reports
+      back to the same ad server. This is how advertisers know which household members
+      watch which shows, without you ever opening an app.
+      Silverpush, Lisnr, and SilentSense all deployed this commercially.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startUltra()">◉ listen</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopUltra()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="ultra-meter">
+      <div class="ultra-val" id="ultra-val">—</div>
+      <div class="ultra-unit">kHz · strongest ultrasonic signal</div>
+      <div class="ultra-status" id="ultra-status" style="color:var(--dim)">waiting</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-peak">—</span><span class="stat-lbl">peak kHz</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-db">—</span><span class="stat-lbl">dB rel.</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-detected">0</span><span class="stat-lbl">signals found</span></div>
+    </div>
+
+    <div class="spec-wrap" style="aspect-ratio:3/1">
+      <canvas id="spec-canvas"></canvas>
+      <div class="spec-label">17 – 22 kHz ultrasonic band</div>
+    </div>
+
+    <div class="signal-list" id="signal-list">
+      <div style="color:var(--dim);font-size:0.72rem;text-align:center;padding:16px 0">
+        no ultrasonic signals detected yet
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does this work?</summary>
+        <p>Most microphones capture up to 22 kHz (the Nyquist limit at 44.1 kHz sample rate).
+        Human speech is 80 Hz–8 kHz. This experiment listens only to the 17–22 kHz band —
+        the part you can't hear.</p>
+        <p>Known ultrasonic signals in this band:</p>
+        <ul style="font-size:0.72rem;color:var(--dim);line-height:1.8;padding-left:20px;margin-top:6px">
+          <li><strong style="color:#fff">18.0–18.5 kHz</strong> — Silverpush beacon range (TV ad tracking)</li>
+          <li><strong style="color:#fff">19.0–19.5 kHz</strong> — ultrasonic pest repellers (drive away rodents)</li>
+          <li><strong style="color:#fff">20.0–20.5 kHz</strong> — Google Nearby API (device pairing)</li>
+          <li><strong style="color:#fff">21.0 kHz</strong> — Lisnr (proximity marketing)</li>
+          <li><strong style="color:#fff">17.5 kHz</strong> — some hearing test tones / youth alarm "mosquito"</li>
+        </ul>
+        <p>On most phones, the microphone rolls off above 20 kHz. Detection above 21 kHz depends on hardware.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let audioCtx, analyser, src, stream, rafId, running = false;
+const FFT_SIZE = 32768;
+let detectedSignals = new Map();
+let totalDetected = 0;
+
+const KNOWN = [
+  { freq: 17500, name: 'Mosquito / youth alarm',      color: '#f59e0b' },
+  { freq: 18000, name: 'Silverpush TV beacon',         color: '#f87171' },
+  { freq: 18500, name: 'Silverpush TV beacon',         color: '#f87171' },
+  { freq: 19000, name: 'Ultrasonic pest repeller',     color: '#a78bfa' },
+  { freq: 19500, name: 'Ultrasonic pest repeller',     color: '#a78bfa' },
+  { freq: 20000, name: 'Google Nearby (pairing)',      color: '#22d3ee' },
+  { freq: 20500, name: 'Google Nearby (pairing)',      color: '#22d3ee' },
+  { freq: 21000, name: 'Lisnr proximity beacon',       color: '#f59e0b' },
+];
+
+const canvas = document.getElementById('spec-canvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+async function startUltra() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, sampleRate: 44100 }
+    });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = FFT_SIZE;
+    analyser.smoothingTimeConstant = 0.82;
+    src = audioCtx.createMediaStreamSource(stream);
+    src.connect(analyser);
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('ultra-status').textContent = 'listening for ultrasonic signals...';
+    document.getElementById('ultra-status').style.color = 'var(--amber)';
+    rafId = requestAnimationFrame(tick);
+  } catch(e) {
+    document.getElementById('ultra-status').textContent = 'mic unavailable: ' + e.message;
+    document.getElementById('ultra-status').style.color = 'var(--red)';
+  }
+}
+
+function stopUltra() {
+  running = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  if (src) src.disconnect();
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('ultra-status').textContent = 'stopped';
+  document.getElementById('ultra-status').style.color = 'var(--dim)';
+}
+
+const data = new Float32Array(FFT_SIZE / 2);
+function freqToBin(hz) { return Math.round(hz / audioCtx.sampleRate * FFT_SIZE); }
+function binToFreq(bin) { return bin * audioCtx.sampleRate / FFT_SIZE; }
+
+function tick() {
+  if (!running) return;
+  rafId = requestAnimationFrame(tick);
+  analyser.getFloatFrequencyData(data);
+
+  const startBin = freqToBin(17000);
+  const endBin   = freqToBin(22050);
+
+  // find peak in ultrasonic band
+  let peakBin = startBin, peakVal = -Infinity;
+  for (let i = startBin; i < Math.min(endBin, data.length); i++) {
+    if (data[i] > peakVal) { peakVal = data[i]; peakBin = i; }
+  }
+  const peakHz = binToFreq(peakBin);
+  const isSignal = peakVal > -50;
+
+  document.getElementById('ultra-val').textContent = (peakHz / 1000).toFixed(2);
+  document.getElementById('stat-peak').textContent = (peakHz / 1000).toFixed(2) + 'k';
+  document.getElementById('stat-db').textContent = peakVal.toFixed(1);
+
+  const ultraEl = document.getElementById('ultra-val');
+  ultraEl.style.color = isSignal ? 'var(--red)' : peakVal > -65 ? 'var(--amber)' : 'var(--dim)';
+
+  if (isSignal) {
+    document.getElementById('ultra-status').textContent = 'active ultrasonic signal detected!';
+    document.getElementById('ultra-status').style.color = 'var(--red)';
+  } else if (peakVal > -65) {
+    document.getElementById('ultra-status').textContent = 'weak signal detected';
+    document.getElementById('ultra-status').style.color = 'var(--amber)';
+  } else {
+    document.getElementById('ultra-status').textContent = 'no ultrasonic signals · quiet';
+    document.getElementById('ultra-status').style.color = 'var(--dim)';
+  }
+
+  // check known signals
+  const newSignals = [];
+  KNOWN.forEach(sig => {
+    const bin = freqToBin(sig.freq);
+    let power = -Infinity;
+    for (let i = Math.max(0, bin - 5); i <= Math.min(data.length-1, bin + 5); i++) {
+      if (data[i] > power) power = data[i];
+    }
+    if (power > -60 && !detectedSignals.has(sig.freq)) {
+      detectedSignals.set(sig.freq, { ...sig, power });
+      newSignals.push({ ...sig, power });
+      totalDetected++;
+    }
+    // update bar level
+    const el = document.getElementById('sb-' + sig.freq);
+    if (el) {
+      const bar = el.querySelector('.signal-bar');
+      const pct = Math.max(0, Math.min(100, (power + 80) / 40 * 100));
+      if (bar) bar.style.width = pct + '%';
+      if (pct > 30) el.classList.add('detected'); else el.classList.remove('detected');
+    }
+  });
+
+  document.getElementById('stat-detected').textContent = totalDetected;
+
+  if (newSignals.length > 0) {
+    renderSignalList();
+  }
+
+  drawSpectrum(startBin, endBin);
+}
+
+function renderSignalList() {
+  const list = document.getElementById('signal-list');
+  list.innerHTML = '';
+  KNOWN.forEach(sig => {
+    const bin = freqToBin(sig.freq);
+    let power = -Infinity;
+    for (let i = Math.max(0,bin-5); i<=Math.min(data.length-1,bin+5); i++) if(data[i]>power) power=data[i];
+    const pct = Math.max(0, Math.min(100, (power + 80) / 40 * 100));
+    const row = document.createElement('div');
+    row.className = 'signal-row' + (pct > 30 ? ' detected' : '');
+    row.id = 'sb-' + sig.freq;
+    row.innerHTML = `
+      <span class="signal-freq">${(sig.freq/1000).toFixed(1)} kHz</span>
+      <div class="signal-bar-wrap"><div class="signal-bar" style="width:${pct}%;background:${sig.color}"></div></div>
+      <span class="signal-name">${sig.name}</span>`;
+    list.appendChild(row);
+  });
+}
+
+function drawSpectrum(startBin, endBin) {
+  const W = canvas.width / devicePixelRatio;
+  const H = canvas.height / devicePixelRatio;
+  ctx.clearRect(0, 0, W, H);
+
+  const totalBins = Math.min(endBin, data.length) - startBin;
+
+  // grid + labels
+  const freqMarks = [17, 18, 18.5, 19, 19.5, 20, 20.5, 21, 22];
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  ctx.fillStyle = 'rgba(100,116,139,0.5)';
+  ctx.font = '9px monospace';
+  freqMarks.forEach(f => {
+    const bin = freqToBin(f * 1000);
+    const x = ((bin - startBin) / totalBins) * W;
+    if (x < 0 || x > W) return;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H - 14); ctx.stroke();
+    ctx.fillText(f + 'k', x + 2, H - 4);
+  });
+
+  // known signal markers
+  KNOWN.forEach(sig => {
+    const bin = freqToBin(sig.freq);
+    const x = ((bin - startBin) / totalBins) * W;
+    if (x < 0 || x > W) return;
+    ctx.strokeStyle = sig.color + '44';
+    ctx.lineWidth = 8;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H - 14); ctx.stroke();
+  });
+
+  // spectrum
+  const barW = W / totalBins;
+  for (let i = startBin; i < Math.min(endBin, data.length); i++) {
+    const x = ((i - startBin) / totalBins) * W;
+    const v = Math.max(0, (data[i] + 90) / 60);
+    const h = v * (H - 18);
+    const isKnown = KNOWN.some(s => Math.abs(freqToBin(s.freq) - i) < 4);
+    ctx.fillStyle = isKnown ? 'rgba(245,158,11,0.9)' : `rgba(100,116,139,${0.3 + v * 0.5})`;
+    ctx.fillRect(x, H - 18 - h, Math.max(1, barW * 1.5), h);
+  }
+}
+
+// Initial render of signal list
+renderSignalList();
+</script>
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Compass anomalies — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.compass-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+}
+.compass-ring {
+  position: relative;
+  width: min(240px, 70vw);
+  height: min(240px, 70vw);
+}
+.compass-ring canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.heading-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 0 8px;
+}
+.heading-val {
+  font-size: clamp(2.4rem, 10vw, 3.6rem);
+  font-weight: 400;
+  color: var(--cyan);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  transition: color 0.3s;
+}
+.heading-dir { font-size: 0.82rem; color: var(--dim); letter-spacing: 0.15em; text-transform: uppercase; }
+.heading-status { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+.anomaly-tape {
+  width: 100%;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+.anomaly-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.2s ease, background 0.3s ease;
+}
+
+.history-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.history-wrap canvas { width: 100%; display: block; }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>compass anomalies</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment 03 · magnetometer</div>
+      <div class="exp-title">the compass<br>knows what's hiding.</div>
+      <div class="exp-desc">
+        Walk slowly through a room while watching the compass heading.
+        When you pass steel beams, rebar in the floor, electrical panels, or hidden pipes —
+        the needle jumps. The magnetometer in your phone is sensitive enough to map
+        the skeleton of a building just by walking through it.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>the rebar grid inside every concrete building is magnetic.</strong>
+      Construction companies use magnetometers to locate rebar and pipes before drilling.
+      Security services use the same principle to map unknown buildings from the outside.
+      Your phone does this passively — every compass app is already doing it.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startCompass()">◉ start compass</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopCompass()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="heading-display">
+      <div class="heading-val" id="heading-val">—°</div>
+      <div class="heading-dir" id="heading-dir">—</div>
+      <div class="heading-status" id="heading-status" style="color:var(--dim)">waiting</div>
+    </div>
+
+    <div class="compass-wrap">
+      <div class="compass-ring">
+        <canvas id="compass-canvas"></canvas>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-heading">—</span><span class="stat-lbl">heading °</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-jump">—</span><span class="stat-lbl">last jump °</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-anomalies">0</span><span class="stat-lbl">anomalies</span></div>
+    </div>
+
+    <div style="width:100%;display:flex;flex-direction:column;gap:6px;">
+      <div style="font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim)">distortion level</div>
+      <div class="anomaly-tape"><div class="anomaly-fill" id="anomaly-fill" style="width:0%;background:var(--green)"></div></div>
+    </div>
+
+    <div class="history-wrap" style="aspect-ratio:4/1">
+      <canvas id="history-canvas"></canvas>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does this work?</summary>
+        <p>Your phone contains a 3-axis magnetometer — the same sensor used by the compass app.
+        It measures the total magnetic field in microtesla. Earth's field points toward magnetic north,
+        but ferromagnetic materials (steel, iron, cast iron pipes) bend and amplify the field locally.</p>
+        <p>When you walk past a steel beam or an electrical panel, the heading changes suddenly —
+        not because you turned, but because the local field is distorted. The jump in heading (in degrees)
+        tells you how strong the anomaly is. A shift of more than 15° while standing still is significant.</p>
+        <p>The compass uses the <code>deviceorientationabsolute</code> event, which gives calibrated
+        absolute heading in degrees from true north (0° = north, 90° = east, 180° = south).</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let running = false, heading = 0, prevHeading = 0, anomalyCount = 0;
+const historyBuf = new Array(200).fill(0);
+let histHead = 0;
+const JUMP_THRESHOLD = 10; // degrees
+
+const compassCanvas = document.getElementById('compass-canvas');
+const cctx = compassCanvas.getContext('2d');
+const histCanvas = document.getElementById('history-canvas');
+const hctx = histCanvas.getContext('2d');
+
+function resize() {
+  const cr = compassCanvas.parentElement.getBoundingClientRect();
+  compassCanvas.width = cr.width * devicePixelRatio;
+  compassCanvas.height = cr.height * devicePixelRatio;
+  const hr = histCanvas.parentElement.getBoundingClientRect();
+  histCanvas.width = hr.width * devicePixelRatio;
+  histCanvas.height = hr.height * devicePixelRatio;
+}
+resize();
+window.addEventListener('resize', resize);
+
+function startCompass() {
+  const go = () => {
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('heading-status').textContent = 'walk slowly · watch for jumps';
+    document.getElementById('heading-status').style.color = 'var(--cyan)';
+
+    const handler = (e) => {
+      if (!running) return;
+      // webkitCompassHeading on iOS, 360 - alpha on Android
+      let h = 0;
+      if (e.webkitCompassHeading != null) {
+        h = e.webkitCompassHeading;
+      } else if (e.alpha != null) {
+        h = 360 - e.alpha;
+      }
+      h = ((h % 360) + 360) % 360;
+
+      // detect jump
+      let diff = Math.abs(h - heading);
+      if (diff > 180) diff = 360 - diff;
+
+      if (diff > JUMP_THRESHOLD) {
+        anomalyCount++;
+        document.getElementById('stat-anomalies').textContent = anomalyCount;
+        document.getElementById('stat-jump').textContent = diff.toFixed(0) + '°';
+        flashAnomaly();
+      }
+
+      heading = h;
+      historyBuf[histHead % historyBuf.length] = h;
+      histHead++;
+
+      updateDisplay(h, diff);
+    };
+
+    window.addEventListener('deviceorientationabsolute', handler, true);
+    window.addEventListener('deviceorientation', handler, true);
+    requestAnimationFrame(renderLoop);
+  };
+
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission().then(s => { if (s === 'granted') go(); }).catch(() => {
+      document.getElementById('heading-status').textContent = 'permission denied';
+      document.getElementById('heading-status').style.color = 'var(--red)';
+    });
+  } else { go(); }
+}
+
+function stopCompass() {
+  running = false;
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('heading-status').textContent = 'stopped';
+  document.getElementById('heading-status').style.color = 'var(--dim)';
+}
+
+function headingDir(h) {
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(h / 22.5) % 16];
+}
+
+function updateDisplay(h, jump) {
+  document.getElementById('heading-val').textContent = Math.round(h) + '°';
+  document.getElementById('heading-dir').textContent = headingDir(h);
+  document.getElementById('stat-heading').textContent = Math.round(h) + '°';
+
+  const anom = Math.min(100, (jump / 30) * 100);
+  const fill = document.getElementById('anomaly-fill');
+  fill.style.width = anom + '%';
+  fill.style.background = anom > 60 ? 'var(--red)' : anom > 30 ? 'var(--amber)' : 'var(--green)';
+
+  const statusEl = document.getElementById('heading-status');
+  const valEl = document.getElementById('heading-val');
+  if (jump > 20) {
+    statusEl.textContent = 'strong anomaly — metal or electrical source';
+    statusEl.style.color = 'var(--red)';
+    valEl.style.color = 'var(--red)';
+  } else if (jump > 10) {
+    statusEl.textContent = 'distortion detected · ' + jump.toFixed(0) + '° jump';
+    statusEl.style.color = 'var(--amber)';
+    valEl.style.color = 'var(--amber)';
+  } else {
+    statusEl.textContent = 'walk slowly · watch for jumps';
+    statusEl.style.color = 'var(--cyan)';
+    valEl.style.color = 'var(--cyan)';
+  }
+}
+
+let flashTimer = null;
+function flashAnomaly() {
+  const el = document.getElementById('heading-val');
+  el.style.color = 'var(--red)';
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => { el.style.color = 'var(--cyan)'; }, 800);
+}
+
+function renderLoop() {
+  if (!running) return;
+  requestAnimationFrame(renderLoop);
+  drawCompass();
+  drawHistory();
+}
+
+function drawCompass() {
+  const W = compassCanvas.width / devicePixelRatio;
+  const H = compassCanvas.height / devicePixelRatio;
+  cctx.clearRect(0, 0, W, H);
+  const cx = W / 2, cy = H / 2;
+  const R = Math.min(W, H) / 2 - 8;
+
+  // outer ring
+  cctx.beginPath();
+  cctx.arc(cx, cy, R, 0, Math.PI * 2);
+  cctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  cctx.lineWidth = 1;
+  cctx.stroke();
+
+  // tick marks
+  for (let i = 0; i < 36; i++) {
+    const angle = (i * 10 - heading) * Math.PI / 180;
+    const isMajor = i % 9 === 0;
+    const r1 = R - (isMajor ? 14 : 7);
+    cctx.beginPath();
+    cctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+    cctx.lineTo(cx + Math.cos(angle) * R, cy + Math.sin(angle) * R);
+    cctx.strokeStyle = isMajor ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)';
+    cctx.lineWidth = isMajor ? 1.5 : 1;
+    cctx.stroke();
+  }
+
+  // NSEW labels
+  [['N', 0], ['E', 90], ['S', 180], ['W', 270]].forEach(([lbl, deg]) => {
+    const angle = (deg - heading) * Math.PI / 180 - Math.PI / 2;
+    const r = R - 22;
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * r;
+    cctx.fillStyle = lbl === 'N' ? '#f87171' : 'rgba(255,255,255,0.6)';
+    cctx.font = `${lbl === 'N' ? 'bold ' : ''}11px monospace`;
+    cctx.textAlign = 'center';
+    cctx.textBaseline = 'middle';
+    cctx.fillText(lbl, x, y);
+  });
+
+  // needle pointing north
+  const northAngle = -heading * Math.PI / 180 - Math.PI / 2;
+  const needleLen = R * 0.55;
+
+  // red (north) half
+  cctx.beginPath();
+  cctx.moveTo(cx, cy);
+  cctx.lineTo(cx + Math.cos(northAngle) * needleLen, cy + Math.sin(northAngle) * needleLen);
+  cctx.strokeStyle = '#f87171';
+  cctx.lineWidth = 2.5;
+  cctx.stroke();
+
+  // white (south) half
+  cctx.beginPath();
+  cctx.moveTo(cx, cy);
+  cctx.lineTo(cx - Math.cos(northAngle) * needleLen * 0.7, cy - Math.sin(northAngle) * needleLen * 0.7);
+  cctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  cctx.lineWidth = 2;
+  cctx.stroke();
+
+  // center dot
+  cctx.beginPath();
+  cctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  cctx.fillStyle = '#fff';
+  cctx.fill();
+}
+
+function drawHistory() {
+  const W = histCanvas.width / devicePixelRatio;
+  const H = histCanvas.height / devicePixelRatio;
+  hctx.clearRect(0, 0, W, H);
+
+  const n = historyBuf.length;
+  const ordered = new Array(n);
+  for (let i = 0; i < n; i++) ordered[i] = historyBuf[(histHead + i) % n];
+
+  // heading line
+  hctx.beginPath();
+  ordered.forEach((h, i) => {
+    const x = (i / (n - 1)) * W;
+    const y = H * 0.1 + (H * 0.8) * (h / 360);
+    i === 0 ? hctx.moveTo(x, y) : hctx.lineTo(x, y);
+  });
+  hctx.strokeStyle = 'rgba(34,211,238,0.7)';
+  hctx.lineWidth = 1.5;
+  hctx.stroke();
+
+  // labels
+  hctx.fillStyle = 'rgba(100,116,139,0.5)';
+  hctx.font = '9px monospace';
+  hctx.textAlign = 'left';
+  hctx.fillText('360°', 4, H * 0.12);
+  hctx.fillText('180°', 4, H * 0.52);
+  hctx.fillText('  0°', 4, H * 0.92);
+}
+</script>
+</body>
+</html>
