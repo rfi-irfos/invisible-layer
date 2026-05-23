@@ -215,8 +215,9 @@ function startDensity() {
 function stopDensity() {
   running = false;
   clearInterval(updateInterval);
+  clearInterval(bleTimer);
   if (motionRunning) window.removeEventListener('devicemotion', onMotion);
-  if (audioCtx) audioCtx.close();
+  if (audioCtx) { audioCtx.close(); audioCtx = null; }
   document.getElementById('btn-start').style.display = 'inline-flex';
   document.getElementById('btn-stop').style.display = 'none';
   document.getElementById('density-env').textContent = 'stopped';
@@ -259,13 +260,31 @@ async function startAudio() {
   } catch (e) { /* mic not available */ }
 }
 
+let bleTimer = null;
 async function startBLE() {
-  if (!navigator.bluetooth || !navigator.bluetooth.requestLEScan) return;
+  if (!navigator.bluetooth || !navigator.bluetooth.requestLEScan) {
+    document.getElementById('sig-ble').textContent = 'not available (Android Chrome only)';
+    return;
+  }
+  await doBleScan();
+  bleTimer = setInterval(doBleScan, 20000);
+}
+
+async function doBleScan() {
+  if (!running) return;
   try {
+    document.getElementById('sig-ble').textContent = 'scanning...';
     const scan = await navigator.bluetooth.requestLEScan({ acceptAllAdvertisements: true });
-    navigator.bluetooth.addEventListener('advertisementreceived', () => { bleCount++; });
-    setTimeout(() => { try { scan.stop(); } catch (e) {} }, 10000);
-  } catch (e) { /* not available or denied */ }
+    let count = 0;
+    const handler = () => { count++; };
+    navigator.bluetooth.addEventListener('advertisementreceived', handler);
+    await new Promise(r => setTimeout(r, 8000));
+    try { scan.stop(); } catch (e) {}
+    navigator.bluetooth.removeEventListener('advertisementreceived', handler);
+    bleCount = count;
+  } catch (e) {
+    document.getElementById('sig-ble').textContent = 'denied or unavailable';
+  }
 }
 
 function updateEstimate() {

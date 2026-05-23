@@ -105,7 +105,8 @@
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;margin-top:4px">
-      <button class="exp-btn" id="btn-scan" onclick="doScan()">◉ scan</button>
+      <button class="exp-btn" id="btn-scan" onclick="startLive()">◉ start live scan</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopLive()" style="display:none">■ stop</button>
     </div>
 
     <div class="density-display">
@@ -149,22 +150,41 @@
   </div>
 </div>
 <script>
+let liveTimer = null;
+
+function startLive() {
+  document.getElementById('btn-scan').style.display = 'none';
+  document.getElementById('btn-stop').style.display = 'inline-flex';
+  document.getElementById('density-class').textContent = 'reading...';
+  doScan();
+  liveTimer = setInterval(doScan, 3000);
+
+  // also hook connection change event
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (conn) conn.addEventListener('change', doScan);
+}
+
+function stopLive() {
+  clearInterval(liveTimer);
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (conn) conn.removeEventListener('change', doScan);
+  document.getElementById('btn-scan').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('density-class').textContent = 'stopped';
+}
+
 function doScan() {
-  // Read what the browser can actually give us
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   let type = '—', rtt = '—', down = '—';
   if (conn) {
     type = conn.effectiveType || conn.type || '—';
-    rtt  = conn.rtt != null ? conn.rtt + 'ms' : '—';
+    rtt  = conn.rtt != null ? conn.rtt + ' ms' : '—';
     down = conn.downlink != null ? conn.downlink.toFixed(1) : '—';
   }
   document.getElementById('stat-type').textContent = type;
   document.getElementById('stat-rtt').textContent = rtt;
   document.getElementById('stat-down').textContent = down;
 
-  // Estimate network density from what the browser actually knows
-  // In reality browsers don't expose a WiFi scan list; we simulate what it would show
-  // and display factual data we do have access to
   const estimatedNetworks = estimateFromContext(conn);
 
   document.getElementById('density-num').textContent = estimatedNetworks.count;

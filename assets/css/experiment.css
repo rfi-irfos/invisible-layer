@@ -87,11 +87,11 @@ html, body {
 }
 .exp-title {
   font-size: clamp(1.4rem, 6vw, 2rem);
-  font-weight: 400; line-height: 1.1;
+  font-weight: 700; line-height: 1.1;
   color: #fff;
 }
 .exp-desc {
-  font-size: 0.78rem; color: var(--dim); line-height: 1.65;
+  font-size: 0.84rem; color: var(--text); line-height: 1.7; opacity: 0.75;
 }
 
 /* shock box */
@@ -102,9 +102,10 @@ html, body {
   border-left: 3px solid var(--red);
   border-radius: 4px;
   padding: 13px 16px;
-  font-size: 0.73rem;
-  line-height: 1.6;
-  color: var(--dim);
+  font-size: 0.8rem;
+  line-height: 1.65;
+  color: var(--text);
+  opacity: 0.85;
 }
 .shock strong { color: var(--red); }
 .shock code {
@@ -190,15 +191,15 @@ html, body {
   padding: 12px 16px;
 }
 .exp-info summary {
-  font-size: 0.72rem; color: var(--dim);
+  font-size: 0.78rem; color: var(--dim);
   cursor: pointer; letter-spacing: 0.04em;
   list-style: none;
 }
 .exp-info summary::-webkit-details-marker { display: none; }
 .exp-info details[open] summary { color: var(--cyan); margin-bottom: 10px; }
 .exp-info p {
-  font-size: 0.72rem; color: var(--dim);
-  line-height: 1.7; margin-top: 8px;
+  font-size: 0.78rem; color: var(--text);
+  opacity: 0.7; line-height: 1.75; margin-top: 8px;
 }
 .exp-info code {
   background: var(--muted);

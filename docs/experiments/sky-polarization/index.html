@@ -180,57 +180,72 @@
 <script>
 let stream = null, videoEl = null, overlayCanvas = null, octx = null;
 let running = false, animId = null;
-let heading = 0; // from compass
+let heading = null; // null = no compass yet
 const sCanvas = document.createElement('canvas');
 sCanvas.width = 32; sCanvas.height = 24;
 const sctx = sCanvas.getContext('2d');
 
-// Heading from device
+let compassGranted = false;
+
 function startCompass() {
   const onOrient = (e) => {
     if (e.webkitCompassHeading != null) {
       heading = e.webkitCompassHeading;
-    } else if (e.alpha != null) {
+      compassGranted = true;
+    } else if (e.absolute && e.alpha != null) {
+      heading = (360 - e.alpha) % 360;
+      compassGranted = true;
+    } else if (e.alpha != null && heading === null) {
       heading = (360 - e.alpha) % 360;
     }
-    document.getElementById('stat-heading').textContent = Math.round(heading) + '°';
+    if (heading !== null)
+      document.getElementById('stat-heading').textContent = Math.round(heading) + '°';
   };
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
     DeviceOrientationEvent.requestPermission().then(s => {
-      if (s === 'granted') window.addEventListener('deviceorientation', onOrient);
+      if (s === 'granted') {
+        window.addEventListener('deviceorientationabsolute', onOrient, true);
+        window.addEventListener('deviceorientation', onOrient, true);
+      }
     }).catch(() => {});
   } else {
-    window.addEventListener('deviceorientation', onOrient);
-    window.addEventListener('deviceorientationabsolute', onOrient);
+    window.addEventListener('deviceorientationabsolute', onOrient, true);
+    window.addEventListener('deviceorientation', onOrient, true);
   }
 }
 
 async function startSky() {
+  document.getElementById('bearing-status').textContent = 'opening camera...';
+  document.getElementById('bearing-status').style.color = 'var(--cyan)';
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1280 } }
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }
     });
     videoEl = document.getElementById('sky-video');
     videoEl.srcObject = stream;
+    videoEl.style.transform = 'scaleX(1)';
+    await new Promise(res => { videoEl.onloadedmetadata = res; });
     await videoEl.play();
 
     overlayCanvas = document.getElementById('sky-overlay');
     const stage = document.getElementById('sky-stage');
-    overlayCanvas.width = stage.clientWidth * devicePixelRatio;
-    overlayCanvas.height = (stage.clientWidth * 3 / 4) * devicePixelRatio;
+    const dpr = window.devicePixelRatio || 1;
+    overlayCanvas.width = stage.clientWidth * dpr;
+    overlayCanvas.height = Math.round(stage.clientWidth * 3 / 4) * dpr;
     octx = overlayCanvas.getContext('2d');
+    octx.scale(dpr, dpr); // draw at CSS pixel coordinates
 
     running = true;
     document.getElementById('btn-start').style.display = 'none';
     document.getElementById('btn-stop').style.display = 'inline-flex';
-    document.getElementById('bearing-status').textContent = 'scanning — point at blue sky, 90° from sun';
+    document.getElementById('bearing-status').textContent = 'scanning — slowly rotate pointing at blue sky';
     document.getElementById('bearing-status').style.color = 'var(--cyan)';
 
     startCompass();
     animId = requestAnimationFrame(analyseLoop);
   } catch (e) {
-    document.getElementById('bearing-status').textContent = 'camera access denied';
+    document.getElementById('bearing-status').textContent = 'camera access denied — try in Safari or Chrome';
     document.getElementById('bearing-status').style.color = 'var(--red)';
   }
 }
@@ -254,6 +269,8 @@ function analyseLoop() {
   if (!running) return;
   animId = requestAnimationFrame(analyseLoop);
 
+  if (!videoEl || videoEl.readyState < 2) return;
+
   sctx.drawImage(videoEl, 0, 0, 32, 24);
   const px = sctx.getImageData(0, 0, 32, 24).data;
 
@@ -267,69 +284,92 @@ function analyseLoop() {
   const total = r + g + b || 1;
   const bp = b / total;
 
-  // Polarization proxy: blue channel excess over expected (sky blue is enriched when polarized)
   const polContrast = Math.max(0, (bp - 0.33) / 0.33 * 100);
+  const h = heading !== null ? heading : 0;
 
   polHistory.push(polContrast);
-  headingAtPol.push(heading);
+  headingAtPol.push(h);
   if (polHistory.length > HISTORY) { polHistory.shift(); headingAtPol.shift(); }
 
-  // Find heading where polContrast was highest — that's 90° from sun
   let maxPol = 0, maxIdx = 0;
   polHistory.forEach((p, i) => { if (p > maxPol) { maxPol = p; maxIdx = i; } });
-  const peakHeading = headingAtPol[maxIdx] || heading;
-  // Sun is 90° from peak polarization direction
+  const peakHeading = headingAtPol[maxIdx] || h;
   const sunBearing = Math.round((peakHeading + 90) % 360);
 
-  const confidence = polHistory.length < 10 ? 'low — keep rotating' :
-                     maxPol < 5 ? 'low — may not be blue sky' :
+  const noCompass = heading === null;
+  const confidence = noCompass ? 'compass not available — rotate manually' :
+                     polHistory.length < 10 ? 'keep rotating slowly' :
+                     maxPol < 5 ? 'low — aim at blue sky away from the sun' :
                      maxPol < 15 ? 'moderate' : 'good';
 
-  document.getElementById('bearing-val').textContent = sunBearing + '°';
-  document.getElementById('bearing-val').style.color = confidence === 'good' ? 'var(--green)' : confidence === 'moderate' ? 'var(--cyan)' : 'var(--dim)';
-  document.getElementById('bearing-status').textContent = 'sun estimated ' + sunBearing + '° — ' + heading2cardinal(sunBearing);
+  const bearingEl = document.getElementById('bearing-val');
+  if (noCompass) {
+    bearingEl.textContent = '—';
+    bearingEl.style.color = 'var(--dim)';
+    document.getElementById('bearing-status').textContent = 'no compass — rotate phone and watch polarization contrast';
+  } else {
+    bearingEl.textContent = sunBearing + '°';
+    bearingEl.style.color = confidence === 'good' ? 'var(--green)' : confidence === 'moderate' ? 'var(--cyan)' : 'var(--dim)';
+    document.getElementById('bearing-status').textContent = 'sun estimated ' + sunBearing + '° — ' + heading2cardinal(sunBearing);
+  }
+
   document.getElementById('stat-bright').textContent = Math.round(lum);
   document.getElementById('stat-pol').textContent = polContrast.toFixed(1);
+  document.getElementById('stat-heading').textContent = heading !== null ? Math.round(heading) + '°' : 'no compass';
 
-  document.getElementById('i-heading').textContent = Math.round(heading) + '° (' + heading2cardinal(heading) + ')';
-  document.getElementById('i-bright').textContent = Math.round(lum) + (lum > 180 ? ' (very bright)' : lum > 80 ? ' (good)' : ' (too dark?)');
-  document.getElementById('i-blue').textContent = (bp * 100).toFixed(1) + '%' + (bp > 0.36 ? ' (polarized sky signal)' : ' (low sky signal)');
-  document.getElementById('i-pol').textContent = polContrast.toFixed(1) + '%';
-  document.getElementById('i-sun').textContent = sunBearing + '° (' + heading2cardinal(sunBearing) + ')';
+  document.getElementById('i-heading').textContent = heading !== null ? Math.round(heading) + '° (' + heading2cardinal(h) + ')' : 'unavailable';
+  document.getElementById('i-bright').textContent = Math.round(lum) + (lum > 180 ? ' — very bright, good' : lum > 80 ? ' — good exposure' : ' — too dark, go outside');
+  document.getElementById('i-blue').textContent = (bp * 100).toFixed(1) + '% blue' + (bp > 0.36 ? ' — sky signal detected' : ' — point at blue sky');
+  document.getElementById('i-pol').textContent = polContrast.toFixed(1) + '% contrast';
+  document.getElementById('i-sun').textContent = noCompass ? '— (no compass)' : sunBearing + '° (' + heading2cardinal(sunBearing) + ')';
   document.getElementById('i-conf').textContent = confidence;
 
-  // Overlay: polarization arc visualisation
-  const OW = overlayCanvas.width / devicePixelRatio;
-  const OH = overlayCanvas.height / devicePixelRatio;
+  // Overlay
+  const OW = overlayCanvas.width / (window.devicePixelRatio || 1);
+  const OH = overlayCanvas.height / (window.devicePixelRatio || 1);
   octx.clearRect(0, 0, OW, OH);
 
-  // Draw polarization strength as a coloured ring
   const cx = OW / 2, cy = OH / 2;
-  const r2 = Math.min(OW, OH) * 0.25;
+  const radius = Math.min(OW, OH) * 0.25;
   const intensity = Math.min(1, polContrast / 30);
+
+  // Polarization ring — brightness indicates polarization strength
   octx.strokeStyle = `rgba(34,211,238,${0.3 + intensity * 0.6})`;
-  octx.lineWidth = 3;
+  octx.lineWidth = 2 + intensity * 2;
+  octx.shadowBlur = 8 * intensity;
+  octx.shadowColor = '#22d3ee';
   octx.beginPath();
-  octx.arc(cx, cy, r2, 0, Math.PI * 2);
+  octx.arc(cx, cy, radius, 0, Math.PI * 2);
   octx.stroke();
+  octx.shadowBlur = 0;
 
-  // Sun direction indicator
-  const sunRad = (sunBearing - 90) * Math.PI / 180;
-  const sx = cx + Math.cos(sunRad) * r2;
-  const sy = cy + Math.sin(sunRad) * r2;
-  octx.fillStyle = 'rgba(245,158,11,0.9)';
-  octx.beginPath();
-  octx.arc(sx, sy, 8, 0, Math.PI * 2);
-  octx.fill();
-  octx.fillStyle = '#fff';
-  octx.font = '11px monospace';
+  // Polarization strength bar at top
+  const barW = OW * 0.6;
+  const barX = (OW - barW) / 2;
+  octx.fillStyle = 'rgba(0,0,0,0.5)';
+  octx.fillRect(barX, 12, barW, 8);
+  octx.fillStyle = intensity > 0.5 ? '#22d3ee' : '#475569';
+  octx.fillRect(barX, 12, barW * intensity, 8);
+  octx.fillStyle = 'rgba(255,255,255,0.6)';
+  octx.font = '10px monospace';
   octx.textAlign = 'center';
-  octx.fillText('☀', sx, sy + 4);
+  octx.fillText('polarization: ' + polContrast.toFixed(0) + '%', cx, 10);
 
-  octx.fillStyle = 'rgba(34,211,238,0.7)';
-  octx.font = '9px monospace';
-  octx.textAlign = 'center';
-  octx.fillText('pol. max →', cx, cy - r2 - 8);
+  if (!noCompass) {
+    // Sun direction dot
+    const sunRad = (sunBearing - 90) * Math.PI / 180;
+    const sx = cx + Math.cos(sunRad) * radius;
+    const sy = cy + Math.sin(sunRad) * radius;
+    octx.fillStyle = 'rgba(245,158,11,0.9)';
+    octx.shadowBlur = 10; octx.shadowColor = '#f59e0b';
+    octx.beginPath();
+    octx.arc(sx, sy, 10, 0, Math.PI * 2);
+    octx.fill();
+    octx.shadowBlur = 0;
+    octx.fillStyle = '#000';
+    octx.font = 'bold 9px monospace';
+    octx.fillText('SUN', sx, sy + 3);
+  }
 }
 
 function heading2cardinal(deg) {
