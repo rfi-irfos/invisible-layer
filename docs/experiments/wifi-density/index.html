@@ -117,7 +117,8 @@
 
     <div class="stat-row">
       <div class="stat-cell"><span class="stat-val" id="stat-type">—</span><span class="stat-lbl">connection</span></div>
-      <div class="stat-cell"><span class="stat-val" id="stat-rtt">—</span><span class="stat-lbl">RTT ms</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-rtt">—</span><span class="stat-lbl">system RTT</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-ping">—</span><span class="stat-lbl">measured ping</span></div>
       <div class="stat-cell"><span class="stat-val" id="stat-down">—</span><span class="stat-lbl">Mbps down</span></div>
     </div>
 
@@ -151,6 +152,22 @@
 </div>
 <script>
 let liveTimer = null;
+let lastMeasuredPing = null;
+
+async function measurePing() {
+  const url = '/assets/css/base.css?_=' + Date.now();
+  const t0 = performance.now();
+  try {
+    await fetch(url, { cache: 'no-store', mode: 'no-cors' });
+    const ms = Math.round(performance.now() - t0);
+    lastMeasuredPing = ms;
+    document.getElementById('stat-ping').textContent = ms + ' ms';
+    document.getElementById('stat-ping').style.color =
+      ms < 30 ? 'var(--green)' : ms < 80 ? 'var(--cyan)' : ms < 200 ? 'var(--amber)' : 'var(--red)';
+  } catch(e) {
+    document.getElementById('stat-ping').textContent = 'offline';
+  }
+}
 
 function startLive() {
   document.getElementById('btn-scan').style.display = 'none';
@@ -185,6 +202,9 @@ function doScan() {
   document.getElementById('stat-rtt').textContent = rtt;
   document.getElementById('stat-down').textContent = down;
 
+  // Fire real ping in parallel — doesn't block the display update
+  measurePing();
+
   const estimatedNetworks = estimateFromContext(conn);
 
   document.getElementById('density-num').textContent = estimatedNetworks.count;
@@ -214,12 +234,15 @@ function estimateFromContext(conn) {
   const rtt = conn.rtt || 0;
   const dl = conn.downlink || 0;
 
+  // Use measured ping if available, otherwise fall back to system RTT
+  const effectiveRtt = lastMeasuredPing != null ? lastMeasuredPing : rtt;
+
   // Very rough heuristics
   if (et === 'wifi' || et === '4g') {
-    if (rtt < 20 && dl > 50) {
+    if (effectiveRtt < 20 && dl > 50) {
       envType = 'high-density urban — likely many networks nearby';
       count = '30+';
-    } else if (rtt < 50 && dl > 10) {
+    } else if (effectiveRtt < 50 && dl > 10) {
       envType = 'moderate density — suburban or small office';
       count = '10–25';
     } else {
@@ -281,7 +304,8 @@ function renderEnvironmentCard(conn, est) {
   card.style.display = 'block';
   const rows = [
     ['effective type',    conn ? (conn.effectiveType || '—') : '—'],
-    ['round trip time',   conn && conn.rtt != null ? conn.rtt + ' ms' : '—'],
+    ['system RTT',        conn && conn.rtt != null ? conn.rtt + ' ms' : '—'],
+    ['measured ping',     lastMeasuredPing != null ? lastMeasuredPing + ' ms (fetch timing)' : 'measuring...'],
     ['downlink estimate', conn && conn.downlink != null ? conn.downlink + ' Mbps' : '—'],
     ['save data mode',    conn && conn.saveData ? 'yes' : 'no'],
     ['location type',     est.envType],

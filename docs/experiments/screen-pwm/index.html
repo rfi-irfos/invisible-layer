@@ -138,6 +138,11 @@
       <div class="pwm-label">brightness over time</div>
     </div>
 
+    <div class="pwm-canvas-wrap" style="aspect-ratio:3/1">
+      <canvas id="spec-canvas"></canvas>
+      <div class="pwm-label">frequency spectrum</div>
+    </div>
+
     <div class="result-grid">
       <div class="res-row">
         <span class="res-key">screen type guess</span>
@@ -187,10 +192,15 @@ let lastFrameTime = performance.now(), fps = 0, frameAccum = 0, lastFpsTime = pe
 
 const canvas = document.getElementById('pwm-canvas');
 const ctx = canvas.getContext('2d');
+const specCanvas = document.getElementById('spec-canvas');
+const sctxSpec = specCanvas.getContext('2d');
 function resizeCanvas() {
   const r = canvas.parentElement.getBoundingClientRect();
   canvas.width = r.width * devicePixelRatio;
   canvas.height = r.height * devicePixelRatio;
+  const rs = specCanvas.parentElement.getBoundingClientRect();
+  specCanvas.width = rs.width * devicePixelRatio;
+  specCanvas.height = rs.height * devicePixelRatio;
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
@@ -290,21 +300,26 @@ function analyzeAndDraw() {
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // DFT for flicker frequency
+  // DFT for flicker frequency — full spectrum, mean-subtracted to remove DC
   if (fps < 20) return;
   const N = Math.min(BUF_LEN, ordered.length);
+  const dcMean = ordered.reduce((a, b) => a + b, 0) / N;
+  const centered = ordered.map(v => v - dcMean);
+  const maxBin = Math.floor(N / 2);
+  const powers = new Float32Array(maxBin + 1);
   let peakAmp = 0, peakFreq = 0;
-  const maxFreq = fps / 2;
-  for (let k = 1; k < N / 2; k++) {
+  for (let k = 1; k <= maxBin; k++) {
     let re = 0, im = 0;
     for (let n = 0; n < N; n++) {
       const angle = 2 * Math.PI * k * n / N;
-      re += ordered[n] * Math.cos(angle);
-      im -= ordered[n] * Math.sin(angle);
+      re += centered[n] * Math.cos(angle);
+      im -= centered[n] * Math.sin(angle);
     }
     const amp = Math.sqrt(re * re + im * im);
+    powers[k] = amp;
     if (amp > peakAmp) { peakAmp = amp; peakFreq = k * fps / N; }
   }
+  drawPWMSpectrum(powers, fps, N, peakFreq, depth > 0.5);
 
   if (depth < 0.5) {
     document.getElementById('pwm-freq').textContent = 'DC';
@@ -345,6 +360,43 @@ function analyzeAndDraw() {
   document.getElementById('res-safety').className = 'res-val ' + verdictCls;
   document.getElementById('res-safety').textContent = verdict;
   document.getElementById('res-match').textContent = match;
+}
+function drawPWMSpectrum(powers, fps, N, peakFreq, hasPeak) {
+  const W = specCanvas.width / devicePixelRatio;
+  const H = specCanvas.height / devicePixelRatio;
+  sctxSpec.clearRect(0, 0, W, H);
+
+  const maxBin = Math.floor(N / 2);
+  let maxP = 0;
+  for (let k = 1; k <= maxBin; k++) if (powers[k] > maxP) maxP = powers[k];
+  maxP = Math.max(maxP, 0.001);
+  const barW = W / maxBin;
+  const nyquist = fps / 2;
+
+  for (let k = 1; k <= maxBin; k++) {
+    const hz = k * fps / N;
+    const h = (powers[k] / maxP) * H * 0.8;
+    const color = powers[k] === maxP ? 'rgba(248,113,113,0.8)' : 'rgba(34,211,238,0.45)';
+    sctxSpec.fillStyle = color;
+    sctxSpec.fillRect((k - 1) * barW, H - h, barW - 0.5, h);
+  }
+
+  // Peak label
+  if (hasPeak && peakFreq > 0) {
+    const pb = Math.round(peakFreq * N / fps);
+    const px = Math.min((pb - 1) * barW + barW / 2, W - 30);
+    const ph = (powers[pb] / maxP) * H * 0.8;
+    sctxSpec.fillStyle = '#f87171';
+    sctxSpec.font = 'bold 9px monospace'; sctxSpec.textAlign = 'center';
+    sctxSpec.fillText(peakFreq.toFixed(1) + 'Hz', px, Math.max(12, H - ph - 6));
+  }
+
+  // Nyquist note
+  sctxSpec.fillStyle = 'rgba(136,150,170,0.5)';
+  sctxSpec.font = '9px monospace'; sctxSpec.textAlign = 'left';
+  sctxSpec.fillText('0 – ' + Math.round(nyquist) + ' Hz  (camera Nyquist)', 4, 13);
+  sctxSpec.textAlign = 'right';
+  sctxSpec.fillText('higher PWM frequencies alias to lower bins', W - 4, 13);
 }
 </script>
 </body>

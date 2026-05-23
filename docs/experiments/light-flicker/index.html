@@ -133,6 +133,10 @@
       <canvas id="bright-canvas"></canvas>
     </div>
 
+    <div class="brightness-chart" style="aspect-ratio:3/1">
+      <canvas id="spec-canvas"></canvas>
+    </div>
+
     <div class="verdict-box" id="verdict-box">
       <div class="verdict-title">verdict</div>
       Point the camera at any light source — lamp, screen, ceiling light — to begin analysis.
@@ -171,10 +175,15 @@ sampleCanvas.width = 32; sampleCanvas.height = 18;
 
 const brightCanvas = document.getElementById('bright-canvas');
 const bctx = brightCanvas.getContext('2d');
+const specCanvas = document.getElementById('spec-canvas');
+const sctxSpec = specCanvas.getContext('2d');
 function resizeBCanvas() {
   const r = brightCanvas.parentElement.getBoundingClientRect();
   brightCanvas.width = r.width * devicePixelRatio;
   brightCanvas.height = r.height * devicePixelRatio;
+  const rs = specCanvas.parentElement.getBoundingClientRect();
+  specCanvas.width = rs.width * devicePixelRatio;
+  specCanvas.height = rs.height * devicePixelRatio;
 }
 resizeBCanvas();
 window.addEventListener('resize', resizeBCanvas);
@@ -269,28 +278,30 @@ function analyseFlicker() {
   const range = maxB - minB;
   const depth = maxB > 0 ? (range / (maxB + minB)) * 100 : 0;
 
-  // Simple DFT over brightness samples (up to Nyquist)
+  // DFT over all bins from 1 to Nyquist; subtract mean to remove DC bias
   const N = SAMPLE_COUNT;
-  const nyquist = actualFps / 2;
-  let peakPower = 0, peakBin = 0;
+  const fps = actualFps;
+  const mean = ordered.reduce((a, b) => a + b, 0) / N;
+  const centered = ordered.map(v => v - mean);
+  const maxBin = Math.floor(N / 2);
+  const powers = new Float32Array(maxBin + 1);
+  let peakPower = 0, peakBin = 1;
 
-  // Only look at bins corresponding to 40-130 Hz
-  const minBin = Math.max(1, Math.round(40 / actualFps * N));
-  const maxBin = Math.min(N/2, Math.round(130 / actualFps * N));
-
-  for (let k = minBin; k <= maxBin; k++) {
+  for (let k = 1; k <= maxBin; k++) {
     let re = 0, im = 0;
     for (let n = 0; n < N; n++) {
       const angle = 2 * Math.PI * k * n / N;
-      re += ordered[n] * Math.cos(angle);
-      im -= ordered[n] * Math.sin(angle);
+      re += centered[n] * Math.cos(angle);
+      im -= centered[n] * Math.sin(angle);
     }
     const power = Math.sqrt(re*re + im*im) / N;
+    powers[k] = power;
     if (power > peakPower) { peakPower = power; peakBin = k; }
   }
 
-  const peakHz = peakBin * actualFps / N;
-  const isSignificant = depth > 1.5 && peakPower > 0.3;
+  const peakHz = peakBin * fps / N;
+  const isSignificant = depth > 1.5 && peakPower > 0.1;
+  drawFlickerSpectrum(powers, fps, N, peakHz, isSignificant);
 
   document.getElementById('stat-depth').textContent = depth.toFixed(1) + '%';
 
@@ -336,6 +347,55 @@ function analyseFlicker() {
       This light source is flicker-free or very low flicker. Good for eye health.
       Natural daylight and incandescent bulbs always show this result.`;
   }
+}
+
+function drawFlickerSpectrum(powers, fps, N, peakHz, hasPeak) {
+  const W = specCanvas.width / devicePixelRatio;
+  const H = specCanvas.height / devicePixelRatio;
+  sctxSpec.clearRect(0, 0, W, H);
+
+  const maxBin = Math.floor(N / 2);
+  let maxP = 0;
+  for (let k = 1; k <= maxBin; k++) if (powers[k] > maxP) maxP = powers[k];
+  maxP = Math.max(maxP, 0.001);
+  const barW = W / maxBin;
+
+  for (let k = 1; k <= maxBin; k++) {
+    const hz = k * fps / N;
+    const near = Math.abs(hz - 50) < 4 || Math.abs(hz - 100) < 4 || Math.abs(hz - 60) < 4 || Math.abs(hz - 120) < 4;
+    const h = (powers[k] / maxP) * H * 0.8;
+    sctxSpec.fillStyle = near ? 'rgba(245,158,11,0.75)' : 'rgba(34,211,238,0.45)';
+    sctxSpec.fillRect((k - 1) * barW, H - h, barW - 0.5, h);
+  }
+
+  // Reference lines for mains flicker frequencies
+  const nyquist = fps / 2;
+  [[50, '50Hz EU'], [60, '60Hz US'], [100, '100Hz'], [120, '120Hz']].forEach(([hz, lbl]) => {
+    if (hz > nyquist - 1) return;
+    const x = ((hz * N / fps) - 1) * barW;
+    sctxSpec.strokeStyle = 'rgba(245,158,11,0.35)';
+    sctxSpec.lineWidth = 1;
+    sctxSpec.setLineDash([2, 3]);
+    sctxSpec.beginPath(); sctxSpec.moveTo(x, 0); sctxSpec.lineTo(x, H - 14); sctxSpec.stroke();
+    sctxSpec.setLineDash([]);
+    sctxSpec.fillStyle = 'rgba(245,158,11,0.55)';
+    sctxSpec.font = '8px monospace'; sctxSpec.textAlign = 'center';
+    sctxSpec.fillText(lbl, x, H - 3);
+  });
+
+  // Peak marker
+  if (hasPeak && peakHz > 0) {
+    const pb = Math.round(peakHz * N / fps);
+    const px = (pb - 1) * barW + barW / 2;
+    const ph = (powers[pb] / maxP) * H * 0.8;
+    sctxSpec.fillStyle = '#f87171';
+    sctxSpec.font = 'bold 9px monospace'; sctxSpec.textAlign = 'center';
+    sctxSpec.fillText(peakHz.toFixed(0) + 'Hz', px, Math.max(12, H - ph - 6));
+  }
+
+  sctxSpec.fillStyle = 'rgba(136,150,170,0.5)';
+  sctxSpec.font = '9px monospace'; sctxSpec.textAlign = 'left';
+  sctxSpec.fillText('spectrum · 1 – ' + Math.round(nyquist) + ' Hz  (Nyquist)', 4, 13);
 }
 
 function drawBrightnessChart() {
