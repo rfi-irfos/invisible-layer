@@ -3,638 +3,755 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>AR sensor stack — invisible layer</title>
+<title>Full metal layer — invisible layer</title>
 <meta name="theme-color" content="#000000"/>
-<link rel="stylesheet" href="../../../assets/css/base.css"/>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  height: 100%; height: 100dvh;
-  overflow: hidden;
-  background: #000;
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:'JetBrains Mono','Courier New',monospace}
+
+#cam-video{
+  position:fixed;inset:0;width:100%;height:100%;
+  object-fit:cover;z-index:0;
+  transform:scaleX(1); /* start neutral; JS overrides if front cam */
+}
+#ar-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+
+/* scanline overlay */
+#scanlines{
+  position:fixed;inset:0;z-index:2;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 4px);
+  mix-blend-mode:multiply;
+}
+/* vignette */
+#vignette{
+  position:fixed;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%);
 }
 
-/* ── full-bleed camera ── */
-#cam-video {
-  position: fixed;
-  inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  z-index: 0;
-  transform: scaleX(-1); /* front cam mirror fix — toggled off for rear cam */
+/* header */
+.ar-header{
+  position:fixed;top:0;left:0;right:0;height:50px;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+  background:linear-gradient(to bottom,rgba(0,0,0,0.8) 0%,transparent 100%);
 }
-#ar-canvas {
-  position: fixed;
-  inset: 0;
-  width: 100%; height: 100%;
-  z-index: 1;
-  pointer-events: none;
+.ar-brand{
+  display:flex;flex-direction:column;gap:1px;
+}
+.ar-brand-main{font-size:0.7rem;color:#22d3ee;letter-spacing:0.18em;text-transform:uppercase}
+.ar-brand-sub{font-size:0.5rem;color:rgba(255,255,255,0.3);letter-spacing:0.12em}
+.ar-close{
+  display:flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border:1px solid rgba(255,255,255,0.25);border-radius:50%;
+  color:rgba(255,255,255,0.6);font-size:0.85rem;text-decoration:none;
+  transition:all 0.15s;
+}
+.ar-close:hover{background:rgba(255,255,255,0.15);border-color:#fff;color:#fff}
+
+/* spectrum bar */
+.spectrum-bar{
+  position:fixed;bottom:88px;left:0;right:0;height:32px;z-index:10;
+  pointer-events:none;
 }
 
-/* ── top bar ── */
-.ar-header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 52px;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 14px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+/* layer chip tray */
+.layer-tray{
+  position:fixed;bottom:0;left:0;right:0;z-index:10;
+  padding:10px 10px max(10px,env(safe-area-inset-bottom));
+  background:linear-gradient(to top,rgba(0,0,0,0.85) 0%,transparent 100%);
+  display:flex;gap:6px;flex-wrap:wrap;justify-content:center;
 }
-.ar-title { font-size: 0.65rem; color: rgba(255,255,255,0.8); letter-spacing: 0.12em; text-transform: uppercase; }
-.ar-close {
-  display: flex; align-items: center; justify-content: center;
-  width: 30px; height: 30px;
-  border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;
-  color: rgba(255,255,255,0.7);
-  font-size: 0.85rem; text-decoration: none;
-  transition: background 0.15s, border-color 0.15s;
+.chip{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px;
+  background:rgba(0,0,0,0.55);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:100px;
+  font-size:0.58rem;color:rgba(255,255,255,0.4);
+  letter-spacing:0.06em;text-transform:uppercase;
+  cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;
+  transition:all 0.15s;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
 }
-.ar-close:hover { background: rgba(255,255,255,0.15); border-color: #fff; color: #fff; }
+.chip.on{border-color:var(--c);color:var(--c);background:rgba(0,0,0,0.7)}
+.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0.4}
+.chip.on .chip-dot{opacity:1;animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
 
-/* ── layer toggle tray ── */
-.layer-tray {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  z-index: 10;
-  padding: 12px 12px max(12px, env(safe-area-inset-bottom));
-  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* start screen */
+.start{
+  position:fixed;inset:0;z-index:30;
+  background:#000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;padding:32px;text-align:center;
 }
-.layer-chips {
-  display: flex;
-  gap: 7px;
-  flex-wrap: wrap;
-  justify-content: center;
+.start.gone{display:none}
+.start-eyebrow{font-size:0.6rem;color:rgba(255,255,255,0.2);letter-spacing:0.18em}
+.start-eyebrow a{color:inherit;text-decoration:none}
+.start-eyebrow a:hover{color:rgba(255,255,255,0.5)}
+.start-title{font-size:clamp(1.8rem,8vw,2.8rem);font-weight:400;color:#fff;line-height:1.1;letter-spacing:-0.02em}
+.start-sub{font-size:0.72rem;color:rgba(255,255,255,0.35);line-height:1.7;max-width:320px}
+.start-sub strong{color:rgba(255,255,255,0.6)}
+.start-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:none;border:1px solid #22d3ee;border-radius:6px;
+  color:#22d3ee;font-family:inherit;font-size:0.8rem;
+  padding:14px 28px;cursor:pointer;letter-spacing:0.06em;
+  transition:background 0.12s,color 0.12s;
+  -webkit-tap-highlight-color:transparent;
 }
-.chip {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 11px;
-  background: rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 100px;
-  font-size: 0.62rem;
-  color: rgba(255,255,255,0.5);
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: all 0.15s;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-.chip.on {
-  background: rgba(0,0,0,0.65);
-  border-color: var(--color);
-  color: var(--color);
-}
-.chip-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.5;
-}
-.chip.on .chip-dot { opacity: 1; animation: blink 1.8s ease-in-out infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-/* ── start screen ── */
-.start-screen {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  background: #000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  padding: 32px;
-  text-align: center;
-}
-.start-screen.hidden { display: none; }
-.start-title {
-  font-size: clamp(1.6rem, 7vw, 2.4rem);
-  font-weight: 400;
-  color: #fff;
-  line-height: 1.1;
-}
-.start-sub {
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.4);
-  line-height: 1.65;
-  max-width: 300px;
-}
-.start-btn {
-  display: inline-flex; align-items: center; gap: 10px;
-  background: none;
-  border: 1px solid #22d3ee;
-  border-radius: 6px;
-  color: #22d3ee;
-  font-family: inherit;
-  font-size: 0.82rem;
-  padding: 14px 28px;
-  cursor: pointer;
-  letter-spacing: 0.04em;
-  transition: background 0.12s, color 0.12s;
-  -webkit-tap-highlight-color: transparent;
-}
-.start-btn:hover, .start-btn:active { background: #22d3ee; color: #000; }
-.start-breadcrumb {
-  font-size: 0.62rem;
-  color: rgba(255,255,255,0.25);
-}
-.start-breadcrumb a { color: inherit; text-decoration: none; }
-.start-breadcrumb a:hover { color: rgba(255,255,255,0.5); }
-
-/* ── HUD overlays drawn by canvas ── */
-/* (all rendering is on #ar-canvas via JS) */
+.start-btn:hover,.start-btn:active{background:#22d3ee;color:#000}
+.start-warn{font-size:0.6rem;color:rgba(255,255,255,0.18);max-width:280px;line-height:1.6}
 </style>
 </head>
 <body>
 
 <video id="cam-video" autoplay playsinline muted></video>
 <canvas id="ar-canvas"></canvas>
+<div id="scanlines"></div>
+<div id="vignette"></div>
 
-<!-- AR header -->
 <div class="ar-header">
-  <div class="ar-title">invisible layer · AR view</div>
+  <div class="ar-brand">
+    <div class="ar-brand-main">full metal layer</div>
+    <div class="ar-brand-sub">invisible layer · palantir mode</div>
+  </div>
   <a class="ar-close" href="../../../" title="close">✕</a>
 </div>
 
-<!-- layer toggle tray -->
-<div class="layer-tray">
-  <div class="layer-chips" id="chip-row">
-    <div class="chip on" style="--color:#22d3ee"   data-layer="motion"  onclick="toggleLayer(this)"><div class="chip-dot"></div>motion</div>
-    <div class="chip on" style="--color:#a78bfa"   data-layer="mag"     onclick="toggleLayer(this)"><div class="chip-dot"></div>EM field</div>
-    <div class="chip on" style="--color:#00ff41"   data-layer="audio"   onclick="toggleLayer(this)"><div class="chip-dot"></div>sound</div>
-    <div class="chip on" style="--color:#f59e0b"   data-layer="ble"     onclick="toggleLayer(this)"><div class="chip-dot"></div>BLE</div>
-    <div class="chip on" style="--color:#f87171"   data-layer="network" onclick="toggleLayer(this)"><div class="chip-dot"></div>network</div>
-    <div class="chip on" style="--color:#fb923c"   data-layer="battery" onclick="toggleLayer(this)"><div class="chip-dot"></div>battery</div>
-  </div>
+<canvas class="spectrum-bar" id="spec-bar"></canvas>
+
+<div class="layer-tray" id="tray">
+  <div class="chip on" style="--c:#00ff41"  data-l="sound"   onclick="tog(this)"><div class="chip-dot"></div>sound</div>
+  <div class="chip on" style="--c:#a78bfa"  data-l="em"      onclick="tog(this)"><div class="chip-dot"></div>EM field</div>
+  <div class="chip on" style="--c:#22d3ee"  data-l="motion"  onclick="tog(this)"><div class="chip-dot"></div>motion</div>
+  <div class="chip on" style="--c:#f59e0b"  data-l="rf"      onclick="tog(this)"><div class="chip-dot"></div>RF signals</div>
+  <div class="chip on" style="--c:#f87171"  data-l="hud"     onclick="tog(this)"><div class="chip-dot"></div>telemetry</div>
+  <div class="chip on" style="--c:#34d399"  data-l="spectrum" onclick="tog(this)"><div class="chip-dot"></div>spectrum</div>
 </div>
 
-<!-- start screen -->
-<div class="start-screen" id="start-screen">
-  <div class="start-breadcrumb"><a href="../../../">invisible layer</a> / the full picture</div>
-  <div class="start-title">every layer.<br>all at once.</div>
+<div class="start" id="start">
+  <div class="start-eyebrow"><a href="../../../">invisible layer</a> / full metal layer</div>
+  <div class="start-title">this is what<br>AI sees.</div>
   <div class="start-sub">
-    Camera feed with live sensor overlays. Motion vectors. Magnetic field distortions.
-    Sound pressure. BLE signals. Network fingerprint. Battery state.
-    Everything your phone sees — stacked.
+    Sound pressure. Magnetic fields. Motion forces. RF signals.
+    <strong>Every invisible layer that surrounds you right now</strong> — rendered on the world in real time.
   </div>
-  <button class="start-btn" onclick="startAR()">◉ open the stack</button>
+  <button class="start-btn" onclick="boot()">◉ open all sensors</button>
+  <div class="start-warn">grants camera + microphone + motion access. all processing stays on-device.</div>
 </div>
 
 <script>
-const layers = { motion: true, mag: true, audio: true, ble: true, network: true, battery: true };
+'use strict';
+// ── Layer state ────────────────────────────────────────────
+const L = {sound:true, em:true, motion:true, rf:true, hud:true, spectrum:true};
+function tog(chip) { const k=chip.dataset.l; L[k]=!L[k]; chip.classList.toggle('on',L[k]); }
 
-// Sensor state
+// ── Sensor state ───────────────────────────────────────────
 const S = {
-  ax: 0, ay: 0, az: 0,        // accelerometer
-  alpha: 0, beta: 0, gamma: 0, // orientation
-  mx: 0, my: 0, mz: 0,        // magnetometer
-  magTotal: 0, magBaseline: null, magSamples: 0,
-  audioLevel: 0, audioPeak: 0, audioFreqs: null,
-  bleCount: 0,
-  netType: '?', netRtt: null, netDown: null,
-  battLevel: null, battCharging: false,
-  lat: null, lon: null, locAcc: null
+  // audio
+  audioLevel:0, audioPeak:0, audioRMS:0,
+  fftBands:[0,0,0,0,0,0,0,0], // 8 FFT bands, normalized 0-1
+  // magnetometer
+  mx:0, my:0, mz:0, magTotal:0, magBaseline:null, magSamples:0,
+  // motion
+  ax:0, ay:0, az:0,
+  // network
+  netType:'?', netRtt:null, netDown:null,
+  // battery
+  battLevel:null, battCharging:false,
+  // geo
+  lat:null, lon:null, locAcc:null,
+  // device
+  screenHz: screen.width + 'x' + screen.height,
+  ua: navigator.userAgent.match(/\(([^)]+)\)/)?.[1] || '?'
 };
 
-// Canvas
-const canvas = document.getElementById('ar-canvas');
-const ctx = canvas.getContext('2d');
-let W, H;
+// ── Canvas ─────────────────────────────────────────────────
+const cv = document.getElementById('ar-canvas');
+const cx = cv.getContext('2d');
+const sb = document.getElementById('spec-bar');
+const sc = sb.getContext('2d');
+let W=0, H=0;
 function resize() {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
+  W = cv.width = window.innerWidth;
+  H = cv.height = window.innerHeight;
+  sb.width = window.innerWidth;
+  sb.height = 32;
 }
 resize();
 window.addEventListener('resize', resize);
 
-// ─── Audio ───────────────────────────────────────────────
-let audioCtx, analyser, audioSrc, audioData;
+// ── Audio ──────────────────────────────────────────────────
+let aCtx, analyser, aData;
 function startAudio() {
-  navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false } })
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})
     .then(stream => {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.75;
-      audioSrc = audioCtx.createMediaStreamSource(stream);
-      audioSrc.connect(analyser);
-      audioData = new Uint8Array(analyser.frequencyBinCount);
-    }).catch(() => {});
+      aCtx = new (window.AudioContext||window.webkitAudioContext)();
+      analyser = aCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.7;
+      aCtx.createMediaStreamSource(stream).connect(analyser);
+      aData = new Float32Array(analyser.frequencyBinCount);
+    }).catch(()=>{});
 }
 
-// ─── Magnetometer ─────────────────────────────────────────
-let magSensor;
+// ── Magnetometer ───────────────────────────────────────────
 function startMag() {
-  if (typeof Magnetometer !== 'undefined') {
-    try {
-      magSensor = new Magnetometer({ frequency: 20 });
-      magSensor.addEventListener('reading', () => {
-        S.mx = magSensor.x; S.my = magSensor.y; S.mz = magSensor.z;
-        S.magTotal = Math.sqrt(S.mx*S.mx + S.my*S.my + S.mz*S.mz);
-        if (S.magSamples < 60) {
-          S.magBaseline = S.magBaseline === null ? S.magTotal : S.magBaseline * 0.95 + S.magTotal * 0.05;
-          S.magSamples++;
-        }
-      });
-      magSensor.start();
-      return;
-    } catch(e) {}
-  }
-  // fallback orientation
-  const handler = (e) => {
-    S.alpha = e.alpha||0; S.beta = e.beta||0; S.gamma = e.gamma||0;
-    const proxy = Math.sqrt(S.beta*S.beta + S.gamma*S.gamma);
-    S.magTotal = proxy;
-    S.mx = S.gamma; S.my = S.beta; S.mz = S.alpha * 0.1;
-    if (S.magSamples < 60) {
-      S.magBaseline = S.magBaseline === null ? proxy : S.magBaseline * 0.95 + proxy * 0.05;
+  const onReading = (x, y, z) => {
+    S.mx=x; S.my=y; S.mz=z;
+    S.magTotal = Math.sqrt(x*x+y*y+z*z);
+    if (S.magSamples < 120) {
+      S.magBaseline = S.magBaseline===null ? S.magTotal : S.magBaseline*0.97+S.magTotal*0.03;
       S.magSamples++;
     }
   };
-  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-    DeviceOrientationEvent.requestPermission().then(s => {
-      if (s === 'granted') window.addEventListener('deviceorientation', handler, true);
-    }).catch(() => {});
-  } else {
-    window.addEventListener('deviceorientation', handler, true);
-    window.addEventListener('deviceorientationabsolute', handler, true);
+  if (typeof Magnetometer !== 'undefined') {
+    try {
+      const m = new Magnetometer({frequency:25});
+      m.addEventListener('reading',()=>onReading(m.x,m.y,m.z));
+      m.start(); return;
+    } catch(e){}
   }
-}
-
-// ─── Motion ───────────────────────────────────────────────
-function startMotion() {
-  const handler = (e) => {
-    if (!e.accelerationIncludingGravity) return;
-    S.ax = e.accelerationIncludingGravity.x || 0;
-    S.ay = e.accelerationIncludingGravity.y || 0;
-    S.az = e.accelerationIncludingGravity.z || 0;
+  const h = e => {
+    const proxy = Math.sqrt((e.beta||0)**2+(e.gamma||0)**2);
+    onReading(e.gamma||0, e.beta||0, (e.alpha||0)*0.1);
   };
-  if (typeof DeviceMotionEvent.requestPermission === 'function') {
-    DeviceMotionEvent.requestPermission().then(s => {
-      if (s === 'granted') window.addEventListener('devicemotion', handler);
-    }).catch(() => {});
+  if (typeof DeviceOrientationEvent.requestPermission==='function') {
+    DeviceOrientationEvent.requestPermission().then(s=>{if(s==='granted')window.addEventListener('deviceorientation',h,true);}).catch(()=>{});
   } else {
-    window.addEventListener('devicemotion', handler);
+    window.addEventListener('deviceorientation',h,true);
+    window.addEventListener('deviceorientationabsolute',h,true);
   }
 }
 
-// ─── Network ──────────────────────────────────────────────
-function pollNetwork() {
-  const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if (c) {
-    S.netType = c.effectiveType || c.type || '?';
-    S.netRtt = c.rtt;
-    S.netDown = c.downlink;
-  }
-  setTimeout(pollNetwork, 3000);
+// ── Motion ─────────────────────────────────────────────────
+function startMotion() {
+  const h = e => {
+    if (!e.accelerationIncludingGravity) return;
+    S.ax=e.accelerationIncludingGravity.x||0;
+    S.ay=e.accelerationIncludingGravity.y||0;
+    S.az=e.accelerationIncludingGravity.z||0;
+  };
+  if (typeof DeviceMotionEvent.requestPermission==='function') {
+    DeviceMotionEvent.requestPermission().then(s=>{if(s==='granted')window.addEventListener('devicemotion',h);}).catch(()=>{});
+  } else { window.addEventListener('devicemotion',h); }
 }
 
-// ─── Battery ──────────────────────────────────────────────
+// ── Network + Battery + Geo ────────────────────────────────
+function startNetwork() {
+  const upd = () => {
+    const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+    if(c){S.netType=c.effectiveType||c.type||'?';S.netRtt=c.rtt;S.netDown=c.downlink;}
+  };
+  upd(); setInterval(upd,4000);
+}
 function startBattery() {
-  if (!navigator.getBattery) return;
-  navigator.getBattery().then(b => {
-    const update = () => { S.battLevel = b.level; S.battCharging = b.charging; };
-    update();
-    b.addEventListener('levelchange', update);
-    b.addEventListener('chargingchange', update);
-  }).catch(() => {});
+  if(!navigator.getBattery)return;
+  navigator.getBattery().then(b=>{
+    const u=()=>{S.battLevel=b.level;S.battCharging=b.charging;};
+    u(); b.addEventListener('levelchange',u); b.addEventListener('chargingchange',u);
+  }).catch(()=>{});
 }
-
-// ─── Geolocation ──────────────────────────────────────────
 function startGeo() {
-  if (!navigator.geolocation) return;
-  navigator.geolocation.watchPosition(p => {
-    S.lat = p.coords.latitude;
-    S.lon = p.coords.longitude;
-    S.locAcc = p.coords.accuracy;
-  }, () => {}, { enableHighAccuracy: true });
+  if(!navigator.geolocation)return;
+  navigator.geolocation.watchPosition(p=>{
+    S.lat=p.coords.latitude; S.lon=p.coords.longitude; S.locAcc=p.coords.accuracy;
+  },()=>{},{enableHighAccuracy:true});
 }
 
-// ─── Camera ───────────────────────────────────────────────
+// ── Camera ─────────────────────────────────────────────────
 function startCamera() {
   return navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-  }).then(stream => {
-    const v = document.getElementById('cam-video');
-    v.srcObject = stream;
-    v.style.transform = ''; // no mirror for rear cam
+    video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
+  }).then(stream=>{
+    const v=document.getElementById('cam-video');
+    v.srcObject=stream;
+    v.style.transform='scaleX(1)'; // rear cam: not mirrored
+  }).catch(()=>navigator.mediaDevices.getUserMedia({video:true}).then(stream=>{
+    const v=document.getElementById('cam-video');
+    v.srcObject=stream;
+    v.style.transform='scaleX(-1)'; // front cam: mirror
+  }));
+}
+
+// ── Boot ───────────────────────────────────────────────────
+function boot() {
+  startCamera().finally(()=>{
+    document.getElementById('start').classList.add('gone');
+    startAudio(); startMag(); startMotion(); startNetwork(); startBattery(); startGeo();
+    requestAnimationFrame(loop);
   });
 }
 
-// ─── Main start ───────────────────────────────────────────
-function startAR() {
-  startCamera()
-    .catch(() => navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-      document.getElementById('cam-video').srcObject = stream;
-    }))
-    .finally(() => {
-      document.getElementById('start-screen').classList.add('hidden');
-      startAudio();
-      startMag();
-      startMotion();
-      pollNetwork();
-      startBattery();
-      startGeo();
-      requestAnimationFrame(render);
-    });
-}
-
-function toggleLayer(chip) {
-  const l = chip.dataset.layer;
-  layers[l] = !layers[l];
-  chip.classList.toggle('on', layers[l]);
-}
-
-// ─── Render ───────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// RENDER SYSTEM
+// ══════════════════════════════════════════════════════════════
+let t0 = performance.now();
 let frame = 0;
-function render() {
-  requestAnimationFrame(render);
-  frame++;
-  ctx.clearRect(0, 0, W, H);
+const shockwaves = []; // {x,y,r,maxR,alpha,born}
 
-  if (analyser && audioData) {
-    analyser.getByteFrequencyData(audioData);
-    let sum = 0, peak = 0;
-    for (let i = 0; i < audioData.length; i++) { sum += audioData[i]; if (audioData[i] > peak) peak = audioData[i]; }
-    S.audioLevel = sum / audioData.length / 255;
-    S.audioPeak = peak / 255;
+function loop() {
+  requestAnimationFrame(loop);
+  const now = performance.now();
+  const t = (now - t0) / 1000;
+  frame++;
+
+  // Update audio
+  if (analyser && aData) {
+    analyser.getFloatFrequencyData(aData);
+    const bins = aData.length;
+    const bSize = Math.floor(bins / 8);
+    let rms = 0, peak = -Infinity;
+    for (let i=0;i<bins;i++) { const v=aData[i]; if(v>peak)peak=v; rms+=v*v; }
+    S.audioPeak = Math.max(0, Math.min(1, (peak+90)/90));
+    S.audioRMS = Math.max(0, Math.min(1, (Math.sqrt(rms/bins)+90)/90));
+    for (let b=0;b<8;b++) {
+      let sum=0;
+      for (let i=b*bSize;i<(b+1)*bSize;i++) sum+=aData[i];
+      S.fftBands[b] = Math.max(0, Math.min(1, (sum/bSize+90)/70));
+    }
+    S.audioLevel = S.fftBands.reduce((a,v)=>a+v,0)/8;
+    // spawn shockwave on loud transient
+    if (S.audioPeak > 0.65 && frame % 8 === 0) {
+      shockwaves.push({x:W*0.5, y:H*0.5, r:20, maxR:Math.min(W,H)*0.48, alpha:0.6, born:now});
+    }
   }
 
-  if (layers.audio)   drawAudio();
-  if (layers.mag)     drawMag();
-  if (layers.motion)  drawMotion();
-  if (layers.network) drawNetwork();
-  if (layers.battery) drawBattery();
-  if (layers.ble)     drawBLE();
+  cx.clearRect(0, 0, W, H);
+
+  if (L.sound)    drawSound(t);
+  if (L.em)       drawEM(t);
+  if (L.motion)   drawMotion(t);
+  if (L.rf)       drawRF(t);
+  if (L.hud)      drawHUD(t);
+  if (L.spectrum) drawSpectrumBar(t);
 }
 
-// ─── Layer: Audio ─────────────────────────────────────────
-const audioHistory = new Array(80).fill(0);
-function drawAudio() {
-  audioHistory.push(S.audioLevel);
-  if (audioHistory.length > 80) audioHistory.shift();
+// ─── SOUND — sine waves spanning full width ─────────────────
+const waveHistories = Array.from({length:6}, () => new Array(W||300).fill(0));
+function drawSound(t) {
+  // 6 frequency bands → 6 stacked waves
+  const bands = [0,1,2,3,4,5]; // low to high
+  const yPositions = [0.20, 0.30, 0.40, 0.50, 0.60, 0.70]; // % of H
+  const colors = ['#00ff4130','#00ff4140','#00ff4155','#00ff4155','#00ff4140','#00ff4130'];
+  const strokeColors = ['#00ff4188','#00ff41aa','#00ff41cc','#00ff41cc','#00ff41aa','#00ff4188'];
 
-  const x0 = W * 0.04, y0 = H * 0.15, bw = W * 0.92, bh = 44;
-  ctx.save();
+  cx.save();
+
+  // draw shockwaves (pressure waves)
+  shockwaves.forEach((sw, i) => {
+    const age = (performance.now() - sw.born) / 1000;
+    sw.r = 20 + age * 180;
+    sw.alpha = Math.max(0, 0.5 - age * 0.5);
+    if (sw.alpha <= 0) { shockwaves.splice(i, 1); return; }
+    cx.beginPath();
+    cx.arc(sw.x, sw.y, sw.r, 0, Math.PI*2);
+    cx.strokeStyle = `rgba(0,255,65,${sw.alpha * 0.6})`;
+    cx.lineWidth = 2;
+    cx.stroke();
+    cx.beginPath();
+    cx.arc(sw.x, sw.y, sw.r * 0.6, 0, Math.PI*2);
+    cx.strokeStyle = `rgba(0,255,65,${sw.alpha * 0.3})`;
+    cx.lineWidth = 1;
+    cx.stroke();
+  });
+
+  // main frequency waves
+  bands.forEach((b, idx) => {
+    const amp = S.fftBands[b] * H * 0.04 + 2;
+    const freq = (b + 1) * 0.8 + 1;
+    const baseY = H * yPositions[idx];
+    const N = 120;
+
+    cx.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const x = (i / N) * W;
+      const phase = t * freq * (0.8 + b * 0.15);
+      const y = baseY + Math.sin(i * 0.18 + phase) * amp
+                      + Math.sin(i * 0.07 + phase * 0.6) * amp * 0.4;
+      i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y);
+    }
+    cx.strokeStyle = strokeColors[idx];
+    cx.lineWidth = idx === 2 || idx === 3 ? 1.5 : 1;
+    cx.stroke();
+
+    // fill area under wave
+    cx.lineTo(W, baseY);
+    cx.lineTo(0, baseY);
+    cx.closePath();
+    cx.fillStyle = colors[idx];
+    cx.fill();
+  });
+
+  // audio level readout
+  cx.fillStyle = `rgba(0,255,65,${0.5 + S.audioLevel*0.5})`;
+  cx.font = '9px monospace';
+  cx.fillText('ACOUSTIC  ' + (S.audioRMS * 100).toFixed(0) + ' dB', W*0.04, H*0.175);
+
+  cx.restore();
+}
+
+// ─── EM FIELD — vector field lines ──────────────────────────
+function drawEM(t) {
+  const anom = S.magBaseline ? Math.abs(S.magTotal - S.magBaseline) : 0;
+  const norm = S.magTotal || 50;
+  const fx = S.mx / norm;
+  const fy = S.my / norm;
+  const fz = S.mz / norm;
+  const intensity = Math.min(1, S.magTotal / 60);
+  const isAnom = anom > 50;
+
+  cx.save();
+  cx.globalAlpha = 0.55 + intensity * 0.2;
+
+  const cx_ = W * 0.5, cy_ = H * 0.5;
+  const fieldColor = isAnom ? '#f87171' : '#a78bfa';
+  const N = 12; // field lines
+
+  for (let i = 0; i < N; i++) {
+    const angle0 = (i / N) * Math.PI * 2 + t * 0.08;
+    const r0 = 30 + intensity * 10;
+    const startX = cx_ + Math.cos(angle0) * r0;
+    const startY = cy_ + Math.sin(angle0) * r0 * 0.7;
+
+    cx.beginPath();
+    cx.moveTo(startX, startY);
+
+    // trace field line in steps
+    let px = startX, py = startY;
+    for (let s = 0; s < 18; s++) {
+      const bx = fx + Math.cos(angle0) * 0.3;
+      const by = fy + Math.sin(angle0) * 0.3;
+      const step = 18 + intensity * 8;
+      px += bx * step * 0.5 + Math.sin(t * 0.4 + i) * 2;
+      py += by * step * 0.4 + Math.cos(t * 0.4 + i) * 1.5;
+      cx.lineTo(px, py);
+    }
+
+    const g = cx.createLinearGradient(startX, startY, px, py);
+    g.addColorStop(0, fieldColor + '00');
+    g.addColorStop(0.3, fieldColor + 'cc');
+    g.addColorStop(1, fieldColor + '00');
+    cx.strokeStyle = g;
+    cx.lineWidth = isAnom ? 1.5 : 1;
+    cx.stroke();
+  }
+
+  // center hex grid — distorts with field
+  const hexR = 14, rows = 4, cols = 5;
+  const offX = cx_ - (cols-1)*hexR*1.73*0.5;
+  const offY = cy_ - (rows-1)*hexR*1.5*0.5;
+  for (let row=0; row<rows; row++) {
+    for (let col=0; col<cols; col++) {
+      const hx = offX + col*hexR*1.73 + (row%2)*hexR*0.87 + fx*8*Math.sin(t*0.3);
+      const hy = offY + row*hexR*1.5 + fy*6*Math.cos(t*0.3);
+      const pulse = 0.3 + intensity*0.4 + Math.sin(t*1.5 + row+col)*0.1;
+      cx.save();
+      cx.globalAlpha = pulse * 0.55;
+      hexagon(cx, hx, hy, hexR * (0.4 + intensity * 0.2));
+      cx.strokeStyle = fieldColor;
+      cx.lineWidth = 0.8;
+      cx.stroke();
+      cx.restore();
+    }
+  }
+
+  // field label
+  cx.globalAlpha = 0.9;
+  cx.fillStyle = isAnom ? '#f87171' : '#a78bfa';
+  cx.font = isAnom ? 'bold 10px monospace' : '9px monospace';
+  cx.textAlign = 'center';
+  cx.fillText(isAnom ? '! EM ANOMALY' : 'EM FIELD', cx_, cy_ - 80);
+  cx.font = '9px monospace';
+  cx.fillStyle = 'rgba(255,255,255,0.4)';
+  cx.fillText(S.magTotal.toFixed(0) + ' µT', cx_, cy_ - 68);
+  cx.textAlign = 'left';
+
+  cx.restore();
+}
+
+// ─── MOTION — force particle grid ───────────────────────────
+const particles = [];
+function initParticles() {
+  particles.length = 0;
+  const cols = 18, rows = 12;
+  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
+    particles.push({
+      bx: (c/(cols-1))*W*0.92 + W*0.04,
+      by: (r/(rows-1))*H*0.82 + H*0.09,
+      x:0, y:0, vx:0, vy:0, life:Math.random()
+    });
+  }
+}
+setTimeout(initParticles, 100);
+window.addEventListener('resize', initParticles);
+
+function drawMotion(t) {
+  const mag = Math.sqrt(S.ax*S.ax + S.ay*S.ay + S.az*S.az);
+  const nax = S.ax / (mag||1);
+  const nay = S.ay / (mag||1);
+  const force = Math.min(1, mag / 15);
+
+  cx.save();
+  cx.globalAlpha = 0.65;
+
+  particles.forEach(p => {
+    p.life += 0.012 + force * 0.02;
+    if (p.life > 1) { p.life = 0; p.x = p.bx; p.y = p.by; }
+    if (p.life < 0.01) { p.x = p.bx; p.y = p.by; }
+
+    const trail = p.life;
+    p.vx = nax * force * 4 + Math.sin(t*0.5 + p.by*0.05) * 0.3;
+    p.vy = nay * force * 4 + Math.cos(t*0.5 + p.bx*0.05) * 0.3;
+    p.x += p.vx;
+    p.y += p.vy;
+
+    const alpha = trail * (0.4 + force*0.4) * Math.sin(Math.PI * trail);
+    cx.beginPath();
+    cx.arc(p.x, p.y, 1.5, 0, Math.PI*2);
+    cx.fillStyle = `rgba(34,211,238,${alpha})`;
+    cx.fill();
+
+    // tail
+    if (force > 0.1) {
+      cx.beginPath();
+      cx.moveTo(p.x, p.y);
+      cx.lineTo(p.x - p.vx * 4, p.y - p.vy * 4);
+      cx.strokeStyle = `rgba(34,211,238,${alpha*0.4})`;
+      cx.lineWidth = 0.8;
+      cx.stroke();
+    }
+  });
+
+  // force vector arrow at center
+  if (force > 0.05) {
+    const aLen = force * 60;
+    const ax0 = W*0.5, ay0 = H*0.5;
+    const ax1 = ax0 + nax * aLen;
+    const ay1 = ay0 + nay * aLen;
+    cx.beginPath();
+    cx.moveTo(ax0, ay0);
+    cx.lineTo(ax1, ay1);
+    cx.strokeStyle = `rgba(34,211,238,${0.6+force*0.4})`;
+    cx.lineWidth = 2;
+    cx.stroke();
+    // arrowhead
+    const angle = Math.atan2(ay1-ay0, ax1-ax0);
+    cx.beginPath();
+    cx.moveTo(ax1, ay1);
+    cx.lineTo(ax1-10*Math.cos(angle-0.4), ay1-10*Math.sin(angle-0.4));
+    cx.lineTo(ax1-10*Math.cos(angle+0.4), ay1-10*Math.sin(angle+0.4));
+    cx.closePath();
+    cx.fillStyle = `rgba(34,211,238,${0.8+force*0.2})`;
+    cx.fill();
+  }
+
+  // label
+  cx.globalAlpha = 0.85;
+  cx.fillStyle = 'rgba(34,211,238,0.7)';
+  cx.font = '9px monospace';
+  cx.fillText('ACCEL  ' + mag.toFixed(1) + ' m/s²', W*0.04, H - 110);
+
+  cx.restore();
+}
+
+// ─── RF SIGNALS — layered frequency rings ───────────────────
+const rfBands = [
+  // { freq label, base Y %, ring speed, color, description }
+  { label:'GPS 1.57GHz',  y:0.15, spd:0.7,  col:'#34d399', always:true },
+  { label:'WiFi 2.4GHz',  y:0.25, spd:1.1,  col:'#f59e0b', always:true },
+  { label:'WiFi 5GHz',    y:0.33, spd:1.8,  col:'#fb923c', always:true },
+  { label:'CELL 700MHz',  y:0.42, spd:0.45, col:'#f87171', always:true },
+  { label:'BLE 2.4GHz',   y:0.50, spd:1.4,  col:'#c084fc', always:true },
+  { label:'5G 3.5GHz',    y:0.58, spd:2.2,  col:'#22d3ee', always:false },
+];
+function drawRF(t) {
+  cx.save();
+
+  const rightX = W - 14;
+  rfBands.forEach((band, i) => {
+    const active = band.always || (band.label.startsWith('5G') && S.netType === '5g');
+    if (!active) return;
+
+    const y = H * band.y;
+    const pulse = 0.4 + Math.sin(t * band.spd * Math.PI * 2) * 0.3;
+
+    // wave line sweeping left-to-right
+    const waveLen = W * 0.3;
+    const offset = ((t * band.spd * 0.5) % 1) * (W + waveLen);
+    const phases = 3;
+    for (let p=0; p<phases; p++) {
+      const ox = offset - p * waveLen * 0.4;
+      if (ox < -waveLen || ox > W + waveLen) continue;
+      cx.beginPath();
+      for (let x=Math.max(0, ox-waveLen); x<=Math.min(W, ox+waveLen); x+=4) {
+        const d = (x - ox) / waveLen;
+        const envelope = Math.exp(-d*d*4);
+        const wy = y + Math.sin(d * Math.PI * 8 + t * band.spd * 6) * 8 * envelope;
+        x === Math.max(0, ox-waveLen) ? cx.moveTo(x, wy) : cx.lineTo(x, wy);
+      }
+      cx.strokeStyle = band.col + Math.round((0.15 + pulse*0.3*(1-p*0.3))*255).toString(16).padStart(2,'0');
+      cx.lineWidth = p === 0 ? 1.5 : 0.8;
+      cx.stroke();
+    }
+
+    // label on right
+    cx.fillStyle = band.col + 'cc';
+    cx.font = '8px monospace';
+    cx.textAlign = 'right';
+    cx.fillText(band.label, rightX, y - 3);
+  });
+
+  cx.textAlign = 'left';
+  cx.restore();
+}
+
+// ─── HUD — telemetry corners ─────────────────────────────────
+function drawHUD(t) {
+  cx.save();
+  const pulse = 0.7 + Math.sin(t*1.5)*0.3;
+
+  // ── Top-left: GPS ──
+  cx.fillStyle = `rgba(34,211,238,${pulse*0.9})`;
+  cx.font = '9px monospace';
+  cx.fillText('GPS', 16, 64);
+  cx.fillStyle = 'rgba(255,255,255,0.55)';
+  if (S.lat !== null) {
+    cx.fillText(S.lat.toFixed(5) + 'N', 16, 78);
+    cx.fillText(S.lon.toFixed(5) + 'E', 16, 91);
+    cx.fillText('±' + Math.round(S.locAcc) + 'm', 16, 104);
+  } else {
+    cx.fillStyle = 'rgba(255,255,255,0.2)';
+    cx.fillText('acquiring...', 16, 78);
+  }
+
+  // ── Top-right: network ──
+  const netColor = {wifi:'#a78bfa','4g':'#22d3ee','5g':'#00ff41','3g':'#f59e0b','2g':'#f87171'}[S.netType.toLowerCase()]||'#64748b';
+  cx.textAlign = 'right';
+  cx.fillStyle = netColor;
+  cx.font = 'bold 11px monospace';
+  cx.fillText(S.netType.toUpperCase(), W-16, 64);
+  cx.font = '9px monospace';
+  cx.fillStyle = 'rgba(255,255,255,0.45)';
+  if (S.netRtt!=null) cx.fillText('rtt '+S.netRtt+'ms', W-16, 78);
+  if (S.netDown!=null) cx.fillText(S.netDown+' Mbps', W-16, 91);
+
+  // ── Bottom-left: motion summary ──
+  cx.textAlign = 'left';
+  const g = Math.sqrt(S.ax*S.ax+S.ay*S.ay+S.az*S.az);
+  cx.fillStyle = 'rgba(34,211,238,0.5)';
+  cx.font = '9px monospace';
+  cx.fillText('X:'+S.ax.toFixed(1)+' Y:'+S.ay.toFixed(1)+' Z:'+S.az.toFixed(1), 16, H-130);
+
+  // ── Bottom-right: battery ──
+  if (S.battLevel !== null) {
+    const pct = Math.round(S.battLevel*100);
+    const bc = pct>60?'#00ff41':pct>20?'#f59e0b':'#f87171';
+    cx.textAlign = 'right';
+    cx.fillStyle = bc;
+    cx.font = 'bold 12px monospace';
+    cx.fillText(pct+'%', W-16, H-132);
+    cx.font = '9px monospace';
+    cx.fillStyle = 'rgba(255,255,255,0.35)';
+    cx.fillText(S.battCharging?'charging':'battery', W-16, H-119);
+
+    // battery icon
+    const bx=W-40, by=H-146, bw=20, bh=10;
+    cx.strokeStyle = bc; cx.lineWidth=1.5;
+    cx.strokeRect(bx,by,bw,bh);
+    cx.fillStyle=bc; cx.fillRect(bx+bw,by+3,2,4);
+    cx.fillRect(bx+1,by+1,(bw-2)*S.battLevel,bh-2);
+  }
+
+  // ── Center bottom: EM field ──
+  const anomColor = (S.magBaseline&&Math.abs(S.magTotal-S.magBaseline)>50)?'#f87171':'rgba(167,139,250,0.6)';
+  cx.textAlign = 'center';
+  cx.fillStyle = anomColor;
+  cx.font = '9px monospace';
+  cx.fillText(S.magTotal.toFixed(0)+' µT', W*0.5, H-100);
+
+  cx.textAlign = 'left';
+  cx.restore();
+}
+
+// ─── SPECTRUM BAR ────────────────────────────────────────────
+const specBands = [
+  {label:'ELF/SLF', col:'#7c3aed', lo:0, hi:0.04, note:'submarine comms'},
+  {label:'VLF/LF',  col:'#6366f1', lo:0.04, hi:0.09, note:'nav beacons'},
+  {label:'MF',      col:'#3b82f6', lo:0.09, hi:0.14, note:'AM radio'},
+  {label:'HF',      col:'#06b6d4', lo:0.14, hi:0.21, note:'shortwave'},
+  {label:'VHF',     col:'#10b981', lo:0.21, hi:0.34, note:'FM/TV'},
+  {label:'UHF',     col:'#f59e0b', lo:0.34, hi:0.72, note:'WiFi·GPS·Cell·BLE'},
+  {label:'SHF/EHF', col:'#ef4444', lo:0.72, hi:1.00, note:'satellite·5G'},
+];
+const audioActive = [0.14, 0.21]; // HF range visually maps to audio frequencies
+
+function drawSpectrumBar(t) {
+  const BW = sb.width, BH = 32;
+  sc.clearRect(0,0,BW,BH);
 
   // background
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  roundRect(ctx, x0, y0, bw, bh, 6); ctx.fill();
-
-  // waveform
-  ctx.beginPath();
-  audioHistory.forEach((v, i) => {
-    const x = x0 + (i / (audioHistory.length - 1)) * bw;
-    const y = y0 + bh - v * bh * 0.85 - 3;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  const bg = sc.createLinearGradient(0,0,BW,0);
+  specBands.forEach(b=>{
+    bg.addColorStop(b.lo, b.col+'22');
+    bg.addColorStop((b.lo+b.hi)/2, b.col+'44');
+    bg.addColorStop(b.hi, b.col+'22');
   });
-  ctx.lineTo(x0 + bw, y0 + bh); ctx.lineTo(x0, y0 + bh); ctx.closePath();
-  const ag = ctx.createLinearGradient(0, y0, 0, y0 + bh);
-  ag.addColorStop(0, 'rgba(0,255,65,0.7)');
-  ag.addColorStop(1, 'rgba(0,255,65,0.05)');
-  ctx.fillStyle = ag;
-  ctx.fill();
+  sc.fillStyle = bg;
+  sc.fillRect(0,0,BW,BH);
 
-  // label
-  ctx.fillStyle = 'rgba(0,255,65,0.9)';
-  ctx.font = '10px monospace';
-  ctx.fillText('AUDIO  ' + (S.audioLevel * 100).toFixed(0) + ' dB', x0 + 8, y0 + 14);
+  // active signals pulsing
+  // UHF always active
+  const uhf = specBands[5];
+  const ub = BW * uhf.lo, uw = BW * (uhf.hi - uhf.lo);
+  const upulse = 0.15 + Math.sin(t*2.5)*0.1;
+  sc.fillStyle = `rgba(245,158,11,${upulse})`;
+  sc.fillRect(ub, 0, uw, BH);
 
-  // peak VU bar on right
-  const barX = x0 + bw - 10, barH = bh - 8;
-  ctx.fillStyle = 'rgba(0,0,0,0.4)';
-  ctx.fillRect(barX, y0 + 4, 6, barH);
-  const green = S.audioPeak < 0.6, amber = S.audioPeak < 0.85;
-  ctx.fillStyle = green ? '#00ff41' : amber ? '#f59e0b' : '#f87171';
-  ctx.fillRect(barX, y0 + 4 + barH * (1 - S.audioPeak), 6, barH * S.audioPeak);
+  // audio band — driven by actual level
+  const hfB = specBands[3];
+  const afPulse = S.audioLevel * 0.5;
+  sc.fillStyle = `rgba(6,182,212,${afPulse})`;
+  sc.fillRect(BW*hfB.lo, 0, BW*(hfB.hi-hfB.lo), BH);
 
-  ctx.restore();
-}
-
-// ─── Layer: Mag field ─────────────────────────────────────
-function drawMag() {
-  const anom = S.magBaseline ? Math.abs(S.magTotal - S.magBaseline) : 0;
-  const color = anom > 100 ? '#f87171' : anom > 40 ? '#f59e0b' : '#a78bfa';
-
-  // field visualizer — orbiting dot around center
-  const cx = W * 0.5, cy = H * 0.5;
-  const t = Date.now() / 1000;
-  // use x/y/z to tilt the orbit
-  const nx = S.mx / (S.magTotal || 1);
-  const ny = S.my / (S.magTotal || 1);
-  const r = 60 + anom * 0.2;
-
-  ctx.save();
-  ctx.globalAlpha = 0.55;
-
-  // outer ring
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1;
-  ctx.setLineDash([3, 6]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // orbiting dot
-  const dx = cx + Math.cos(t * 1.2 + nx * Math.PI) * r;
-  const dy = cy + Math.sin(t * 1.2 + ny * Math.PI) * r * 0.6;
-  ctx.beginPath();
-  ctx.arc(dx, dy, 4, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-
-  // field strength readout
-  ctx.globalAlpha = 0.9;
-  ctx.fillStyle = color;
-  ctx.font = 'bold 11px monospace';
-  const label = S.magBaseline ? (anom > 40 ? '⚠ ANOMALY' : 'EM FIELD') : 'EM FIELD';
-  ctx.textAlign = 'center';
-  ctx.fillText(label, cx, cy - r - 10);
-  ctx.font = '10px monospace';
-  ctx.fillText(S.magTotal.toFixed(0) + ' µT', cx, cy - r - 24);
-  ctx.textAlign = 'left';
-
-  ctx.restore();
-}
-
-// ─── Layer: Motion ────────────────────────────────────────
-function drawMotion() {
-  const cx = W * 0.15, cy = H * 0.5;
-  const len = 35;
-  ctx.save();
-  ctx.globalAlpha = 0.85;
-
-  // axes
-  const axes = [
-    { v: S.ax / 10, color: '#22d3ee', label: 'X' },
-    { v: S.ay / 10, color: '#a78bfa', label: 'Y' },
-    { v: S.az / 10, color: '#f59e0b', label: 'Z' },
-  ];
-  axes.forEach((a, i) => {
-    const y = cy - 24 + i * 24;
-    const barW = Math.min(Math.abs(a.v) * len, len);
-    const dir = a.v >= 0 ? 1 : -1;
-
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillRect(cx - len, y - 5, len * 2, 10);
-
-    ctx.fillStyle = a.color;
-    if (dir > 0) ctx.fillRect(cx, y - 5, barW, 10);
-    else         ctx.fillRect(cx - barW, y - 5, barW, 10);
-
-    ctx.fillStyle = a.color;
-    ctx.font = '9px monospace';
-    ctx.fillText(a.label, cx - len - 12, y + 3);
+  // band boundary lines
+  specBands.forEach(b=>{
+    sc.strokeStyle = b.col + '55';
+    sc.lineWidth = 1;
+    sc.beginPath();
+    sc.moveTo(BW*b.lo, 0);
+    sc.lineTo(BW*b.lo, BH);
+    sc.stroke();
   });
 
-  // label
-  ctx.fillStyle = 'rgba(34,211,238,0.8)';
-  ctx.font = '10px monospace';
-  ctx.fillText('MOTION', cx - len, cy - 44);
-  ctx.font = '9px monospace';
-  const g = Math.sqrt(S.ax*S.ax + S.ay*S.ay + S.az*S.az);
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.fillText(g.toFixed(1) + ' m/s²', cx - len, cy + 44);
+  // labels
+  sc.font = '7px monospace';
+  specBands.forEach(b=>{
+    const mx = BW*(b.lo + (b.hi-b.lo)*0.5);
+    sc.fillStyle = b.col + 'cc';
+    sc.textAlign = 'center';
+    sc.fillText(b.label, mx, 10);
+    sc.fillStyle = 'rgba(255,255,255,0.3)';
+    sc.fillText(b.note, mx, 23);
+  });
+  sc.textAlign = 'left';
 
-  ctx.restore();
+  // "ALL PRESENT NOW" note
+  sc.fillStyle = 'rgba(255,255,255,0.15)';
+  sc.font = '7px monospace';
+  sc.textAlign = 'right';
+  sc.fillText('all of this is hitting you right now', BW-4, BH-3);
+  sc.textAlign = 'left';
 }
 
-// ─── Layer: Network ───────────────────────────────────────
-function drawNetwork() {
-  const x = W - 14, y = H * 0.35;
-  ctx.save();
-  ctx.textAlign = 'right';
-
-  const typeColor = { '4g': '#22d3ee', '5g': '#00ff41', '3g': '#f59e0b', '2g': '#f87171', 'wifi': '#a78bfa' };
-  const c = typeColor[S.netType.toLowerCase()] || '#64748b';
-
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  roundRect(ctx, x - 90, y - 14, 94, 54, 6); ctx.fill();
-
-  ctx.fillStyle = c;
-  ctx.font = 'bold 13px monospace';
-  ctx.fillText(S.netType.toUpperCase(), x - 6, y);
-  ctx.font = '9px monospace';
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  if (S.netRtt != null) ctx.fillText('rtt ' + S.netRtt + ' ms', x - 6, y + 14);
-  if (S.netDown != null) ctx.fillText(S.netDown + ' Mbps', x - 6, y + 26);
-  ctx.fillStyle = 'rgba(248,113,113,0.7)';
-  ctx.font = '9px monospace';
-  ctx.fillText('NETWORK', x - 6, y - 28);
-
-  ctx.textAlign = 'left';
-  ctx.restore();
-}
-
-// ─── Layer: Battery ───────────────────────────────────────
-function drawBattery() {
-  if (S.battLevel === null) return;
-  const x = W - 14, y = H * 0.55;
-  const pct = Math.round(S.battLevel * 100);
-  const color = pct > 60 ? '#00ff41' : pct > 20 ? '#f59e0b' : '#f87171';
-
-  ctx.save();
-  ctx.textAlign = 'right';
-
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  roundRect(ctx, x - 90, y - 14, 94, 44, 6); ctx.fill();
-
-  // battery icon
-  const bx = x - 80, by = y - 6, bw = 22, bh = 12;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(bx, by, bw, bh);
-  ctx.fillStyle = color;
-  ctx.fillRect(bx + bw, by + 3, 3, 6);
-  ctx.fillRect(bx + 2, by + 2, (bw - 4) * S.battLevel, bh - 4);
-
-  ctx.fillStyle = color;
-  ctx.font = 'bold 13px monospace';
-  ctx.fillText(pct + '%', x - 6, y + 4);
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.font = '9px monospace';
-  ctx.fillText(S.battCharging ? '⚡ charging' : 'on battery', x - 6, y + 18);
-  ctx.fillStyle = 'rgba(251,146,60,0.7)';
-  ctx.font = '9px monospace';
-  ctx.fillText('BATTERY', x - 6, y - 28);
-
-  ctx.textAlign = 'left';
-  ctx.restore();
-}
-
-// ─── Layer: BLE presence ─────────────────────────────────
-// Simulates ambient BLE device count (demo — real scan needs user gesture)
-let bleDemoDevices = Math.floor(Math.random() * 6) + 3;
-let bleLastUpdate = 0;
-function drawBLE() {
-  const now = Date.now();
-  if (now - bleLastUpdate > 4000) {
-    bleDemoDevices = Math.max(1, bleDemoDevices + Math.floor(Math.random() * 3) - 1);
-    bleLastUpdate = now;
-  }
-  const cx = W * 0.15, cy = H * 0.28;
-  ctx.save();
-  ctx.globalAlpha = 0.85;
-
-  // ripple rings
-  for (let i = 0; i < 3; i++) {
-    const phase = ((now / 1000 + i * 0.7) % 2) / 2;
-    const r = 20 + phase * 40;
-    const alpha = (1 - phase) * 0.4;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(245,158,11,${alpha})`;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-  }
-
-  // center dot
+// ─── Utils ───────────────────────────────────────────────────
+function hexagon(ctx, x, y, r) {
   ctx.beginPath();
-  ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-  ctx.fillStyle = '#f59e0b';
-  ctx.fill();
-
-  // label
-  ctx.fillStyle = '#f59e0b';
-  ctx.font = 'bold 13px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText(bleDemoDevices, cx, cy + 55);
-  ctx.font = '9px monospace';
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.fillText('BLE nearby', cx, cy + 68);
-  ctx.fillStyle = 'rgba(245,158,11,0.7)';
-  ctx.font = '10px monospace';
-  ctx.fillText('BLE', cx, cy - 32);
-
-  ctx.textAlign = 'left';
-  ctx.restore();
-}
-
-// ─── util ─────────────────────────────────────────────────
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.arcTo(x + w, y, x + w, y + r, r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-  ctx.lineTo(x + r, y + h);
-  ctx.arcTo(x, y + h, x, y + h - r, r);
-  ctx.lineTo(x, y + r);
-  ctx.arcTo(x, y, x + r, y, r);
+  for (let i=0;i<6;i++) {
+    const a = i/6 * Math.PI*2 - Math.PI/6;
+    i===0 ? ctx.moveTo(x+r*Math.cos(a), y+r*Math.sin(a)) : ctx.lineTo(x+r*Math.cos(a), y+r*Math.sin(a));
+  }
   ctx.closePath();
 }
 </script>
