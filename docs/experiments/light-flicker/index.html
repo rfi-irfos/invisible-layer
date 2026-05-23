@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>LED flicker detector — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.flicker-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 0 10px;
+}
+.flicker-val {
+  font-size: clamp(3rem, 13vw, 4.4rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  transition: color 0.3s;
+}
+.flicker-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.flicker-status { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+.cam-preview {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  position: relative;
+  aspect-ratio: 16/9;
+}
+.cam-preview video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cam-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brightness-chart {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.brightness-chart canvas { width: 100%; display: block; }
+
+.verdict-box {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  font-size: 0.72rem;
+  color: var(--dim);
+  line-height: 1.7;
+}
+.verdict-box .verdict-title { font-size: 0.78rem; font-weight: 500; margin-bottom: 8px; }
+.verdict-box.bad   { border-color: var(--red);   border-left: 3px solid var(--red); }
+.verdict-box.warn  { border-color: var(--amber); border-left: 3px solid var(--amber); }
+.verdict-box.good  { border-color: var(--green); border-left: 3px solid var(--green); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>LED flicker</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · camera</div>
+      <div class="exp-title">lights that flicker<br>faster than you can see.</div>
+      <div class="exp-desc">
+        Most LED bulbs and fluorescent tubes flicker at 50 or 100 Hz — too fast to see,
+        but your phone's camera captures it frame by frame. Sustained exposure to invisible
+        flicker causes headaches, eye strain, and migraines in sensitive people.
+        Point the camera at any light source and see what your eyes are missing.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>cheap LED bulbs can flicker up to 120 times per second.</strong>
+      Offices lit with LED panels commonly run at 100% flicker depth — the light actually
+      goes completely off between pulses. EEG studies show this disrupts alpha waves in the
+      brain even when subjects report no discomfort. Some people are more sensitive than others.
+      Your phone already knows. You just never looked.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startFlicker()">◉ start camera</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopFlicker()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="cam-preview" id="cam-preview">
+      <video id="cam-video" autoplay playsinline muted></video>
+      <canvas id="sample-canvas" style="display:none"></canvas>
+      <div class="cam-overlay" id="cam-overlay">point at a light source</div>
+    </div>
+
+    <div class="flicker-display">
+      <div class="flicker-val" id="flicker-val" style="color:var(--dim)">—</div>
+      <div class="flicker-unit">Hz · flicker frequency</div>
+      <div class="flicker-status" id="flicker-status" style="color:var(--dim)">waiting</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-hz">—</span><span class="stat-lbl">freq Hz</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-depth">—</span><span class="stat-lbl">depth %</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-fps">—</span><span class="stat-lbl">camera fps</span></div>
+    </div>
+
+    <div class="brightness-chart" style="aspect-ratio:3/1">
+      <canvas id="bright-canvas"></canvas>
+    </div>
+
+    <div class="verdict-box" id="verdict-box">
+      <div class="verdict-title">verdict</div>
+      Point the camera at any light source — lamp, screen, ceiling light — to begin analysis.
+      LED and fluorescent lights typically show 50Hz or 100Hz flicker. Incandescent and sunlight show none.
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ why does flicker matter?</summary>
+        <p>The human visual system can detect flicker up to about 60 Hz consciously. Above that,
+        flicker is invisible but not necessarily harmless. The IEEE has guidelines (IEEE 1789) that
+        recommend flicker depth below 8% at 100 Hz to avoid health effects.</p>
+        <p>The camera captures frames at 30 or 60 fps. To detect 100 Hz flicker, we need a camera
+        that can sample faster than 200 Hz (Nyquist). Most phone cameras have a high-speed mode
+        (120/240 fps) but the browser API typically exposes 30 or 60 fps. At 60 fps we can reliably
+        detect 50Hz and 60Hz (one alias each). Higher frequencies may alias — we report them with a note.</p>
+        <p>Flicker depth = (Lmax − Lmin) / (Lmax + Lmin) × 100%.
+        Below 8% = safe. 8–30% = moderate risk. Above 30% = avoid prolonged exposure.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let stream = null, video = null, running = false, rafId = null;
+const SAMPLE_COUNT = 256;
+const brightHistory = new Array(SAMPLE_COUNT).fill(0);
+let brightHead = 0, frameCount = 0;
+let lastFrameTime = performance.now(), actualFps = 30;
+let fpsHistory = [];
+
+const sampleCanvas = document.getElementById('sample-canvas');
+const sampleCtx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+sampleCanvas.width = 32; sampleCanvas.height = 18;
+
+const brightCanvas = document.getElementById('bright-canvas');
+const bctx = brightCanvas.getContext('2d');
+function resizeBCanvas() {
+  const r = brightCanvas.parentElement.getBoundingClientRect();
+  brightCanvas.width = r.width * devicePixelRatio;
+  brightCanvas.height = r.height * devicePixelRatio;
+}
+resizeBCanvas();
+window.addEventListener('resize', resizeBCanvas);
+
+async function startFlicker() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+        frameRate: { ideal: 60, max: 120 }
+      }
+    });
+    video = document.getElementById('cam-video');
+    video.srcObject = stream;
+    await video.play();
+
+    // Get actual FPS from track settings
+    const track = stream.getVideoTracks()[0];
+    const settings = track.getSettings();
+    if (settings.frameRate) actualFps = settings.frameRate;
+    document.getElementById('stat-fps').textContent = actualFps.toFixed(0);
+
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('cam-overlay').style.display = 'none';
+    document.getElementById('flicker-status').textContent = 'point at a light source';
+    document.getElementById('flicker-status').style.color = 'var(--cyan)';
+    rafId = requestAnimationFrame(captureFrame);
+  } catch(e) {
+    document.getElementById('flicker-status').textContent = 'camera unavailable: ' + e.message;
+    document.getElementById('flicker-status').style.color = 'var(--red)';
+  }
+}
+
+function stopFlicker() {
+  running = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('cam-overlay').style.display = 'flex';
+  document.getElementById('cam-overlay').textContent = 'stopped';
+  document.getElementById('flicker-status').textContent = 'stopped';
+  document.getElementById('flicker-status').style.color = 'var(--dim)';
+}
+
+function captureFrame() {
+  if (!running) return;
+  rafId = requestAnimationFrame(captureFrame);
+
+  const now = performance.now();
+  const dt = now - lastFrameTime;
+  if (dt < 8) return; // limit to ~60fps max
+  lastFrameTime = now;
+
+  // Measure real FPS
+  fpsHistory.push(1000 / dt);
+  if (fpsHistory.length > 60) fpsHistory.shift();
+  const measuredFps = fpsHistory.reduce((a,b)=>a+b,0)/fpsHistory.length;
+  actualFps = measuredFps;
+  document.getElementById('stat-fps').textContent = measuredFps.toFixed(0);
+
+  // Sample frame brightness
+  sampleCtx.drawImage(video, 0, 0, 32, 18);
+  const imageData = sampleCtx.getImageData(0, 0, 32, 18);
+  let brightness = 0;
+  const data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    brightness += 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+  }
+  brightness /= (32 * 18);
+
+  brightHistory[brightHead % SAMPLE_COUNT] = brightness;
+  brightHead++;
+  frameCount++;
+
+  if (frameCount % 3 === 0) {
+    analyseFlicker();
+    drawBrightnessChart();
+  }
+}
+
+function analyseFlicker() {
+  const ordered = new Array(SAMPLE_COUNT);
+  for (let i = 0; i < SAMPLE_COUNT; i++) {
+    ordered[i] = brightHistory[(brightHead + i) % SAMPLE_COUNT];
+  }
+
+  const maxB = Math.max(...ordered);
+  const minB = Math.min(...ordered);
+  const range = maxB - minB;
+  const depth = maxB > 0 ? (range / (maxB + minB)) * 100 : 0;
+
+  // Simple DFT over brightness samples (up to Nyquist)
+  const N = SAMPLE_COUNT;
+  const nyquist = actualFps / 2;
+  let peakPower = 0, peakBin = 0;
+
+  // Only look at bins corresponding to 40-130 Hz
+  const minBin = Math.max(1, Math.round(40 / actualFps * N));
+  const maxBin = Math.min(N/2, Math.round(130 / actualFps * N));
+
+  for (let k = minBin; k <= maxBin; k++) {
+    let re = 0, im = 0;
+    for (let n = 0; n < N; n++) {
+      const angle = 2 * Math.PI * k * n / N;
+      re += ordered[n] * Math.cos(angle);
+      im -= ordered[n] * Math.sin(angle);
+    }
+    const power = Math.sqrt(re*re + im*im) / N;
+    if (power > peakPower) { peakPower = power; peakBin = k; }
+  }
+
+  const peakHz = peakBin * actualFps / N;
+  const isSignificant = depth > 1.5 && peakPower > 0.3;
+
+  document.getElementById('stat-depth').textContent = depth.toFixed(1) + '%';
+
+  if (isSignificant && range > 5) {
+    document.getElementById('flicker-val').textContent = peakHz.toFixed(0);
+    document.getElementById('flicker-val').style.color = depth > 30 ? 'var(--red)' : depth > 8 ? 'var(--amber)' : 'var(--green)';
+    document.getElementById('stat-hz').textContent = peakHz.toFixed(0);
+
+    const known = Math.abs(peakHz - 50) < 8 ? '50 Hz — EU mains' :
+                  Math.abs(peakHz - 60) < 8 ? '60 Hz — US mains' :
+                  Math.abs(peakHz - 100) < 8 ? '100 Hz — LED driver (EU)' :
+                  Math.abs(peakHz - 120) < 8 ? '120 Hz — LED driver (US)' :
+                  peakHz.toFixed(0) + ' Hz — PWM dimming';
+
+    document.getElementById('flicker-status').textContent = known + ' · ' + depth.toFixed(0) + '% depth';
+    document.getElementById('flicker-status').style.color = depth > 30 ? 'var(--red)' : depth > 8 ? 'var(--amber)' : 'var(--cyan)';
+
+    const vb = document.getElementById('verdict-box');
+    if (depth > 30) {
+      vb.className = 'verdict-box bad';
+      vb.innerHTML = `<div class="verdict-title" style="color:var(--red)">high flicker — avoid prolonged exposure</div>
+        ${peakHz.toFixed(0)} Hz at ${depth.toFixed(0)}% depth. This exceeds IEEE 1789 safe limits (8% at 100Hz).
+        Prolonged exposure may cause eye strain, headaches, or migraines in sensitive people.`;
+    } else if (depth > 8) {
+      vb.className = 'verdict-box warn';
+      vb.innerHTML = `<div class="verdict-title" style="color:var(--amber)">moderate flicker detected</div>
+        ${peakHz.toFixed(0)} Hz at ${depth.toFixed(0)}% depth. Within marginal limits but above the IEEE recommended safe threshold.
+        You may want to avoid using this light source for close, prolonged work.`;
+    } else {
+      vb.className = 'verdict-box good';
+      vb.innerHTML = `<div class="verdict-title" style="color:var(--green)">low flicker — acceptable</div>
+        ${peakHz.toFixed(0)} Hz at ${depth.toFixed(0)}% depth. Below 8% depth — within safe limits per IEEE 1789.`;
+    }
+  } else {
+    document.getElementById('flicker-val').textContent = '< 1';
+    document.getElementById('flicker-val').style.color = 'var(--green)';
+    document.getElementById('stat-hz').textContent = '—';
+    document.getElementById('flicker-status').textContent = range > 3 ? 'very low flicker — good light source' : 'steady light or not enough light';
+    document.getElementById('flicker-status').style.color = 'var(--green)';
+    const vb = document.getElementById('verdict-box');
+    vb.className = 'verdict-box good';
+    vb.innerHTML = `<div class="verdict-title" style="color:var(--green)">no significant flicker</div>
+      This light source is flicker-free or very low flicker. Good for eye health.
+      Natural daylight and incandescent bulbs always show this result.`;
+  }
+}
+
+function drawBrightnessChart() {
+  const W = brightCanvas.width / devicePixelRatio;
+  const H = brightCanvas.height / devicePixelRatio;
+  bctx.clearRect(0, 0, W, H);
+
+  const ordered = new Array(SAMPLE_COUNT);
+  for (let i = 0; i < SAMPLE_COUNT; i++) {
+    ordered[i] = brightHistory[(brightHead + i) % SAMPLE_COUNT];
+  }
+  const maxB = Math.max(...ordered) || 1;
+  const minB = Math.min(...ordered);
+
+  bctx.beginPath();
+  ordered.forEach((v, i) => {
+    const x = (i / (SAMPLE_COUNT-1)) * W;
+    const y = H * 0.9 - ((v - minB) / Math.max(maxB - minB, 1)) * (H * 0.8);
+    i === 0 ? bctx.moveTo(x, y) : bctx.lineTo(x, y);
+  });
+  const g = bctx.createLinearGradient(0, 0, W, 0);
+  g.addColorStop(0, 'rgba(245,158,11,0.2)');
+  g.addColorStop(1, 'rgba(245,158,11,1)');
+  bctx.strokeStyle = g;
+  bctx.lineWidth = 1.5;
+  bctx.stroke();
+
+  bctx.fillStyle = 'rgba(100,116,139,0.5)';
+  bctx.font = '9px monospace';
+  bctx.textAlign = 'left';
+  bctx.fillText('brightness', 4, 14);
+  bctx.fillText('time →', W - 50, H - 4);
+}
+</script>
+</body>
+</html>

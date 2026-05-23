@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Room size from echo — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.room-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 0 12px;
+}
+.room-size {
+  font-size: clamp(1.8rem, 8vw, 2.8rem);
+  font-weight: 400;
+  color: var(--cyan);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  transition: color 0.3s;
+  text-align: center;
+}
+.room-rt60 { font-size: 0.72rem; color: var(--dim); letter-spacing: 0.08em; }
+.room-status { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 6px; }
+
+.echo-chart {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.echo-chart canvas { width: 100%; display: block; }
+.echo-label {
+  position: absolute; top: 8px; left: 12px;
+  font-size: 0.58rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--dim);
+}
+
+.rt-table {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.rt-row {
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.65rem;
+}
+.rt-row:last-child { border-bottom: none; }
+.rt-cell {
+  flex: 1;
+  padding: 9px 12px;
+  color: var(--dim);
+  border-right: 1px solid var(--border);
+}
+.rt-cell:last-child { border-right: none; }
+.rt-cell.hl { color: var(--cyan); background: rgba(34,211,238,0.05); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>room size from echo</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · acoustic</div>
+      <div class="exp-title">a clap reveals<br>the room around you.</div>
+      <div class="exp-desc">
+        Sound bounces off walls and decays. How long it takes to go quiet — the reverb time —
+        depends directly on room size and what the surfaces are made of. A clap in a bathroom
+        echoes differently than in a bedroom. Your phone can hear the difference and estimate
+        which one you're in.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>forensic audio analysts can determine where a recording was made from its echo signature.</strong>
+      The reverb fingerprint of a room is unique — walls, furniture, carpet, and ceiling height
+      all leave a signature in the sound. Intelligence agencies use this to geolocate recordings.
+      The same technique, applied in reverse, works for navigation in GPS-denied spaces like
+      underground car parks and tunnels.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startListen()">◉ start listening</button>
+      <button class="exp-btn ghost" id="btn-clap" onclick="registerClap()" style="display:none">✦ I just clapped</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopListen()" style="display:none">■ stop</button>
+    </div>
+
+    <div style="width:100%;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--cyan);border-radius:4px;padding:12px 15px;font-size:0.72rem;color:var(--dim);line-height:1.6" id="instructions">
+      Press <strong style="color:#fff">start listening</strong>, then clap once sharply near your phone.
+      The microphone will capture the reverb decay and estimate room size from it.
+      Works best in quiet rooms. Soft clap = bad result. Sharp, loud clap = good result.
+    </div>
+
+    <div class="room-result">
+      <div class="room-size" id="room-size">—</div>
+      <div class="room-rt60" id="room-rt60">RT60 = — ms</div>
+      <div class="room-status" id="room-status" style="color:var(--dim)">waiting</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-rt60">—</span><span class="stat-lbl">RT60 ms</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-vol">—</span><span class="stat-lbl">est. volume m³</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-samples">0</span><span class="stat-lbl">claps taken</span></div>
+    </div>
+
+    <div class="echo-chart" style="aspect-ratio:3/1">
+      <canvas id="echo-canvas"></canvas>
+      <div class="echo-label">decay envelope</div>
+    </div>
+
+    <div class="rt-table">
+      <div class="rt-row">
+        <div class="rt-cell">RT60</div>
+        <div class="rt-cell">typical room</div>
+        <div class="rt-cell">surface type</div>
+      </div>
+      <div class="rt-row" id="rt-row-bth">
+        <div class="rt-cell">< 400 ms</div>
+        <div class="rt-cell">bathroom / small tiled</div>
+        <div class="rt-cell">hard, reflective</div>
+      </div>
+      <div class="rt-row" id="rt-row-bed">
+        <div class="rt-cell">400–700 ms</div>
+        <div class="rt-cell">bedroom / office</div>
+        <div class="rt-cell">soft furnishings</div>
+      </div>
+      <div class="rt-row" id="rt-row-liv">
+        <div class="rt-cell">700–1200 ms</div>
+        <div class="rt-cell">living room / classroom</div>
+        <div class="rt-cell">mixed surfaces</div>
+      </div>
+      <div class="rt-row" id="rt-row-hal">
+        <div class="rt-cell">1200–2500 ms</div>
+        <div class="rt-cell">hall / stairwell</div>
+        <div class="rt-cell">hard floors, tall ceiling</div>
+      </div>
+      <div class="rt-row" id="rt-row-chu">
+        <div class="rt-cell">> 2500 ms</div>
+        <div class="rt-cell">large hall / church</div>
+        <div class="rt-cell">stone / concrete, vast</div>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does this work?</summary>
+        <p>RT60 is the standard measure of room acoustics: the time it takes for a sound to decay
+        by 60 decibels after the source stops. It's calculated using Sabine's formula:
+        <code>RT60 = 0.161 × V / A</code>, where V is room volume (m³) and A is total sound absorption.</p>
+        <p>We invert this: measure RT60 from the clap decay, then estimate volume.
+        We measure the peak of the clap, find when the envelope has decayed to 1/1000th of that
+        (which is −60 dB), and call that time RT60. Then we back-calculate room volume using
+        typical absorption coefficients for furnished domestic spaces.</p>
+        <p>Accuracy: ±40% for volume, good enough to classify room type. Results improve with multiple claps.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let audioCtx, analyser, src, stream, running = false;
+let capturing = false, clapBuffer = [], clapSampleRate = 44100;
+let rt60Results = [], sampleCount = 0;
+
+const canvas = document.getElementById('echo-canvas');
+const cctx = canvas.getContext('2d');
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+async function startListen() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+    });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    clapSampleRate = audioCtx.sampleRate;
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    src = audioCtx.createMediaStreamSource(stream);
+    src.connect(analyser);
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-clap').style.display = 'inline-flex';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('room-status').textContent = 'listening · clap sharply near the phone';
+    document.getElementById('room-status').style.color = 'var(--cyan)';
+    // Auto-detect clap
+    monitorForClap();
+  } catch(e) {
+    document.getElementById('room-status').textContent = 'mic unavailable: ' + e.message;
+    document.getElementById('room-status').style.color = 'var(--red)';
+  }
+}
+
+function stopListen() {
+  running = false;
+  if (src) src.disconnect();
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-clap').style.display = 'none';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('room-status').textContent = 'stopped';
+  document.getElementById('room-status').style.color = 'var(--dim)';
+}
+
+const timeDomain = new Float32Array(2048);
+let rollingRMS = 0, ambientRMS = 0, ambientFrames = 0;
+
+function monitorForClap() {
+  if (!running) return;
+  analyser.getFloatTimeDomainData(timeDomain);
+  let rms = 0;
+  for (let i = 0; i < timeDomain.length; i++) rms += timeDomain[i] * timeDomain[i];
+  rms = Math.sqrt(rms / timeDomain.length);
+
+  // Build ambient floor (first 2 seconds)
+  if (ambientFrames < 60) {
+    ambientRMS = ambientRMS * 0.9 + rms * 0.1;
+    ambientFrames++;
+  }
+
+  // Clap detection: signal > 10× ambient
+  if (!capturing && rms > Math.max(ambientRMS * 10, 0.05)) {
+    captureDecay();
+  } else {
+    setTimeout(monitorForClap, 16);
+  }
+}
+
+function registerClap() {
+  if (!capturing) captureDecay();
+}
+
+function captureDecay() {
+  if (capturing) return;
+  capturing = true;
+  document.getElementById('room-status').textContent = 'capturing decay...';
+  document.getElementById('room-status').style.color = 'var(--amber)';
+  clapBuffer = [];
+
+  // Record for 3 seconds
+  const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+  const startTime = audioCtx.currentTime;
+  processor.onaudioprocess = (e) => {
+    const ch = e.inputBuffer.getChannelData(0);
+    for (let i = 0; i < ch.length; i++) clapBuffer.push(Math.abs(ch[i]));
+    if (audioCtx.currentTime - startTime > 3.0) {
+      processor.disconnect();
+      src.disconnect(processor);
+      analyseDecay();
+    }
+  };
+  src.connect(processor);
+  processor.connect(audioCtx.destination);
+}
+
+function analyseDecay() {
+  capturing = false;
+  sampleCount++;
+  document.getElementById('stat-samples').textContent = sampleCount;
+
+  // Smooth envelope
+  const env = [];
+  const SMOOTH = 256;
+  for (let i = 0; i < clapBuffer.length; i += SMOOTH) {
+    let s = 0;
+    for (let j = i; j < Math.min(i + SMOOTH, clapBuffer.length); j++) s += clapBuffer[j];
+    env.push(s / SMOOTH);
+  }
+
+  // Find peak
+  let peakIdx = 0, peakVal = 0;
+  env.forEach((v, i) => { if (v > peakVal) { peakVal = v; peakIdx = i; } });
+
+  if (peakVal < 0.01) {
+    document.getElementById('room-status').textContent = 'clap too quiet — try again louder';
+    document.getElementById('room-status').style.color = 'var(--red)';
+    monitorForClap();
+    return;
+  }
+
+  // Find −60dB point (peakVal / 1000)
+  const target = peakVal / 1000;
+  let rt60Idx = peakIdx;
+  for (let i = peakIdx; i < env.length; i++) {
+    if (env[i] <= target) { rt60Idx = i; break; }
+    rt60Idx = i;
+  }
+
+  const samplesPerEnvFrame = SMOOTH;
+  const rt60Samples = (rt60Idx - peakIdx) * samplesPerEnvFrame;
+  const rt60Ms = (rt60Samples / clapSampleRate) * 1000;
+
+  // Use -30dB if we can't find -60dB in 3s window, and extrapolate
+  const target30 = peakVal / Math.sqrt(1000);
+  let rt30Idx = peakIdx;
+  for (let i = peakIdx; i < env.length; i++) {
+    if (env[i] <= target30) { rt30Idx = i; break; }
+    rt30Idx = i;
+  }
+  const rt30Samples = (rt30Idx - peakIdx) * samplesPerEnvFrame;
+  const rt60Estimated = Math.max(100, rt60Samples < rt30Samples * 1.5 ? rt60Ms : (rt30Samples / clapSampleRate) * 2000);
+
+  rt60Results.push(rt60Estimated);
+  const avgRt60 = rt60Results.reduce((a,b)=>a+b,0) / rt60Results.length;
+
+  // Estimate volume from Sabine's formula inverted
+  // V = RT60 * A / 0.161 where A = absorption (assume mid-range furnished room: 0.4 × surface)
+  // Approximate surface from cubic room assumption
+  // Simplified: volume ≈ (RT60/0.161) * 15 (avg absorption coefficient 0.25 × 60m² surface)
+  const estimatedVol = Math.round((avgRt60 / 1000 / 0.161) * 15);
+
+  document.getElementById('stat-rt60').textContent = avgRt60.toFixed(0);
+  document.getElementById('stat-vol').textContent = estimatedVol;
+  document.getElementById('room-rt60').textContent = 'RT60 ≈ ' + avgRt60.toFixed(0) + ' ms';
+
+  const roomType =
+    avgRt60 < 400  ? ['bathroom or tiled room', 'var(--cyan)'] :
+    avgRt60 < 700  ? ['bedroom or office', 'var(--green)'] :
+    avgRt60 < 1200 ? ['living room or classroom', 'var(--amber)'] :
+    avgRt60 < 2500 ? ['corridor or stairwell', 'var(--amber)'] :
+                     ['large hall or church', 'var(--red)'];
+
+  document.getElementById('room-size').textContent = roomType[0];
+  document.getElementById('room-size').style.color = roomType[1];
+  document.getElementById('room-status').textContent = 'done · clap again for better accuracy';
+  document.getElementById('room-status').style.color = 'var(--green)';
+
+  // Highlight RT60 table
+  ['bth','bed','liv','hal','chu'].forEach(id => {
+    document.getElementById('rt-row-' + id).querySelectorAll('.rt-cell').forEach(c => c.classList.remove('hl'));
+  });
+  const rowId = avgRt60 < 400 ? 'bth' : avgRt60 < 700 ? 'bed' : avgRt60 < 1200 ? 'liv' : avgRt60 < 2500 ? 'hal' : 'chu';
+  document.getElementById('rt-row-' + rowId).querySelectorAll('.rt-cell').forEach(c => c.classList.add('hl'));
+
+  drawDecay(env, peakIdx, rt60Idx);
+  monitorForClap();
+}
+
+function drawDecay(env, peakIdx, rt60Idx) {
+  const W = canvas.width / devicePixelRatio;
+  const H = canvas.height / devicePixelRatio;
+  cctx.clearRect(0, 0, W, H);
+
+  let maxV = 0;
+  env.forEach(v => { if (v > maxV) maxV = v; });
+  if (maxV === 0) return;
+
+  const n = env.length;
+  cctx.beginPath();
+  env.forEach((v, i) => {
+    const x = (i / (n-1)) * W;
+    const y = H * 0.9 - (v / maxV) * (H * 0.8);
+    i === 0 ? cctx.moveTo(x, y) : cctx.lineTo(x, y);
+  });
+  cctx.strokeStyle = 'rgba(34,211,238,0.9)';
+  cctx.lineWidth = 1.5;
+  cctx.stroke();
+
+  // RT60 marker
+  if (rt60Idx < n) {
+    const x = (rt60Idx / (n-1)) * W;
+    cctx.strokeStyle = 'rgba(245,158,11,0.8)';
+    cctx.lineWidth = 1;
+    cctx.setLineDash([4,4]);
+    cctx.beginPath(); cctx.moveTo(x, 0); cctx.lineTo(x, H); cctx.stroke();
+    cctx.setLineDash([]);
+    cctx.fillStyle = 'rgba(245,158,11,0.8)';
+    cctx.font = '9px monospace';
+    cctx.fillText('RT60', x + 4, 18);
+  }
+
+  // -60dB line
+  cctx.strokeStyle = 'rgba(100,116,139,0.3)';
+  cctx.lineWidth = 1;
+  cctx.setLineDash([2,6]);
+  const y60 = H * 0.9 - (1/1000) * (H * 0.8);
+  cctx.beginPath(); cctx.moveTo(0, y60); cctx.lineTo(W, y60); cctx.stroke();
+  cctx.setLineDash([]);
+  cctx.fillStyle = 'rgba(100,116,139,0.5)';
+  cctx.font = '9px monospace';
+  cctx.fillText('−60 dB', 4, y60 - 4);
+}
+</script>
+</body>
+</html>

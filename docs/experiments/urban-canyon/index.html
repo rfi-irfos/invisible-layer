@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Urban canyon — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.accuracy-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 0 10px;
+}
+.acc-val {
+  font-size: clamp(3rem, 13vw, 4.4rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  transition: color 0.4s;
+}
+.acc-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.acc-status { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+.signal-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+}
+.sig-row {
+  display: flex;
+  background: var(--surface);
+  padding: 10px 14px;
+  gap: 12px;
+  align-items: center;
+}
+.sig-key { font-size: 0.65rem; color: var(--dim); width: 110px; flex-shrink: 0; }
+.sig-val { font-size: 0.75rem; color: var(--text); flex: 1; }
+.sig-val.good   { color: var(--green); }
+.sig-val.ok     { color: var(--cyan); }
+.sig-val.warn   { color: var(--amber); }
+.sig-val.bad    { color: var(--red); }
+
+.accuracy-history {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.accuracy-history canvas { width: 100%; display: block; }
+.accuracy-history-label {
+  position: absolute; top: 8px; left: 12px;
+  font-size: 0.58rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--dim);
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>urban canyon</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · GPS</div>
+      <div class="exp-title">tall buildings<br>break GPS.</div>
+      <div class="exp-desc">
+        In the open sky, GPS is accurate to 2–5 metres. Walk into a city street lined
+        with glass towers and watch that number jump to 50 or 200 metres. The signal
+        bounces off buildings before reaching your phone — and the reflection looks
+        exactly like a direct signal. This is why your map shows you walking through
+        buildings.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>GPS spoofing attacks on ships cause them to appear hundreds of miles off course.</strong>
+      The same multipath effect that blurs your city navigation can be weaponised.
+      In 2017, ships in the Black Sea reported GPS positions 32 km inland.
+      In 2019, dozens of vessels near Shanghai were falsely positioned in the middle of
+      Pudong airport. No hardware needed — just a signal transmitter and a laptop.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startGPS()">◉ start GPS</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopGPS()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="accuracy-ring">
+      <div class="acc-val" id="acc-val" style="color:var(--dim)">—</div>
+      <div class="acc-unit">metres · GPS accuracy radius</div>
+      <div class="acc-status" id="acc-status" style="color:var(--dim)">waiting</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-acc">—</span><span class="stat-lbl">current m</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-best">—</span><span class="stat-lbl">best m</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-worst">—</span><span class="stat-lbl">worst m</span></div>
+    </div>
+
+    <div class="signal-grid">
+      <div class="sig-row">
+        <span class="sig-key">latitude</span>
+        <span class="sig-val" id="sig-lat">—</span>
+      </div>
+      <div class="sig-row">
+        <span class="sig-key">longitude</span>
+        <span class="sig-val" id="sig-lon">—</span>
+      </div>
+      <div class="sig-row">
+        <span class="sig-key">accuracy</span>
+        <span class="sig-val" id="sig-acc">—</span>
+      </div>
+      <div class="sig-row">
+        <span class="sig-key">altitude</span>
+        <span class="sig-val" id="sig-alt">—</span>
+      </div>
+      <div class="sig-row">
+        <span class="sig-key">speed</span>
+        <span class="sig-val" id="sig-spd">—</span>
+      </div>
+      <div class="sig-row">
+        <span class="sig-key">heading</span>
+        <span class="sig-val" id="sig-hdg">—</span>
+      </div>
+      <div class="sig-row">
+        <span class="sig-key">environment</span>
+        <span class="sig-val" id="sig-env">—</span>
+      </div>
+      <div class="sig-row">
+        <span class="sig-key">fixes received</span>
+        <span class="sig-val" id="sig-fixes">0</span>
+      </div>
+    </div>
+
+    <div class="accuracy-history" style="aspect-ratio:3/1">
+      <canvas id="acc-canvas"></canvas>
+      <div class="accuracy-history-label">accuracy over time (lower = better)</div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ what causes urban canyon GPS error?</summary>
+        <p>GPS works by measuring the time it takes signals from multiple satellites (you need at least 4)
+        to reach your receiver. The calculation assumes signals travel in a straight line at the speed of light.
+        In an urban canyon, signals bounce off glass and steel facades — called <strong>multipath</strong> —
+        and arrive slightly late, skewing the position fix by tens of metres.</p>
+        <p>Modern phones use several tricks to compensate: GLONASS (Russian), Galileo (European),
+        and BeiDou (Chinese) satellites in addition to US GPS give more fix candidates to average.
+        The <code>accuracy</code> field in the browser Geolocation API reflects the receiver's own
+        estimate of its uncertainty — though this estimate itself can be wrong in severe multipath.</p>
+        <p>Try this: compare accuracy indoors vs outdoors vs next to a tall building.
+        The jump is immediate and dramatic.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let watchId = null, running = false;
+let accHistory = [], bestAcc = Infinity, worstAcc = 0, fixes = 0;
+
+const canvas = document.getElementById('acc-canvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function startGPS() {
+  if (!navigator.geolocation) {
+    document.getElementById('acc-status').textContent = 'geolocation not available';
+    document.getElementById('acc-status').style.color = 'var(--red)';
+    return;
+  }
+  running = true;
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-stop').style.display = 'inline-flex';
+  document.getElementById('acc-status').textContent = 'acquiring fix...';
+  document.getElementById('acc-status').style.color = 'var(--amber)';
+
+  watchId = navigator.geolocation.watchPosition(onFix, onError, {
+    enableHighAccuracy: true,
+    maximumAge: 0,
+    timeout: 10000
+  });
+}
+
+function stopGPS() {
+  running = false;
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('acc-status').textContent = 'stopped';
+  document.getElementById('acc-status').style.color = 'var(--dim)';
+}
+
+function onError(e) {
+  document.getElementById('acc-status').textContent = 'GPS error: ' + e.message;
+  document.getElementById('acc-status').style.color = 'var(--red)';
+}
+
+function onFix(pos) {
+  fixes++;
+  const acc = Math.round(pos.coords.accuracy);
+  const lat = pos.coords.latitude;
+  const lon = pos.coords.longitude;
+  const alt = pos.coords.altitude;
+  const spd = pos.coords.speed;
+  const hdg = pos.coords.heading;
+
+  if (acc < bestAcc) bestAcc = acc;
+  if (acc > worstAcc) worstAcc = acc;
+
+  accHistory.push(acc);
+  if (accHistory.length > 60) accHistory.shift();
+
+  // Environment classification
+  const env = acc <= 5   ? ['open sky, clear signal', 'good'] :
+              acc <= 15  ? ['good GPS conditions', 'good'] :
+              acc <= 40  ? ['partial obstruction — indoors or trees', 'ok'] :
+              acc <= 100 ? ['urban environment — building reflections', 'warn'] :
+                           ['severe multipath — dense urban canyon', 'bad'];
+
+  // Update UI
+  const accEl = document.getElementById('acc-val');
+  accEl.textContent = acc;
+  accEl.style.color = acc <= 10 ? 'var(--green)' : acc <= 30 ? 'var(--cyan)' : acc <= 80 ? 'var(--amber)' : 'var(--red)';
+
+  const statusEl = document.getElementById('acc-status');
+  statusEl.textContent = env[0];
+  statusEl.style.color = env[1] === 'good' ? 'var(--green)' : env[1] === 'ok' ? 'var(--cyan)' : env[1] === 'warn' ? 'var(--amber)' : 'var(--red)';
+
+  document.getElementById('stat-acc').textContent = acc + 'm';
+  document.getElementById('stat-best').textContent = bestAcc + 'm';
+  document.getElementById('stat-worst').textContent = worstAcc + 'm';
+
+  const fmt = (v, d) => v != null ? v.toFixed(d) : '—';
+  const cls = (v, good, ok) => v <= good ? 'good' : v <= ok ? 'ok' : v <= ok*3 ? 'warn' : 'bad';
+
+  document.getElementById('sig-lat').textContent = lat.toFixed(6);
+  document.getElementById('sig-lon').textContent = lon.toFixed(6);
+  document.getElementById('sig-acc').className = 'sig-val ' + cls(acc,10,30);
+  document.getElementById('sig-acc').textContent = acc + ' m  (±' + acc + 'm radius)';
+  document.getElementById('sig-alt').textContent = alt != null ? alt.toFixed(0) + ' m' : '— (no altitude fix)';
+  document.getElementById('sig-spd').textContent = spd != null ? (spd * 3.6).toFixed(1) + ' km/h' : '—';
+  document.getElementById('sig-hdg').textContent = hdg != null ? hdg.toFixed(0) + '°' : '—';
+  document.getElementById('sig-env').className = 'sig-val ' + env[1];
+  document.getElementById('sig-env').textContent = env[0];
+  document.getElementById('sig-fixes').textContent = fixes;
+
+  drawHistory();
+}
+
+function drawHistory() {
+  const W = canvas.width / devicePixelRatio;
+  const H = canvas.height / devicePixelRatio;
+  ctx.clearRect(0, 0, W, H);
+  if (accHistory.length < 2) return;
+
+  const max = Math.max(...accHistory, 50);
+  const n = accHistory.length;
+
+  // colour zones
+  [[5,'rgba(0,255,65,0.05)'],[30,'rgba(34,211,238,0.04)'],[100,'rgba(245,158,11,0.04)']].forEach(([th,c]) => {
+    const y = H * 0.9 - (th / max) * (H * 0.8);
+    ctx.fillStyle = c;
+    ctx.fillRect(0, y, W, H);
+  });
+
+  ctx.beginPath();
+  accHistory.forEach((v, i) => {
+    const x = (i / (n-1)) * W;
+    const y = H * 0.9 - (v / max) * (H * 0.8);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(248,113,113,1)');
+  g.addColorStop(0.5, 'rgba(245,158,11,0.8)');
+  g.addColorStop(1, 'rgba(0,255,65,0.6)');
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = 'rgba(100,116,139,0.6)';
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'left';
+  [[5,'5m — ideal'],[30,'30m'],[100,'100m — canyon']].forEach(([th,lbl]) => {
+    const y = H * 0.9 - (th / max) * (H * 0.8);
+    if (y > 10) ctx.fillText(lbl, 4, y - 3);
+  });
+}
+</script>
+</body>
+</html>

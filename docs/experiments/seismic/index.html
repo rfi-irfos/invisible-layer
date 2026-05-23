@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Micro-seismic logger — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.seismo-wrap {
+  width: 100%;
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.seismo-wrap canvas { width: 100%; display: block; }
+.seismo-label {
+  position: absolute; top: 8px; left: 12px;
+  font-size: 0.58rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--dim);
+}
+.seismo-time {
+  position: absolute; top: 8px; right: 12px;
+  font-size: 0.58rem; color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.mag-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 0 10px;
+}
+.mag-val {
+  font-size: clamp(2.8rem, 12vw, 4rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  transition: color 0.3s;
+}
+.mag-label { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.mag-status { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+.event-log {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.event-header {
+  padding: 8px 14px;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border-bottom: 1px solid var(--border);
+}
+.event-body { max-height: 130px; overflow-y: auto; }
+.event-item {
+  padding: 7px 14px;
+  font-size: 0.65rem;
+  color: var(--dim);
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  animation: fadein 0.2s ease;
+}
+@keyframes fadein { from{opacity:0} to{opacity:1} }
+.event-item .et { flex-shrink: 0; opacity: 0.5; }
+.event-item .em { flex: 1; }
+.event-item.big .em { color: var(--red); }
+.event-item.mid .em { color: var(--amber); }
+.event-item.small .em { color: var(--cyan); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>seismic logger</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment 08 · accelerometer</div>
+      <div class="exp-title">the ground<br>is never still.</div>
+      <div class="exp-desc">
+        Lay your phone flat on a desk or floor and watch. Every truck that drives
+        past, every footstep in the corridor, every distant train — your phone picks
+        it up. This is the same principle behind professional seismograph networks.
+        Your MEMS accelerometer is sensitive to about 0.001 m/s² — enough to detect
+        vibrations from 50 metres away.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>researchers have tracked people through walls using only phone accelerometers.</strong>
+      A study at Stanford showed that your walking gait — measured by an accelerometer — is
+      as unique as a fingerprint. Footstep vibrations through floor and furniture can reveal
+      which room you're in, how many people are present, and whether you're sitting or standing.
+      No camera. No microphone. Just the ground shaking.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startSeismo()">◉ start sensor</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopSeismo()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="mag-display">
+      <div class="mag-val" id="mag-val" style="color:var(--green)">0.000</div>
+      <div class="mag-label">m/s² · current vibration magnitude</div>
+      <div class="mag-status" id="mag-status" style="color:var(--dim)">waiting</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-max">0.000</span><span class="stat-lbl">session max</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-events">0</span><span class="stat-lbl">events logged</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-uptime">0s</span><span class="stat-lbl">recording</span></div>
+    </div>
+
+    <div class="seismo-wrap" style="aspect-ratio:3/1">
+      <canvas id="seismo-canvas"></canvas>
+      <div class="seismo-label">live seismograph</div>
+      <div class="seismo-time" id="seismo-time">0s</div>
+    </div>
+
+    <div class="event-log">
+      <div class="event-header">event log</div>
+      <div class="event-body" id="event-body">
+        <div class="event-item"><span class="em" style="color:var(--dim);padding-left:0">lay phone flat on a hard surface to begin</span></div>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does this work?</summary>
+        <p>The accelerometer in your phone is a tiny MEMS (Micro-Electro-Mechanical System) device —
+        a microscopic spring with a proof mass, whose deflection is measured capacitively.
+        It can detect accelerations as small as 0.01–0.1 mg (milli-g), which corresponds to about
+        0.0001–0.001 m/s². This is well within the range of floor vibrations from footsteps and traffic.</p>
+        <p>We remove the gravity component by high-pass filtering the signal, leaving only the
+        vibration component. Events are logged when vibration exceeds a threshold — scaled to a
+        rough equivalent on the micro-Richter scale for nearby events.</p>
+        <p>Try: tap the table 30cm from the phone. Slam a door in the room. Have someone walk past.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let running = false, startTime = null, eventCount = 0, sessionMax = 0;
+const BUF_LEN = 300;
+const buf = new Array(BUF_LEN).fill(0);
+let bufHead = 0;
+let gravity = { x: 0, y: 0, z: 9.8 }; // for high-pass filter
+const ALPHA = 0.9; // high-pass filter coefficient
+const EVENT_THRESHOLD = 0.8;
+let lastEvent = 0;
+
+const canvas = document.getElementById('seismo-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function startSeismo() {
+  const go = () => {
+    running = true;
+    startTime = Date.now();
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('mag-status').textContent = 'lay phone flat · recording...';
+    document.getElementById('mag-status').style.color = 'var(--green)';
+    window.addEventListener('devicemotion', onMotion);
+    requestAnimationFrame(renderLoop);
+    setInterval(updateUptime, 1000);
+  };
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(s => { if(s==='granted') go(); }).catch(() => {
+      document.getElementById('mag-status').textContent = 'permission denied';
+      document.getElementById('mag-status').style.color = 'var(--red)';
+    });
+  } else if (typeof DeviceMotionEvent !== 'undefined') { go(); }
+  else { document.getElementById('mag-status').textContent = 'accelerometer not available'; }
+}
+
+function stopSeismo() {
+  running = false;
+  window.removeEventListener('devicemotion', onMotion);
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('mag-status').textContent = 'stopped';
+  document.getElementById('mag-status').style.color = 'var(--dim)';
+}
+
+function onMotion(e) {
+  if (!running || !e.accelerationIncludingGravity) return;
+  const rx = e.accelerationIncludingGravity.x || 0;
+  const ry = e.accelerationIncludingGravity.y || 0;
+  const rz = e.accelerationIncludingGravity.z || 0;
+
+  // low-pass (gravity estimate)
+  gravity.x = ALPHA * gravity.x + (1 - ALPHA) * rx;
+  gravity.y = ALPHA * gravity.y + (1 - ALPHA) * ry;
+  gravity.z = ALPHA * gravity.z + (1 - ALPHA) * rz;
+
+  // high-pass (linear acceleration without gravity)
+  const ax = rx - gravity.x;
+  const ay = ry - gravity.y;
+  const az = rz - gravity.z;
+  const mag = Math.sqrt(ax*ax + ay*ay + az*az);
+
+  buf[bufHead % BUF_LEN] = mag;
+  bufHead++;
+
+  if (mag > sessionMax) {
+    sessionMax = mag;
+    document.getElementById('stat-max').textContent = sessionMax.toFixed(3);
+  }
+
+  const magEl = document.getElementById('mag-val');
+  magEl.textContent = mag.toFixed(3);
+  magEl.style.color = mag > 2 ? 'var(--red)' : mag > 0.5 ? 'var(--amber)' : 'var(--green)';
+
+  const statusEl = document.getElementById('mag-status');
+  if (mag > 2) {
+    statusEl.textContent = 'strong vibration — nearby impact or vehicle';
+    statusEl.style.color = 'var(--red)';
+  } else if (mag > 0.5) {
+    statusEl.textContent = 'vibration detected · footstep or distant impact?';
+    statusEl.style.color = 'var(--amber)';
+  } else {
+    statusEl.textContent = 'quiet · lay flat for best sensitivity';
+    statusEl.style.color = 'var(--green)';
+  }
+
+  // log event
+  const now = Date.now();
+  if (mag > EVENT_THRESHOLD && now - lastEvent > 500) {
+    lastEvent = now;
+    logEvent(mag);
+  }
+}
+
+function logEvent(mag) {
+  eventCount++;
+  document.getElementById('stat-events').textContent = eventCount;
+  const body = document.getElementById('event-body');
+  const t = new Date().toLocaleTimeString('en-GB', {hour12:false});
+  const cls = mag > 3 ? 'big' : mag > 1 ? 'mid' : 'small';
+  const desc = mag > 3   ? 'strong impact / vehicle passing' :
+               mag > 1.5 ? 'moderate vibration — footsteps?' :
+               mag > 0.8 ? 'faint vibration detected' : 'micro-event';
+  const row = document.createElement('div');
+  row.className = 'event-item ' + cls;
+  row.innerHTML = `<span class="et">${t}</span><span class="em">${desc} · ${mag.toFixed(3)} m/s²</span>`;
+  if (body.children.length === 1 && body.children[0].querySelector('.et') === null) {
+    body.innerHTML = '';
+  }
+  body.insertBefore(row, body.firstChild);
+  while (body.children.length > 30) body.removeChild(body.lastChild);
+}
+
+function updateUptime() {
+  if (!running || !startTime) return;
+  const s = Math.floor((Date.now() - startTime) / 1000);
+  const t = s < 60 ? s + 's' : Math.floor(s/60) + 'm ' + (s%60) + 's';
+  document.getElementById('stat-uptime').textContent = t;
+  document.getElementById('seismo-time').textContent = t;
+}
+
+function renderLoop() {
+  if (!running) return;
+  requestAnimationFrame(renderLoop);
+  const W = canvas.width / devicePixelRatio;
+  const H = canvas.height / devicePixelRatio;
+  ctx.clearRect(0, 0, W, H);
+
+  const ordered = new Array(BUF_LEN);
+  for (let i = 0; i < BUF_LEN; i++) ordered[i] = buf[(bufHead + i) % BUF_LEN];
+
+  const maxV = Math.max(sessionMax, 0.5);
+
+  // zero line
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+
+  // threshold lines
+  ctx.strokeStyle = 'rgba(245,158,11,0.15)';
+  [EVENT_THRESHOLD, 2].forEach(th => {
+    const y = H/2 - (th/maxV)*(H/2-4);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, H/2+(th/maxV)*(H/2-4)); ctx.lineTo(W, H/2+(th/maxV)*(H/2-4)); ctx.stroke();
+  });
+
+  // waveform (mirrored — seismograph style)
+  ctx.beginPath();
+  ordered.forEach((v, i) => {
+    const x = (i / BUF_LEN) * W;
+    const amp = Math.min(v / maxV, 1) * (H/2 - 6);
+    const y = H/2 - amp;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  const g = ctx.createLinearGradient(0, 0, W, 0);
+  g.addColorStop(0, 'rgba(0,255,65,0.1)');
+  g.addColorStop(0.7, 'rgba(0,255,65,0.6)');
+  g.addColorStop(1, 'rgba(0,255,65,1)');
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // mirror
+  ctx.beginPath();
+  ordered.forEach((v, i) => {
+    const x = (i / BUF_LEN) * W;
+    const amp = Math.min(v / maxV, 1) * (H/2 - 6);
+    const y = H/2 + amp;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+</script>
+</body>
+</html>

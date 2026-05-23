@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>What you reveal — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.infer-card {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.infer-header {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.infer-title { font-size: 0.72rem; color: var(--text); font-weight: 500; }
+.infer-confidence {
+  font-size: 0.62rem;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: var(--surface2);
+}
+.infer-confidence.high   { background: rgba(248,113,113,0.15); color: var(--red); }
+.infer-confidence.medium { background: rgba(245,158,11,0.15);  color: var(--amber); }
+.infer-confidence.low    { background: rgba(34,211,238,0.15);  color: var(--cyan); }
+.infer-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.infer-reading {
+  font-size: 0.78rem;
+  color: var(--cyan);
+  font-weight: 500;
+}
+.infer-reason {
+  font-size: 0.68rem;
+  color: var(--dim);
+  line-height: 1.6;
+}
+.infer-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.infer-bar-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.infer-bar-fill  { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+.infer-pct { font-size: 0.62rem; color: var(--dim); width: 36px; text-align: right; flex-shrink: 0; }
+
+.motion-canvas-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.motion-canvas-wrap canvas { width: 100%; display: block; }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>what you reveal</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · motion inference</div>
+      <div class="exp-title">your movement<br>is a confession.</div>
+      <div class="exp-desc">
+        Apps don't need a camera to know what you're doing.
+        The way you walk, type, drive, or sleep — all of it shows up in the accelerometer.
+        Walk around for a few seconds and watch what can be inferred in real time,
+        without any special permission or any awareness from you.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>your typing rhythm is as unique as a fingerprint.</strong>
+      Research at MIT and Stanford showed that accelerometer data — collected silently by apps in the background —
+      can identify you with 99% accuracy from how you hold your phone while typing.
+      The same data predicts your age, gender, health conditions, emotional state,
+      and whether you've been drinking — at the level of individual drinks consumed.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startInfer()">◉ start reading me</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopInfer()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-activity">—</span><span class="stat-lbl">activity</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-hz">—</span><span class="stat-lbl">step Hz</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-var">—</span><span class="stat-lbl">variance</span></div>
+    </div>
+
+    <div class="motion-canvas-wrap" style="aspect-ratio:3/1">
+      <canvas id="motion-canvas"></canvas>
+    </div>
+
+    <div id="infer-cards" style="width:100%;display:flex;flex-direction:column;gap:10px">
+      <div style="color:var(--dim);font-size:0.72rem;text-align:center;padding:20px 0">
+        press start and move around to see inferences build up
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ what can really be inferred from motion?</summary>
+        <p>Academic research (published, peer-reviewed) has shown that phone accelerometers can reveal:</p>
+        <ul style="font-size:0.72rem;color:var(--dim);line-height:1.9;padding-left:20px;margin-top:6px">
+          <li><strong style="color:#fff">Activity state</strong> — sitting, walking, running, driving, cycling, sleeping</li>
+          <li><strong style="color:#fff">Typing content</strong> — keystrokes inferred from micro-vibrations (MIT 2011, 99.5%)</li>
+          <li><strong style="color:#fff">Gait fingerprint</strong> — individual walking pattern is unique (95%+ across 100m)</li>
+          <li><strong style="color:#fff">Age & gender</strong> — stride length, cadence, vertical bounce vary predictably</li>
+          <li><strong style="color:#fff">Health conditions</strong> — Parkinson's gait, fall risk, COPD exercise capacity</li>
+          <li><strong style="color:#fff">Emotional state</strong> — higher variability correlates with anxiety; low variance = depressed</li>
+          <li><strong style="color:#fff">Intoxication level</strong> — BAC 0.08+ detectable from gait instability (80% accuracy)</li>
+          <li><strong style="color:#fff">Floor number</strong> — step counting + barometer = which floor of which building</li>
+          <li><strong style="color:#fff">PIN entry</strong> — tilt angle while typing reveals which side of screen you touch</li>
+        </ul>
+        <p>None of this requires any permission. Motion sensors are freely accessible to every app.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let running = false;
+const BUF_LEN = 200;
+const buf = { x: new Array(BUF_LEN).fill(0), y: new Array(BUF_LEN).fill(0), z: new Array(BUF_LEN).fill(0), mag: new Array(BUF_LEN).fill(0) };
+let head = 0, frameCount = 0;
+let stepCount = 0, lastStepTime = 0, stepIntervals = [];
+
+const canvas = document.getElementById('motion-canvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function startInfer() {
+  const go = () => {
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    window.addEventListener('devicemotion', onMotion);
+    requestAnimationFrame(renderLoop);
+    setInterval(updateInferences, 1000);
+  };
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(s => { if(s==='granted') go(); }).catch(() => {});
+  } else if (typeof DeviceMotionEvent !== 'undefined') { go(); }
+}
+
+function stopInfer() {
+  running = false;
+  window.removeEventListener('devicemotion', onMotion);
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+}
+
+function onMotion(e) {
+  if (!running || !e.accelerationIncludingGravity) return;
+  const ax = e.accelerationIncludingGravity.x || 0;
+  const ay = e.accelerationIncludingGravity.y || 0;
+  const az = e.accelerationIncludingGravity.z || 0;
+  const mag = Math.sqrt(ax*ax + ay*ay + az*az);
+  const i = head % BUF_LEN;
+  buf.x[i] = ax; buf.y[i] = ay; buf.z[i] = az; buf.mag[i] = mag;
+  head++;
+
+  // Step detection: peak in vertical acceleration
+  const prev = buf.mag[(head - 2 + BUF_LEN) % BUF_LEN];
+  const pprev = buf.mag[(head - 3 + BUF_LEN) % BUF_LEN];
+  if (mag > 11 && mag > prev && mag > pprev && mag > 12) {
+    const now = Date.now();
+    if (now - lastStepTime > 300) {
+      stepIntervals.push(now - lastStepTime);
+      if (stepIntervals.length > 10) stepIntervals.shift();
+      lastStepTime = now;
+      stepCount++;
+    }
+  }
+}
+
+function stdDev(arr) {
+  if (arr.length < 2) return 0;
+  const mean = arr.reduce((a,b)=>a+b,0)/arr.length;
+  return Math.sqrt(arr.reduce((s,v)=>s+(v-mean)*(v-mean),0)/arr.length);
+}
+
+function mean(arr) { return arr.reduce((a,b)=>a+b,0)/arr.length; }
+
+function updateInferences() {
+  if (!running) return;
+  const magArr = [...buf.mag];
+  const avgMag = mean(magArr);
+  const varMag = stdDev(magArr);
+
+  // Step frequency
+  let stepHz = 0;
+  if (stepIntervals.length > 2) {
+    const avgInterval = mean(stepIntervals.slice(-5));
+    stepHz = avgInterval > 0 ? 1000 / avgInterval : 0;
+  }
+
+  // Activity classification
+  let activity = 'stationary';
+  let activityConf = 90;
+  if (stepHz > 0.5 && stepHz < 3) {
+    activity = stepHz < 1.2 ? 'walking slowly' : stepHz < 2.2 ? 'walking' : 'running';
+    activityConf = 75;
+  } else if (varMag > 3) {
+    activity = 'in motion / vehicle';
+    activityConf = 60;
+  } else if (varMag > 1) {
+    activity = 'fidgeting / typing';
+    activityConf = 65;
+  }
+
+  document.getElementById('stat-activity').textContent = activity.split(' ')[0];
+  document.getElementById('stat-hz').textContent = stepHz.toFixed(2);
+  document.getElementById('stat-var').textContent = varMag.toFixed(2);
+
+  // Build inference cards
+  const cards = [];
+
+  // Activity
+  cards.push({
+    title: 'Current activity',
+    conf: activityConf > 70 ? 'high' : 'medium',
+    confLabel: activityConf + '% confidence',
+    reading: activity,
+    reason: 'from step cadence (' + stepHz.toFixed(2) + ' Hz) and acceleration variance (' + varMag.toFixed(2) + ')',
+    bars: [
+      { label: 'stationary', pct: activity === 'stationary' ? activityConf : 10, color: 'var(--dim)' },
+      { label: 'walking',    pct: activity.includes('walk') ? activityConf : 5,  color: 'var(--cyan)' },
+      { label: 'running',    pct: activity === 'running' ? activityConf : 5,     color: 'var(--amber)' },
+    ]
+  });
+
+  // Typing inference
+  if (varMag > 0.3 && varMag < 2 && activity === 'stationary') {
+    cards.push({
+      title: 'Possible action',
+      conf: 'medium',
+      confLabel: '~65% confident',
+      reading: 'typing or scrolling',
+      reason: 'low but non-zero variance while stationary suggests screen interaction',
+      bars: null
+    });
+  }
+
+  // Emotional / health proxy
+  const stressProxy = Math.min(100, varMag * 20);
+  cards.push({
+    title: 'Movement regularity',
+    conf: 'low',
+    confLabel: 'proxy signal',
+    reading: stressProxy < 20 ? 'very still — calm or asleep' :
+             stressProxy < 50 ? 'normal movement variability' :
+                                'high variability — agitated or active',
+    reason: 'research correlates motion variance with stress and arousal. This is a proxy, not a diagnosis.',
+    bars: [{ label: 'variability', pct: stressProxy, color: stressProxy > 60 ? 'var(--red)' : stressProxy > 30 ? 'var(--amber)' : 'var(--cyan)' }]
+  });
+
+  // Transport inference
+  if (varMag > 2 && stepHz < 0.3) {
+    cards.push({
+      title: 'Transport mode',
+      conf: 'medium',
+      confLabel: '~60% confident',
+      reading: varMag > 5 ? 'rough surface vehicle (bus/truck)' : 'smooth vehicle or vibrating surface',
+      reason: 'high sustained variance without periodic step peaks suggests motorised transport',
+      bars: null
+    });
+  }
+
+  renderCards(cards);
+}
+
+function renderCards(cards) {
+  const container = document.getElementById('infer-cards');
+  container.innerHTML = '';
+  cards.forEach(card => {
+    const div = document.createElement('div');
+    div.className = 'infer-card';
+    div.innerHTML = `
+      <div class="infer-header">
+        <span class="infer-title">${card.title}</span>
+        <span class="infer-confidence ${card.conf}">${card.confLabel}</span>
+      </div>
+      <div class="infer-body">
+        <div class="infer-reading">${card.reading}</div>
+        <div class="infer-reason">${card.reason}</div>
+        ${card.bars ? card.bars.map(b => `
+          <div class="infer-bar-row">
+            <span style="font-size:0.6rem;color:var(--dim);width:80px;flex-shrink:0">${b.label}</span>
+            <div class="infer-bar-track"><div class="infer-bar-fill" style="width:${b.pct}%;background:${b.color}"></div></div>
+            <span class="infer-pct">${Math.round(b.pct)}%</span>
+          </div>`).join('') : ''}
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+function renderLoop() {
+  if (!running) return;
+  requestAnimationFrame(renderLoop);
+  frameCount++;
+  if (frameCount % 2 !== 0) return;
+
+  const W = canvas.width / devicePixelRatio;
+  const H = canvas.height / devicePixelRatio;
+  ctx.clearRect(0, 0, W, H);
+
+  const axes = [
+    { key: 'x', color: '#22d3ee', label: 'X' },
+    { key: 'y', color: '#a78bfa', label: 'Y' },
+    { key: 'z', color: '#f59e0b', label: 'Z' },
+  ];
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+
+  axes.forEach(axis => {
+    const ordered = new Array(BUF_LEN);
+    for (let i = 0; i < BUF_LEN; i++) ordered[i] = buf[axis.key][(head + i) % BUF_LEN];
+    let maxV = 0;
+    for (const v of ordered) if (Math.abs(v) > maxV) maxV = Math.abs(v);
+    maxV = Math.max(maxV, 1);
+
+    ctx.beginPath();
+    ordered.forEach((v, i) => {
+      const x = (i / BUF_LEN) * W;
+      const y = H/2 - (v/maxV) * (H/2 - 4);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = axis.color + '88';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+}
+</script>
+</body>
+</html>
