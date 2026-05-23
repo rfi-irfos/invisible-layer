@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Surface resonance — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.resonance-display {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 0 12px;
+}
+.res-freq {
+  font-size: clamp(2.8rem, 12vw, 4.4rem);
+  font-weight: 400;
+  color: var(--cyan);
+  line-height: 1;
+  transition: color 0.2s;
+  letter-spacing: -0.02em;
+}
+.res-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.res-status { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+.wave-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.wave-wrap canvas { width: 100%; display: block; }
+.wave-label {
+  position: absolute; top: 8px; left: 12px;
+  font-size: 0.58rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--dim);
+}
+
+.fft-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.fft-wrap canvas { width: 100%; display: block; }
+.fft-label {
+  position: absolute; top: 8px; left: 12px;
+  font-size: 0.58rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--dim);
+}
+
+.instructions {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  font-size: 0.72rem;
+  color: var(--dim);
+  line-height: 1.7;
+}
+.instructions strong { color: var(--cyan); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>surface resonance</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment 07 · accelerometer</div>
+      <div class="exp-title">every surface<br>has a voice.</div>
+      <div class="exp-desc">
+        Place your phone face-down on any surface and tap it.
+        The accelerometer captures the vibration decay.
+        Different materials — wood, glass, concrete, metal — resonate at different frequencies.
+        Your phone can tell them apart.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>this is how seismologists detect underground structures.</strong>
+      Surface wave analysis reveals what's underneath — soil type, water table depth, void spaces.
+      Oil companies sweep terrain with sensors like this to find reservoirs.
+      Your phone's MEMS accelerometer does the same thing at human scale.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startRes()">◉ start sensor</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopRes()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="resonance-display">
+      <div class="res-freq" id="res-freq">—</div>
+      <div class="res-unit">Hz · dominant resonance</div>
+      <div class="res-status" id="res-status" style="color:var(--dim)">waiting</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-ax">0.00</span><span class="stat-lbl">X m/s²</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-ay">0.00</span><span class="stat-lbl">Y m/s²</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-az">0.00</span><span class="stat-lbl">Z m/s²</span></div>
+    </div>
+
+    <div class="wave-wrap" style="aspect-ratio:3/1">
+      <canvas id="wave-canvas"></canvas>
+      <div class="wave-label">waveform</div>
+    </div>
+
+    <div class="fft-wrap" style="aspect-ratio:3/1">
+      <canvas id="fft-canvas"></canvas>
+      <div class="fft-label">0 – 50 Hz · resonance spectrum</div>
+    </div>
+
+    <div class="instructions">
+      <strong>try this:</strong> lay phone flat on a wooden desk → tap the desk surface 1m away.
+      Then try on glass, metal, concrete. Watch the decay shape change.
+      Soft surfaces (wood, fabric) absorb fast. Hard surfaces (glass, metal) ring longer.
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does this work?</summary>
+        <p>The <code>DeviceMotionEvent</code> API delivers acceleration at up to 100 Hz on most devices.
+        We capture a rolling buffer and run a simple DFT over it to extract the frequency content of vibrations.</p>
+        <p>After a tap, the surface oscillates at its resonant frequency — determined by mass, stiffness,
+        and damping. A glass table resonates at ~20–40 Hz; a wooden desk ~5–15 Hz; a concrete floor shows
+        a broad low-frequency signature. The decay envelope (how quickly it goes quiet) reveals material properties.</p>
+        <p>On iOS, tap "start sensor" to trigger the permission prompt (required since iOS 13).</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let running = false;
+const SAMPLE_RATE = 100; // Hz (typical DeviceMotionEvent rate)
+const BUFFER_LEN  = 512;
+const buf = new Float32Array(BUFFER_LEN);
+let bufHead = 0;
+let peakHistory = new Array(60).fill(0); // 60-point peak magnitude history
+let frameCount  = 0;
+
+// canvases
+const waveCanvas = document.getElementById('wave-canvas');
+const waveCtx    = waveCanvas.getContext('2d');
+const fftCanvas  = document.getElementById('fft-canvas');
+const fftCtx     = fftCanvas.getContext('2d');
+
+function resizeCanvases() {
+  [waveCanvas, fftCanvas].forEach(c => {
+    const r = c.parentElement.getBoundingClientRect();
+    c.width  = r.width  * devicePixelRatio;
+    c.height = r.height * devicePixelRatio;
+  });
+}
+resizeCanvases();
+window.addEventListener('resize', resizeCanvases);
+
+function startRes() {
+  const go = () => {
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display  = 'inline-flex';
+    document.getElementById('res-status').textContent  = 'reading · lay phone flat & tap surface';
+    document.getElementById('res-status').style.color  = 'var(--cyan)';
+    window.addEventListener('devicemotion', onMotion);
+    requestAnimationFrame(renderLoop);
+  };
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(s => { if (s === 'granted') go(); }).catch(e => {
+      document.getElementById('res-status').textContent = 'permission denied';
+      document.getElementById('res-status').style.color = 'var(--red)';
+    });
+  } else if (typeof DeviceMotionEvent !== 'undefined') {
+    go();
+  } else {
+    document.getElementById('res-status').textContent = 'accelerometer unavailable';
+    document.getElementById('res-status').style.color = 'var(--red)';
+  }
+}
+
+function stopRes() {
+  running = false;
+  window.removeEventListener('devicemotion', onMotion);
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display  = 'none';
+  document.getElementById('res-status').textContent  = 'stopped';
+  document.getElementById('res-status').style.color  = 'var(--dim)';
+}
+
+function onMotion(e) {
+  if (!running || !e.accelerationIncludingGravity) return;
+  const ax = e.accelerationIncludingGravity.x || 0;
+  const ay = e.accelerationIncludingGravity.y || 0;
+  const az = e.accelerationIncludingGravity.z || 0;
+  // use Z (perpendicular to surface when lying flat)
+  buf[bufHead % BUFFER_LEN] = az;
+  bufHead++;
+
+  const mag = Math.sqrt(ax*ax + ay*ay + az*az);
+  peakHistory.push(mag);
+  if (peakHistory.length > 120) peakHistory.shift();
+
+  document.getElementById('stat-ax').textContent = ax.toFixed(2);
+  document.getElementById('stat-ay').textContent = ay.toFixed(2);
+  document.getElementById('stat-az').textContent = az.toFixed(2);
+}
+
+function renderLoop() {
+  if (!running) return;
+  requestAnimationFrame(renderLoop);
+  frameCount++;
+  if (frameCount % 3 !== 0) return; // throttle to ~30fps draw
+
+  drawWave();
+  const { peakHz, spectrum } = computeFFT();
+  drawFFT(spectrum, peakHz);
+  updateFreqDisplay(peakHz, spectrum);
+}
+
+function drawWave() {
+  const W = waveCanvas.width / devicePixelRatio;
+  const H = waveCanvas.height / devicePixelRatio;
+  waveCtx.clearRect(0, 0, W, H);
+
+  // build ordered buffer
+  const ordered = new Float32Array(BUFFER_LEN);
+  for (let i = 0; i < BUFFER_LEN; i++) {
+    ordered[i] = buf[(bufHead + i) % BUFFER_LEN];
+  }
+  // find scale
+  let maxV = 0.5;
+  for (let v of ordered) if (Math.abs(v) > maxV) maxV = Math.abs(v);
+
+  // zero line
+  waveCtx.strokeStyle = 'rgba(255,255,255,0.05)';
+  waveCtx.lineWidth = 1;
+  waveCtx.beginPath();
+  waveCtx.moveTo(0, H / 2); waveCtx.lineTo(W, H / 2);
+  waveCtx.stroke();
+
+  // waveform
+  waveCtx.beginPath();
+  for (let i = 0; i < BUFFER_LEN; i++) {
+    const x = (i / BUFFER_LEN) * W;
+    const y = H / 2 - (ordered[i] / maxV) * (H / 2 - 4);
+    i === 0 ? waveCtx.moveTo(x, y) : waveCtx.lineTo(x, y);
+  }
+  const wg = waveCtx.createLinearGradient(0, 0, W, 0);
+  wg.addColorStop(0, 'rgba(34,211,238,0.15)');
+  wg.addColorStop(1, 'rgba(34,211,238,0.9)');
+  waveCtx.strokeStyle = wg;
+  waveCtx.lineWidth = 1.5;
+  waveCtx.stroke();
+}
+
+function computeFFT() {
+  // Simple DFT over buffer (up to 50 Hz)
+  const N = BUFFER_LEN;
+  const maxFreq = 50;
+  const freqStep = SAMPLE_RATE / N;
+  const numBins = Math.floor(maxFreq / freqStep);
+  const spectrum = new Float32Array(numBins);
+
+  // ordered buffer
+  const x = new Float32Array(N);
+  for (let i = 0; i < N; i++) x[i] = buf[(bufHead + i) % N];
+
+  // simple Hann window + DFT
+  let peakPower = 0, peakBin = 0;
+  for (let k = 1; k < numBins; k++) {
+    let re = 0, im = 0;
+    for (let n = 0; n < N; n++) {
+      const hann = 0.5 * (1 - Math.cos(2 * Math.PI * n / N));
+      const angle = 2 * Math.PI * k * n / N;
+      re += x[n] * hann * Math.cos(angle);
+      im -= x[n] * hann * Math.sin(angle);
+    }
+    const power = Math.sqrt(re * re + im * im) / N;
+    spectrum[k] = power;
+    if (power > peakPower && k > 1) { peakPower = power; peakBin = k; }
+  }
+  const peakHz = Math.round(peakBin * freqStep * 10) / 10;
+  return { peakHz, spectrum };
+}
+
+function drawFFT(spectrum, peakHz) {
+  const W = fftCanvas.width / devicePixelRatio;
+  const H = fftCanvas.height / devicePixelRatio;
+  fftCtx.clearRect(0, 0, W, H);
+
+  let maxP = 0;
+  for (const v of spectrum) if (v > maxP) maxP = v;
+  if (maxP < 0.01) maxP = 0.01;
+
+  const n = spectrum.length;
+  const bw = W / n;
+
+  for (let k = 1; k < n; k++) {
+    const x = (k / n) * W;
+    const h = (spectrum[k] / maxP) * (H - 18);
+    const isPeak = Math.abs(k * (SAMPLE_RATE / BUFFER_LEN) - peakHz) < 1;
+    fftCtx.fillStyle = isPeak ? '#22d3ee' : `rgba(34,211,238,${0.2 + (spectrum[k]/maxP)*0.6})`;
+    fftCtx.fillRect(x, H - 18 - h, Math.max(1, bw * 1.4), h);
+  }
+
+  // freq labels
+  fftCtx.fillStyle = 'rgba(100,116,139,0.6)';
+  fftCtx.font = '9px monospace';
+  [10, 20, 30, 40, 50].forEach(f => {
+    const freqStep = SAMPLE_RATE / BUFFER_LEN;
+    const x = (f / freqStep / spectrum.length) * W;
+    fftCtx.beginPath();
+    fftCtx.strokeStyle = 'rgba(255,255,255,0.05)';
+    fftCtx.moveTo(x, 0); fftCtx.lineTo(x, H - 16); fftCtx.stroke();
+    fftCtx.fillText(f + 'Hz', x + 2, H - 4);
+  });
+}
+
+function updateFreqDisplay(peakHz, spectrum) {
+  let maxP = 0;
+  for (const v of spectrum) if (v > maxP) maxP = v;
+  const isActive = maxP > 0.05;
+
+  const el = document.getElementById('res-freq');
+  const st = document.getElementById('res-status');
+  el.textContent = isActive ? peakHz.toFixed(1) : '—';
+  el.style.color  = isActive ? 'var(--cyan)' : 'var(--dim)';
+
+  if (isActive) {
+    const material =
+      peakHz < 5   ? 'heavy structure (concrete/steel)' :
+      peakHz < 12  ? 'wooden surface' :
+      peakHz < 25  ? 'glass or composite' :
+      peakHz < 40  ? 'thin metal or tile' :
+                     'high-frequency surface';
+    st.textContent  = material;
+    st.style.color  = 'var(--cyan)';
+  } else {
+    st.textContent = 'no significant vibration · tap the surface';
+    st.style.color = 'var(--dim)';
+  }
+}
+</script>
+</body>
+</html>

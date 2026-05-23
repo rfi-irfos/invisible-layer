@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Network fingerprint — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.fp-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 0 12px;
+}
+.fp-bits {
+  font-size: clamp(2.6rem, 11vw, 4rem);
+  font-weight: 400;
+  color: var(--red);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.fp-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.fp-caption { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 4px; }
+
+.fp-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.fp-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  background: var(--surface);
+  padding: 9px 14px;
+  font-size: 0.68rem;
+}
+.fp-key {
+  color: var(--dim);
+  flex-shrink: 0;
+  width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fp-val {
+  color: var(--text);
+  flex: 1;
+  word-break: break-all;
+  line-height: 1.5;
+}
+.fp-val.red    { color: var(--red); }
+.fp-val.amber  { color: var(--amber); }
+.fp-val.green  { color: var(--green); }
+.fp-val.cyan   { color: var(--cyan); }
+.fp-val.dim    { color: var(--dim); }
+.fp-entropy {
+  font-size: 0.58rem;
+  color: var(--dim);
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 36px;
+}
+
+.entropy-bar-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.entropy-bar-title {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.entropy-segments {
+  display: flex;
+  height: 20px;
+  border-radius: 4px;
+  overflow: hidden;
+  gap: 1px;
+}
+.entropy-seg {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  color: rgba(0,0,0,0.7);
+  transition: width 0.4s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.entropy-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.entropy-dot {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6rem;
+  color: var(--dim);
+}
+.entropy-dot::before {
+  content: '';
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  background: var(--c);
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>network fingerprint</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment 10 · browser APIs</div>
+      <div class="exp-title">you already<br>told them everything.</div>
+      <div class="exp-desc">
+        You haven't clicked anything. No login. No form. But your browser
+        has already sent dozens of data points that, combined, identify you
+        uniquely among billions of users. This is what you leak on every page load.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>77% of the web uses browser fingerprinting.</strong>
+      Unlike cookies, it doesn't need storage — it can't be cleared.
+      A VPN changes your IP. It doesn't change your GPU, your fonts,
+      your timezone offset, your screen resolution, or how your browser
+      renders a canvas. These form a fingerprint that persists across sessions.
+    </div>
+
+    <div class="fp-score">
+      <div class="fp-bits" id="fp-bits">—</div>
+      <div class="fp-unit">bits of entropy · your fingerprint uniqueness</div>
+      <div class="fp-caption" id="fp-caption" style="color:var(--dim)">computing...</div>
+    </div>
+
+    <div class="entropy-bar-wrap">
+      <div class="entropy-bar-title">entropy breakdown</div>
+      <div class="entropy-segments" id="ent-bar"></div>
+      <div class="entropy-legend" id="ent-legend"></div>
+    </div>
+
+    <div class="fp-grid" id="fp-grid">
+      <div class="fp-row"><span class="fp-key">computing...</span></div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does this work?</summary>
+        <p>Browser fingerprinting works by reading dozens of passive signals — no permission required.
+        Each signal contributes some number of "bits of entropy": the more unique a value,
+        the more bits it adds. 33 bits = 1 in 8 billion — essentially globally unique.</p>
+        <p>The canvas and WebGL fingerprints are especially stable — they depend on your GPU's
+        exact rasterization pipeline, which varies by GPU model and driver version.
+        Even with the same browser on the same OS, two different GPU models produce
+        different pixel values for the same drawing commands.</p>
+        <p>This experiment runs entirely in your browser. Nothing is sent anywhere.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+// Compute fingerprint immediately on load — no permission needed
+const signals = [];
+
+function addSignal(key, value, bits, colorClass) {
+  signals.push({ key, value, bits, colorClass });
+}
+
+// ── User Agent ───────────────────────────────────────────
+const ua = navigator.userAgent;
+const uaTokens = ua.split(/[\s\/();]+/).filter(Boolean).length;
+addSignal('user agent', ua.substring(0, 80) + (ua.length > 80 ? '…' : ''), Math.min(uaTokens * 0.4, 8).toFixed(1), 'red');
+
+// ── Platform / OS ────────────────────────────────────────
+const platform = navigator.platform || navigator.userAgentData?.platform || 'unknown';
+addSignal('platform', platform, '3.2', 'amber');
+
+// ── Language ─────────────────────────────────────────────
+const langs = navigator.languages ? navigator.languages.join(', ') : navigator.language;
+addSignal('languages', langs, '3.1', 'amber');
+
+// ── Timezone ─────────────────────────────────────────────
+const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const tzOffset = new Date().getTimezoneOffset();
+addSignal('timezone', `${tz} (UTC${tzOffset <= 0 ? '+' : ''}${-tzOffset/60})`, '4.0', 'red');
+
+// ── Screen ───────────────────────────────────────────────
+const scr = `${screen.width}×${screen.height} · ${screen.colorDepth}bit · dpr ${devicePixelRatio}`;
+addSignal('screen', scr, '4.8', 'red');
+
+// ── Viewport ─────────────────────────────────────────────
+addSignal('viewport', `${window.innerWidth}×${window.innerHeight}`, '2.1', 'amber');
+
+// ── Hardware concurrency ─────────────────────────────────
+addSignal('cpu cores', navigator.hardwareConcurrency || 'unknown', '2.8', 'amber');
+
+// ── Device memory ────────────────────────────────────────
+addSignal('device memory', (navigator.deviceMemory || 'unknown') + ' GB', '1.9', 'amber');
+
+// ── Touch ────────────────────────────────────────────────
+const touchPoints = navigator.maxTouchPoints;
+addSignal('touch points', touchPoints, '1.5', 'cyan');
+
+// ── Connection ───────────────────────────────────────────
+const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+if (conn) {
+  addSignal('connection', `${conn.effectiveType || conn.type} · ${conn.downlink || '?'} Mbps · RTT ${conn.rtt || '?'} ms`, '2.3', 'cyan');
+}
+
+// ── Battery ──────────────────────────────────────────────
+if (navigator.getBattery) {
+  navigator.getBattery().then(b => {
+    addSignal('battery', `${Math.round(b.level*100)}% · ${b.charging ? 'charging' : 'discharging'} · drain ${b.dischargingTime === Infinity ? '?' : Math.round(b.dischargingTime/60)+'min'}`, '2.1', 'cyan');
+    renderAll();
+  }).catch(() => {});
+}
+
+// ── Plugins / MIME ───────────────────────────────────────
+const pluginCount = navigator.plugins ? navigator.plugins.length : 0;
+addSignal('plugins', pluginCount + ' detected', '2.5', 'amber');
+
+// ── Do Not Track ─────────────────────────────────────────
+addSignal('do not track', navigator.doNotTrack || 'not set', '0.8', 'dim');
+
+// ── Cookie enabled ───────────────────────────────────────
+addSignal('cookies', navigator.cookieEnabled ? 'enabled' : 'disabled', '0.5', 'dim');
+
+// ── Canvas fingerprint ───────────────────────────────────
+function canvasFingerprint() {
+  try {
+    const c = document.createElement('canvas');
+    c.width = 200; c.height = 40;
+    const cx = c.getContext('2d');
+    cx.textBaseline = 'top';
+    cx.font = '14px Arial';
+    cx.fillStyle = '#f60';
+    cx.fillRect(125, 1, 62, 20);
+    cx.fillStyle = '#069';
+    cx.fillText('invisible layer 🔍', 2, 15);
+    cx.fillStyle = 'rgba(102,204,0,0.7)';
+    cx.fillText('invisible layer 🔍', 4, 17);
+    const data = c.toDataURL();
+    // hash last 32 chars as proxy for uniqueness display
+    return data.substring(data.length - 32);
+  } catch(e) { return 'blocked'; }
+}
+const cvs = canvasFingerprint();
+addSignal('canvas hash', cvs, '8.4', 'red');
+
+// ── WebGL renderer ───────────────────────────────────────
+function webglInfo() {
+  try {
+    const c = document.createElement('canvas');
+    const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (!gl) return ['unavailable', '0'];
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    if (ext) {
+      const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+      const vendor   = gl.getParameter(ext.UNMASKED_VENDOR_WEBGL);
+      return [`${vendor} · ${renderer}`, '10.2'];
+    }
+    return [gl.getParameter(gl.RENDERER), '5.1'];
+  } catch(e) { return ['blocked', '0']; }
+}
+const [webgl, webglBits] = webglInfo();
+addSignal('WebGL renderer', webgl, webglBits, 'red');
+
+// ── Audio fingerprint ────────────────────────────────────
+function audioFingerprint(cb) {
+  try {
+    const ac = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 44100, 44100);
+    const osc = ac.createOscillator();
+    const comp = ac.createDynamicsCompressor();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(10000, ac.currentTime);
+    [['threshold',-50],['knee',40],['ratio',12],['attack',0],['release',0.25]].forEach(([k,v]) => { if(comp[k]) comp[k].setValueAtTime(v, ac.currentTime); });
+    osc.connect(comp);
+    comp.connect(ac.destination);
+    osc.start(0);
+    ac.startRendering();
+    ac.oncomplete = e => {
+      const buf = e.renderedBuffer.getChannelData(0);
+      let sum = 0;
+      for (let i = 4500; i < 5000; i++) sum += Math.abs(buf[i]);
+      cb((sum).toFixed(8).substring(0, 12));
+    };
+  } catch(e) { cb('blocked'); }
+}
+audioFingerprint(hash => {
+  addSignal('audio context', hash, '7.6', 'red');
+  renderAll();
+});
+
+// ── Fonts ────────────────────────────────────────────────
+function detectFonts() {
+  const test = ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Georgia',
+                'Verdana', 'Comic Sans MS', 'Impact', 'Trebuchet MS', 'Arial Black',
+                'Palatino', 'Garamond', 'Bookman', 'Avant Garde', 'AppleGothic',
+                'Ubuntu', 'Roboto', 'Noto Sans', 'Fira Code', 'JetBrains Mono'];
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const detected = [];
+  test.forEach(f => {
+    ctx.font = `72px ${f}, monospace`;
+    const w = ctx.measureText('mmmmmmmmmml').width;
+    ctx.font = '72px monospace';
+    const baseline = ctx.measureText('mmmmmmmmmml').width;
+    if (Math.abs(w - baseline) > 0.01) detected.push(f);
+  });
+  return detected;
+}
+const fonts = detectFonts();
+addSignal('fonts detected', fonts.slice(0, 8).join(', ') + (fonts.length > 8 ? ` +${fonts.length - 8}` : ''), (Math.log2(fonts.length + 1) * 1.5).toFixed(1), 'amber');
+
+// ── IP / geolocation ─────────────────────────────────────
+addSignal('IP geolocation', 'blocked by browser — VPN-irrelevant; JS fingerprint persists', '0', 'dim');
+
+// ── Render ───────────────────────────────────────────────
+function renderAll() {
+  const totalBits = signals.reduce((s, sig) => s + parseFloat(sig.bits || 0), 0);
+  const bitsEl = document.getElementById('fp-bits');
+  bitsEl.textContent = totalBits.toFixed(1);
+  const capEl = document.getElementById('fp-caption');
+
+  if (totalBits >= 33) {
+    capEl.textContent = 'globally unique — 1 in ' + Math.round(Math.pow(2, totalBits) / 1e9) + 'B';
+    capEl.style.color = 'var(--red)';
+  } else if (totalBits >= 20) {
+    capEl.textContent = '1 in ' + Math.round(Math.pow(2, totalBits) / 1e6) + 'M — highly identifiable';
+    capEl.style.color = 'var(--amber)';
+  } else {
+    capEl.textContent = 'partial fingerprint — browser may be blocking some signals';
+    capEl.style.color = 'var(--dim)';
+  }
+
+  // entropy bar
+  const colors = { red: '#f87171', amber: '#f59e0b', cyan: '#22d3ee', green: '#00ff41', dim: '#475569' };
+  const barEl = document.getElementById('ent-bar');
+  barEl.innerHTML = '';
+  const sorted = [...signals].sort((a, b) => parseFloat(b.bits) - parseFloat(a.bits));
+  sorted.forEach(s => {
+    const bits = parseFloat(s.bits);
+    if (bits <= 0) return;
+    const pct = (bits / totalBits * 100).toFixed(1);
+    const seg = document.createElement('div');
+    seg.className = 'entropy-seg';
+    seg.style.width = pct + '%';
+    seg.style.background = colors[s.colorClass] || '#475569';
+    if (parseFloat(pct) > 8) seg.textContent = s.bits + ' b';
+    seg.title = `${s.key}: ${s.bits} bits`;
+    barEl.appendChild(seg);
+  });
+
+  // legend
+  const legEl = document.getElementById('ent-legend');
+  legEl.innerHTML = '';
+  sorted.slice(0, 5).forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'entropy-dot';
+    d.style.setProperty('--c', colors[s.colorClass] || '#475569');
+    d.textContent = s.key + ' · ' + s.bits + 'b';
+    legEl.appendChild(d);
+  });
+
+  // table
+  const grid = document.getElementById('fp-grid');
+  grid.innerHTML = '';
+  signals.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'fp-row';
+    row.innerHTML = `
+      <span class="fp-key">${s.key}</span>
+      <span class="fp-val ${s.colorClass}">${s.value}</span>
+      <span class="fp-entropy">${s.bits}b</span>`;
+    grid.appendChild(row);
+  });
+}
+
+// initial render (may re-render as async signals arrive)
+renderAll();
+</script>
+</body>
+</html>

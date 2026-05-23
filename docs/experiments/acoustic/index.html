@@ -112,7 +112,7 @@
     <div class="crosshair-info" id="crosshair-info">tap the spectrum to inspect a frequency</div>
 
     <div style="width:100%">
-      <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">waterfall — last 10 seconds</div>
+      <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">waterfall — time → · freq ↑</div>
       <div class="vis-frame">
         <canvas id="canvas-waterfall"></canvas>
       </div>
@@ -132,7 +132,7 @@
         Fast Fourier Transform (FFT). This converts the time-domain audio signal into frequency bins —
         each bin shows how much energy exists at a specific frequency.</p>
         <p>With an FFT size of 4096 and 44.1kHz sample rate, each bin covers ~10.8Hz.
-        The waterfall chart scrolls new spectrum lines downward over time so you can see how frequencies evolve.
+        The waterfall scrolls left-to-right: time progresses rightward, frequency increases upward, so you can see how the spectrum evolves.
         Peaks are detected when a bin exceeds the noise floor by &gt;15 dB.</p>
         <p>Known signatures: <code>50Hz</code> = European mains · <code>60Hz</code> = North American mains ·
         <code>100/120Hz</code> = LED flicker harmonic · <code>18–22kHz</code> = ultrasonic beacon or pest repeller.</p>
@@ -272,27 +272,28 @@ function draw() {
   document.getElementById('stat-db').textContent    = peakDb.toFixed(1)+' dB';
   document.getElementById('stat-noise').textContent = noiseDb.toFixed(1)+' dB';
 
-  // ── waterfall ──
-  waterfallBuf.unshift(buf.slice(startBin, endBin));
-  if (waterfallBuf.length > WATERFALL_ROWS) waterfallBuf.pop();
+  // ── waterfall (left-to-right: time on X, frequency on Y, newest column on right) ──
+  waterfallBuf.push(buf.slice(startBin, endBin));
+  if (waterfallBuf.length > WATERFALL_ROWS) waterfallBuf.shift();
 
   const wc = document.getElementById('canvas-waterfall');
   const WW = wc.offsetWidth, WH = 140;
   if (wc.width !== WW*dpr) { wc.width=WW*dpr; wc.height=WH*dpr; }
   const wctx = wc.getContext('2d');
   wctx.scale(dpr,dpr); wctx.clearRect(0,0,WW,WH);
-  const rowH = WH / WATERFALL_ROWS;
+  const colW = WW / WATERFALL_ROWS;
   const bins = endBin - startBin;
-  waterfallBuf.forEach((row,ri) => {
-    const y = ri*rowH;
-    row.forEach((v,bi) => {
-      const x = bi*(WW/bins);
-      const t = v/255;
-      const r2 = Math.floor(t*255);
-      const g2 = Math.floor(t<0.5?t*2*80:80+(t-0.5)*2*175);
-      const b2 = Math.floor(t<0.5?t*2*160:0);
-      wctx.fillStyle=`rgba(${r2},${g2},${b2},0.9)`;
-      wctx.fillRect(x,y,WW/bins+0.5,rowH+0.5);
+  waterfallBuf.forEach((col, ci) => {
+    const x = ci * colW;
+    col.forEach((v, bi) => {
+      // bi=0 is lowest freq → bottom of canvas; bi=max is highest → top
+      const y = WH - (bi + 1) * (WH / bins);
+      const t = v / 255;
+      const r2 = Math.floor(t * 255);
+      const g2 = Math.floor(t < 0.5 ? t * 2 * 80 : 80 + (t - 0.5) * 2 * 175);
+      const b2 = Math.floor(t < 0.5 ? t * 2 * 160 : 0);
+      wctx.fillStyle = `rgba(${r2},${g2},${b2},0.9)`;
+      wctx.fillRect(x, y, colW + 0.5, WH / bins + 0.5);
     });
   });
   wctx.setTransform(1,0,0,1,0,0);
