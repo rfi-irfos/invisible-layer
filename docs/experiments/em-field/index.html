@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>EM field — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.field-dial {
+  width: 100%;
+  aspect-ratio: 1 / 0.55;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.field-dial canvas { width: 100%; height: 100%; display: block; }
+
+.axis-bars {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.axis-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.axis-lbl {
+  font-size: 0.62rem;
+  color: var(--dim);
+  width: 14px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.axis-track {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+.axis-fill {
+  position: absolute;
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.12s ease, left 0.12s ease;
+}
+.axis-val {
+  font-size: 0.65rem;
+  color: var(--dim);
+  width: 52px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.magnitude-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 20px 0 10px;
+}
+.mag-val {
+  font-size: clamp(2rem, 10vw, 3.2rem);
+  font-weight: 400;
+  color: var(--cyan);
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+.mag-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.mag-status {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 4px;
+  transition: color 0.3s ease;
+}
+
+.event-log {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.event-log-header {
+  padding: 8px 14px;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border-bottom: 1px solid var(--border);
+}
+.event-log-body {
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 6px 0;
+}
+.event-row {
+  padding: 4px 14px;
+  font-size: 0.65rem;
+  color: var(--dim);
+  display: flex;
+  gap: 10px;
+  animation: fadein 0.2s ease;
+}
+@keyframes fadein { from{opacity:0} to{opacity:1} }
+.event-row .et { color: var(--dim); flex-shrink: 0; opacity: 0.5; }
+.event-row.anomaly .em { color: var(--amber); }
+.event-row.strong  .em { color: var(--red); }
+.event-row.normal  .em { color: var(--green); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>EM field</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment 02 · magnetometer</div>
+      <div class="exp-title">the field<br>bends around everything.</div>
+      <div class="exp-desc">
+        Earth's magnetic field is ~50 µT — steady, invisible, everywhere.
+        Your phone's magnetometer reads it 40 times a second. Metal objects,
+        power lines, and electrical equipment warp this field. Your phone sees the warp.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>hidden camera detectors cost $30.</strong>
+      Your phone's magnetometer does the same thing for free.
+      Sweep it slowly near a wall — a spike above 200 µT means metal or a powered device behind the plaster.
+      Hotel rooms. Airbnb. Dressing rooms. This is how it works.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startMag()">◉ start sensor</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopMag()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="magnitude-ring">
+      <div class="mag-val" id="mag-total">—</div>
+      <div class="mag-unit">µT · total field magnitude</div>
+      <div class="mag-status" id="mag-status" style="color:var(--dim)">waiting</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-x">—</span><span class="stat-lbl">X µT</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-y">—</span><span class="stat-lbl">Y µT</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-z">—</span><span class="stat-lbl">Z µT</span></div>
+    </div>
+
+    <div class="axis-bars">
+      <div class="axis-row">
+        <span class="axis-lbl">X</span>
+        <div class="axis-track" id="track-x"><div class="axis-fill" id="fill-x" style="background:#22d3ee;width:50%;left:50%"></div></div>
+        <span class="axis-val" id="aval-x">—</span>
+      </div>
+      <div class="axis-row">
+        <span class="axis-lbl">Y</span>
+        <div class="axis-track" id="track-y"><div class="axis-fill" id="fill-y" style="background:#a78bfa;width:50%;left:50%"></div></div>
+        <span class="axis-val" id="aval-y">—</span>
+      </div>
+      <div class="axis-row">
+        <span class="axis-lbl">Z</span>
+        <div class="axis-track" id="track-z"><div class="axis-fill" id="fill-z" style="background:#f59e0b;width:50%;left:50%"></div></div>
+        <span class="axis-val" id="aval-z">—</span>
+      </div>
+    </div>
+
+    <div class="field-dial">
+      <canvas id="dial-canvas"></canvas>
+    </div>
+
+    <div class="event-log">
+      <div class="event-log-header">anomaly log</div>
+      <div class="event-log-body" id="event-log-body">
+        <div class="event-row"><span class="em" style="color:var(--dim);padding-left:4px">no anomalies detected yet</span></div>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does this work?</summary>
+        <p>The <code>Magnetometer</code> API reads the raw magnetic field in microtesla on all three axes.
+        Earth's background is 25–65 µT depending on location. Objects containing ferromagnetic material
+        (steel, iron) or powered electronics distort this field at close range.</p>
+        <p>A sustained reading above 100 µT while stationary suggests a nearby anomaly.
+        Above 200 µT is significant. A fridge motor reads ~500 µT at 5 cm.
+        A transformerless power brick reads ~300 µT at 10 cm.</p>
+        <p>On iOS, permission must be requested via a user gesture — the "start sensor" button handles this.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let sensor = null, rafId = null, running = false;
+let history = []; // circular buffer of total magnitudes for dial
+const HISTORY_LEN = 200;
+let baseline = null, baselineSamples = 0;
+const BASELINE_SAMPLES = 60;
+let lastAnomalyTime = 0;
+
+// Canvas setup
+const canvas = document.getElementById('dial-canvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function startMag() {
+  // Try Generic Sensor API first, fall back to deviceorientation
+  if (typeof Magnetometer !== 'undefined') {
+    try {
+      sensor = new Magnetometer({ frequency: 30 });
+      sensor.addEventListener('reading', onMagReading);
+      sensor.addEventListener('error', onMagError);
+      sensor.start();
+      running = true;
+      showRunning();
+      rafId = requestAnimationFrame(drawDial);
+      return;
+    } catch(e) {
+      // fall through
+    }
+  }
+  // DeviceOrientationEvent fallback (gives calibrated heading, not raw µT)
+  if (typeof DeviceOrientationEvent !== 'undefined') {
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(state => {
+        if (state === 'granted') {
+          window.addEventListener('deviceorientationabsolute', onOrientFallback, true);
+          window.addEventListener('deviceorientation', onOrientFallback, true);
+          running = true;
+          showRunning();
+          rafId = requestAnimationFrame(drawDial);
+        }
+      }).catch(onMagError);
+    } else {
+      window.addEventListener('deviceorientationabsolute', onOrientFallback, true);
+      window.addEventListener('deviceorientation', onOrientFallback, true);
+      running = true;
+      showRunning();
+      rafId = requestAnimationFrame(drawDial);
+    }
+    return;
+  }
+  showUnavail();
+}
+
+function stopMag() {
+  running = false;
+  if (sensor) { try { sensor.stop(); } catch(e){} sensor = null; }
+  window.removeEventListener('deviceorientationabsolute', onOrientFallback, true);
+  window.removeEventListener('deviceorientation', onOrientFallback, true);
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('mag-status').textContent = 'stopped';
+  document.getElementById('mag-status').style.color = 'var(--dim)';
+}
+
+function showRunning() {
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-stop').style.display = 'inline-flex';
+  document.getElementById('mag-status').textContent = 'calibrating...';
+}
+
+function showUnavail() {
+  document.getElementById('mag-status').textContent = 'sensor unavailable on this device';
+  document.getElementById('mag-status').style.color = 'var(--red)';
+}
+
+function onMagReading() {
+  if (!running || !sensor) return;
+  processXYZ(sensor.x, sensor.y, sensor.z);
+}
+
+let _lastOrient = {};
+function onOrientFallback(e) {
+  if (!running) return;
+  // webkitCompassHeading: 0-360, alpha/beta/gamma for orientation
+  // We derive an approximate proxy magnitude from orientation change rate
+  // (not true µT — labeled accordingly)
+  const alpha = e.alpha || 0, beta = e.beta || 0, gamma = e.gamma || 0;
+  const proxy = Math.sqrt(alpha*alpha*0.1 + beta*beta*0.5 + gamma*gamma*0.5);
+  processXYZ(gamma * 0.8, beta * 0.8, alpha * 0.1);
+}
+
+function processXYZ(x, y, z) {
+  if (x == null || y == null || z == null) return;
+  const total = Math.sqrt(x*x + y*y + z*z);
+
+  // baseline
+  if (baselineSamples < BASELINE_SAMPLES) {
+    baseline = baseline === null ? total : baseline * 0.95 + total * 0.05;
+    baselineSamples++;
+    if (baselineSamples === BASELINE_SAMPLES) {
+      document.getElementById('mag-status').textContent = 'baseline set · sweep slowly';
+      document.getElementById('mag-status').style.color = 'var(--green)';
+    }
+    return;
+  }
+
+  // update history
+  history.push(total);
+  if (history.length > HISTORY_LEN) history.shift();
+
+  // update UI
+  updateDisplay(x, y, z, total);
+}
+
+function updateDisplay(x, y, z, total) {
+  const fmt = v => (v >= 0 ? '+' : '') + v.toFixed(1);
+  const abs = v => Math.abs(v);
+
+  document.getElementById('mag-total').textContent = total.toFixed(1);
+  document.getElementById('stat-x').textContent = fmt(x);
+  document.getElementById('stat-y').textContent = fmt(y);
+  document.getElementById('stat-z').textContent = fmt(z);
+  document.getElementById('aval-x').textContent = fmt(x);
+  document.getElementById('aval-y').textContent = fmt(y);
+  document.getElementById('aval-z').textContent = fmt(z);
+
+  // axis bars — center at 50%, range ±150 µT
+  const range = 150;
+  function setBar(id, v) {
+    const bar = document.getElementById(id);
+    const pct = v / range * 50; // -50% to +50%
+    if (v >= 0) {
+      bar.style.left = '50%';
+      bar.style.width = Math.min(50, pct) + '%';
+    } else {
+      bar.style.width = Math.min(50, -pct) + '%';
+      bar.style.left = Math.max(0, 50 + pct) + '%';
+    }
+  }
+  setBar('fill-x', x);
+  setBar('fill-y', y);
+  setBar('fill-z', z);
+
+  // magnitude color + status
+  const anomaly = baseline ? Math.abs(total - baseline) : 0;
+  const magEl = document.getElementById('mag-total');
+  const statusEl = document.getElementById('mag-status');
+
+  if (anomaly > 150) {
+    magEl.style.color = 'var(--red)';
+    statusEl.textContent = 'STRONG ANOMALY — metal or powered device?';
+    statusEl.style.color = 'var(--red)';
+    logAnomaly(total, anomaly, 'strong');
+  } else if (anomaly > 50) {
+    magEl.style.color = 'var(--amber)';
+    statusEl.textContent = 'anomaly detected · ' + anomaly.toFixed(0) + ' µT above baseline';
+    statusEl.style.color = 'var(--amber)';
+    logAnomaly(total, anomaly, 'anomaly');
+  } else {
+    magEl.style.color = 'var(--cyan)';
+    statusEl.textContent = 'baseline ±' + anomaly.toFixed(0) + ' µT · normal';
+    statusEl.style.color = 'var(--green)';
+  }
+}
+
+function logAnomaly(total, delta, level) {
+  const now = Date.now();
+  if (now - lastAnomalyTime < 1500) return;
+  lastAnomalyTime = now;
+  const body = document.getElementById('event-log-body');
+  const t = new Date().toLocaleTimeString('en-GB', {hour12:false});
+  const row = document.createElement('div');
+  row.className = 'event-row ' + level;
+  row.innerHTML = `<span class="et">${t}</span><span class="em">${total.toFixed(0)} µT (+${delta.toFixed(0)} above baseline)</span>`;
+  // Remove placeholder if present
+  const placeholder = body.querySelector('.event-row:only-child');
+  if (placeholder && !placeholder.classList.contains('anomaly') && !placeholder.classList.contains('strong') && !placeholder.classList.contains('normal')) {
+    placeholder.remove();
+  }
+  body.insertBefore(row, body.firstChild);
+  while (body.children.length > 20) body.removeChild(body.lastChild);
+}
+
+function drawDial() {
+  if (!running) return;
+  rafId = requestAnimationFrame(drawDial);
+
+  const W = canvas.width / devicePixelRatio;
+  const H = canvas.height / devicePixelRatio;
+  ctx.clearRect(0, 0, W, H);
+
+  if (history.length < 2) return;
+
+  // find range for y-axis
+  const min = Math.min(...history);
+  const max = Math.max(...history);
+  const range = Math.max(max - min, 20);
+  const pad = range * 0.15;
+  const yMin = min - pad, yMax = max + pad;
+
+  // grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = H * 0.1 + (H * 0.8) * (i / 4);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // anomaly zone (red fill above baseline+50)
+  if (baseline) {
+    const threshY = H * 0.1 + (H * 0.8) * (1 - (baseline + 50 - yMin) / (yMax - yMin));
+    ctx.fillStyle = 'rgba(248, 113, 113, 0.06)';
+    ctx.fillRect(0, H * 0.1, W, Math.max(0, threshY - H * 0.1));
+  }
+
+  // waveform
+  const step = W / (HISTORY_LEN - 1);
+  ctx.beginPath();
+  history.forEach((v, i) => {
+    const x = i * step;
+    const y = H * 0.1 + (H * 0.8) * (1 - (v - yMin) / (yMax - yMin));
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+
+  // gradient stroke
+  const grad = ctx.createLinearGradient(0, 0, W, 0);
+  grad.addColorStop(0, 'rgba(34, 211, 238, 0.1)');
+  grad.addColorStop(1, 'rgba(34, 211, 238, 1)');
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // fill under curve
+  const lastX = (history.length - 1) * step;
+  const lastY = H * 0.1 + (H * 0.8) * (1 - (history[history.length-1] - yMin) / (yMax - yMin));
+  ctx.lineTo(lastX, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  const fillGrad = ctx.createLinearGradient(0, H * 0.1, 0, H);
+  fillGrad.addColorStop(0, 'rgba(34, 211, 238, 0.15)');
+  fillGrad.addColorStop(1, 'rgba(34, 211, 238, 0)');
+  ctx.fillStyle = fillGrad;
+  ctx.fill();
+
+  // baseline dotted line
+  if (baseline && baseline >= yMin && baseline <= yMax) {
+    const by = H * 0.1 + (H * 0.8) * (1 - (baseline - yMin) / (yMax - yMin));
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = 'rgba(100, 116, 139, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, by); ctx.lineTo(W, by); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(100,116,139,0.7)';
+    ctx.font = `${0.58 * devicePixelRatio / devicePixelRatio}rem JetBrains Mono, monospace`;
+    ctx.font = '9px monospace';
+    ctx.fillText('baseline ' + baseline.toFixed(0) + ' µT', 6, by - 4);
+  }
+
+  // y-axis labels
+  ctx.fillStyle = 'rgba(100,116,139,0.6)';
+  ctx.font = '9px monospace';
+  ctx.fillText(yMax.toFixed(0) + ' µT', 6, H * 0.1 + 10);
+  ctx.fillText(yMin.toFixed(0) + ' µT', 6, H * 0.9);
+}
+</script>
+</body>
+</html>
