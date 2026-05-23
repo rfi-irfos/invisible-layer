@@ -267,13 +267,13 @@ body { display:flex; flex-direction:column; align-items:center; }
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">magnetometer</span></div>
     </a>
-    <a class="card coming" data-cat="rf" href="#">
+    <a class="card" data-cat="rf" href="docs/experiments/wifi-density/">
       <div class="card-icon">⠿</div>
       <div class="card-body">
         <div class="card-title">WiFi density map</div>
-        <div class="card-desc">Walk a room. Signal strength as spatial data. Map the invisible RF topology around you.</div>
+        <div class="card-desc">Connection speed, RTT, and network congestion reveal how many devices are fighting for bandwidth around you.</div>
       </div>
-      <div class="card-right"><span class="badge soon">soon</span><span class="card-sensor">wifi rssi</span></div>
+      <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">network api</span></div>
     </a>
   </div>
 
@@ -328,10 +328,18 @@ body { display:flex; flex-direction:column; align-items:center; }
     <a class="card" data-cat="motion" href="docs/experiments/motion/">
       <div class="card-icon">⟁</div>
       <div class="card-body">
-        <div class="card-title">surface resonance</div>
-        <div class="card-desc">Place your phone on any surface. Footsteps, machines, traffic — every surface is a membrane.</div>
+        <div class="card-title">motion force field</div>
+        <div class="card-desc">Your acceleration rendered as a live force field. Watch the sensor react to every shake, step, and tilt.</div>
       </div>
       <div class="card-right"><span class="badge live">live</span><span class="card-sensor">accelerometer</span></div>
+    </a>
+    <a class="card" data-cat="motion" href="docs/experiments/surface-resonance/">
+      <div class="card-icon">⋰</div>
+      <div class="card-body">
+        <div class="card-title">surface material ID</div>
+        <div class="card-desc">Tap any surface. The vibration ring-down frequency reveals whether it's concrete, wood, glass, or thin metal.</div>
+      </div>
+      <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">accelerometer</span></div>
     </a>
     <a class="card" data-cat="motion" href="docs/experiments/gait/">
       <div class="card-icon">⤖</div>
@@ -386,13 +394,21 @@ body { display:flex; flex-direction:column; align-items:center; }
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">camera · flash</span></div>
     </a>
-    <a class="card coming" data-cat="light" href="#">
+    <a class="card" data-cat="light" href="docs/experiments/sky-polarization/">
       <div class="card-icon">◐</div>
       <div class="card-body">
         <div class="card-title">sky polarization</div>
-        <div class="card-desc">The sky is polarized. Navigate without GPS like a bee. Detect it with camera + polarizing filter.</div>
+        <div class="card-desc">The sky is polarized. Bees navigate by it. Your camera can estimate the sun's position even when it's hidden.</div>
       </div>
-      <div class="card-right"><span class="badge soon">soon</span><span class="card-sensor">camera</span></div>
+      <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">camera · compass</span></div>
+    </a>
+    <a class="card" data-cat="light" href="docs/experiments/led-quality/">
+      <div class="card-icon">◑</div>
+      <div class="card-body">
+        <div class="card-title">LED light quality</div>
+        <div class="card-desc">Point at a light source. Your camera extracts color temperature, CRI estimate, and blue spike hazard.</div>
+      </div>
+      <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">camera</span></div>
     </a>
   </div>
 
@@ -431,13 +447,13 @@ body { display:flex; flex-direction:column; align-items:center; }
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">gps accuracy</span></div>
     </a>
-    <a class="card coming" data-cat="meta" href="#">
+    <a class="card" data-cat="meta" href="docs/experiments/human-density/">
       <div class="card-icon">⠿</div>
       <div class="card-body">
-        <div class="card-title">human density from WiFi</div>
-        <div class="card-desc">Count nearby WiFi probe requests. Each one is a person's phone shouting for familiar networks.</div>
+        <div class="card-title">crowd density sensor</div>
+        <div class="card-desc">Audio RMS, network congestion, and BLE advertisement count combine to estimate how many people are around you.</div>
       </div>
-      <div class="card-right"><span class="badge soon">soon</span><span class="card-sensor">wifi probes</span></div>
+      <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">mic · network · ble</span></div>
     </a>
     <a class="card" data-cat="meta" href="docs/experiments/the-meta/">
       <div class="card-icon">∞</div>
