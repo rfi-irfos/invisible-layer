@@ -320,6 +320,14 @@ function loop() {
 
   cx.clearRect(0, 0, W, H);
 
+  // Dark sidebars so labels read against any camera background
+  const lGrad = cx.createLinearGradient(0,0,W*0.22,0);
+  lGrad.addColorStop(0,'rgba(0,0,0,0.55)'); lGrad.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle = lGrad; cx.fillRect(0,0,W*0.22,H);
+  const rGrad = cx.createLinearGradient(W*0.72,0,W,0);
+  rGrad.addColorStop(0,'rgba(0,0,0,0)'); rGrad.addColorStop(1,'rgba(0,0,0,0.55)');
+  cx.fillStyle = rGrad; cx.fillRect(W*0.72,0,W*0.28,H);
+
   if (L.sound)    drawSound(t);
   if (L.em)       drawEM(t);
   if (L.motion)   drawMotion(t);
@@ -329,17 +337,13 @@ function loop() {
 }
 
 // ─── SOUND — sine waves spanning full width ─────────────────
-const waveHistories = Array.from({length:6}, () => new Array(W||300).fill(0));
 function drawSound(t) {
-  // 6 frequency bands → 6 stacked waves
-  const bands = [0,1,2,3,4,5]; // low to high
-  const yPositions = [0.20, 0.30, 0.40, 0.50, 0.60, 0.70]; // % of H
-  const colors = ['#00ff4130','#00ff4140','#00ff4155','#00ff4155','#00ff4140','#00ff4130'];
-  const strokeColors = ['#00ff4188','#00ff41aa','#00ff41cc','#00ff41cc','#00ff41aa','#00ff4188'];
+  const yPositions = [0.20, 0.30, 0.40, 0.50, 0.60, 0.70];
+  const strokeColors = ['#00ff4166','#00ff4188','#00ff41bb','#00ff41bb','#00ff4188','#00ff4166'];
 
   cx.save();
 
-  // draw shockwaves (pressure waves)
+  // shockwaves on loud transients
   shockwaves.forEach((sw, i) => {
     const age = (performance.now() - sw.born) / 1000;
     sw.r = 20 + age * 180;
@@ -347,50 +351,39 @@ function drawSound(t) {
     if (sw.alpha <= 0) { shockwaves.splice(i, 1); return; }
     cx.beginPath();
     cx.arc(sw.x, sw.y, sw.r, 0, Math.PI*2);
-    cx.strokeStyle = `rgba(0,255,65,${sw.alpha * 0.6})`;
-    cx.lineWidth = 2;
-    cx.stroke();
+    cx.strokeStyle = `rgba(0,255,65,${sw.alpha * 0.7})`;
+    cx.lineWidth = 2.5;
+    cx.shadowBlur = 12; cx.shadowColor = '#00ff41';
+    cx.stroke(); cx.shadowBlur = 0;
     cx.beginPath();
-    cx.arc(sw.x, sw.y, sw.r * 0.6, 0, Math.PI*2);
+    cx.arc(sw.x, sw.y, sw.r * 0.55, 0, Math.PI*2);
     cx.strokeStyle = `rgba(0,255,65,${sw.alpha * 0.3})`;
-    cx.lineWidth = 1;
-    cx.stroke();
+    cx.lineWidth = 1; cx.stroke();
   });
 
-  // main frequency waves
-  bands.forEach((b, idx) => {
-    const amp = S.fftBands[b] * H * 0.05 + 8; // min 8px so always visible
+  // 6 frequency band waves — stroke only (no muddy fill)
+  [0,1,2,3,4,5].forEach((b, idx) => {
+    const amp = S.fftBands[b] * H * 0.05 + 9;
     const freq = (b + 1) * 0.8 + 1;
     const baseY = H * yPositions[idx];
-    const N = 120;
-
     cx.beginPath();
-    for (let i = 0; i <= N; i++) {
-      const x = (i / N) * W;
+    for (let i = 0; i <= 120; i++) {
+      const x = (i / 120) * W;
       const phase = t * freq * (0.8 + b * 0.15);
       const y = baseY + Math.sin(i * 0.18 + phase) * amp
                       + Math.sin(i * 0.07 + phase * 0.6) * amp * 0.4;
       i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y);
     }
     cx.strokeStyle = strokeColors[idx];
-    cx.lineWidth = idx === 2 || idx === 3 ? 2 : 1.5;
-    cx.shadowBlur = 6 + S.fftBands[b] * 14;
-    cx.shadowColor = strokeColors[idx];
-    cx.stroke();
-    cx.shadowBlur = 0;
-
-    // fill area under wave
-    cx.lineTo(W, baseY);
-    cx.lineTo(0, baseY);
-    cx.closePath();
-    cx.fillStyle = colors[idx];
-    cx.fill();
+    cx.lineWidth = idx === 2 || idx === 3 ? 2.5 : 1.8;
+    cx.shadowBlur = 8 + S.fftBands[b] * 16;
+    cx.shadowColor = '#00ff41';
+    cx.stroke(); cx.shadowBlur = 0;
   });
 
-  // audio level readout
-  cx.fillStyle = `rgba(0,255,65,${0.5 + S.audioLevel*0.5})`;
-  cx.font = '9px monospace';
-  cx.fillText('ACOUSTIC  ' + (S.audioRMS * 100).toFixed(0) + ' dB', W*0.04, H*0.175);
+  // pill label — left side, middle wave
+  const db = Math.round(S.audioRMS * 120);
+  pill(cx, 14, H * 0.395, '#00ff41', 'SOUND  ' + db + ' dB');
 
   cx.restore();
 }
@@ -463,16 +456,11 @@ function drawEM(t) {
     }
   }
 
-  // field label
-  cx.globalAlpha = 0.9;
-  cx.fillStyle = isAnom ? '#f87171' : '#a78bfa';
-  cx.font = isAnom ? 'bold 10px monospace' : '9px monospace';
-  cx.textAlign = 'center';
-  cx.fillText(isAnom ? '! EM ANOMALY' : 'EM FIELD', cx_, cy_ - 80);
-  cx.font = '9px monospace';
-  cx.fillStyle = 'rgba(255,255,255,0.4)';
-  cx.fillText(S.magTotal.toFixed(0) + ' µT', cx_, cy_ - 68);
+  // field label — pill on left
+  cx.globalAlpha = 1;
   cx.textAlign = 'left';
+  const emLbl = isAnom ? '! EM ANOMALY  ' + S.magTotal.toFixed(0) + ' µT' : 'MAGNETIC FIELD  ' + S.magTotal.toFixed(0) + ' µT';
+  pill(cx, 14, cy_ - 60, isAnom ? '#f87171' : '#a78bfa', emLbl);
 
   cx.restore();
 }
@@ -553,11 +541,7 @@ function drawMotion(t) {
     cx.fill();
   }
 
-  // label
-  cx.globalAlpha = 0.85;
-  cx.fillStyle = 'rgba(34,211,238,0.7)';
-  cx.font = '9px monospace';
-  cx.fillText('ACCEL  ' + mag.toFixed(1) + ' m/s²', W*0.04, H - 110);
+  pill(cx, 14, H - 115, '#22d3ee', 'MOTION  ' + mag.toFixed(1) + ' m/s²');
 
   cx.restore();
 }
@@ -575,41 +559,52 @@ const rfBands = [
 function drawRF(t) {
   cx.save();
 
-  const rightX = W - 14;
-  rfBands.forEach((band, i) => {
+  // RTT drives WiFi wave agitation (real data)
+  const rttAgit = S.netRtt ? Math.min(2.5, S.netRtt / 40) : 1;
+
+  rfBands.forEach((band) => {
     const active = band.always || (band.label.startsWith('5G') && S.netType === '5g');
     if (!active) return;
 
     const y = H * band.y;
-    const pulse = 0.4 + Math.sin(t * band.spd * Math.PI * 2) * 0.3;
+    const isWifi = band.label.startsWith('WiFi');
+    const spd = isWifi ? band.spd * rttAgit : band.spd;
+    const pulse = 0.5 + Math.sin(t * spd * Math.PI * 2) * 0.3;
+    const waveAmp = isWifi ? 10 + rttAgit * 4 : 11;
 
-    // wave line sweeping left-to-right
-    const waveLen = W * 0.3;
-    const offset = ((t * band.spd * 0.5) % 1) * (W + waveLen);
-    const phases = 3;
-    for (let p=0; p<phases; p++) {
-      const ox = offset - p * waveLen * 0.4;
+    const waveLen = W * 0.32;
+    const offset = ((t * spd * 0.45) % 1) * (W + waveLen);
+
+    for (let p = 0; p < 3; p++) {
+      const ox = offset - p * waveLen * 0.38;
       if (ox < -waveLen || ox > W + waveLen) continue;
       cx.beginPath();
-      for (let x=Math.max(0, ox-waveLen); x<=Math.min(W, ox+waveLen); x+=4) {
+      for (let x = Math.max(0, ox - waveLen); x <= Math.min(W, ox + waveLen); x += 3) {
         const d = (x - ox) / waveLen;
-        const envelope = Math.exp(-d*d*4);
-        const wy = y + Math.sin(d * Math.PI * 8 + t * band.spd * 6) * 8 * envelope;
-        x === Math.max(0, ox-waveLen) ? cx.moveTo(x, wy) : cx.lineTo(x, wy);
+        const env = Math.exp(-d * d * 4);
+        const wy = y + Math.sin(d * Math.PI * 8 + t * spd * 6) * waveAmp * env;
+        x === Math.max(0, ox - waveLen) ? cx.moveTo(x, wy) : cx.lineTo(x, wy);
       }
-      cx.strokeStyle = band.col + Math.round((0.15 + pulse*0.3*(1-p*0.3))*255).toString(16).padStart(2,'0');
-      cx.lineWidth = p === 0 ? 1.5 : 0.8;
-      if (p === 0) { cx.shadowBlur = 8; cx.shadowColor = band.col; }
-      cx.stroke();
-      cx.shadowBlur = 0;
+      const alpha = Math.round((0.2 + pulse * 0.4 * (1 - p * 0.28)) * 255).toString(16).padStart(2, '0');
+      cx.strokeStyle = band.col + alpha;
+      cx.lineWidth = p === 0 ? 2 : 1;
+      if (p === 0) { cx.shadowBlur = 10; cx.shadowColor = band.col; }
+      cx.stroke(); cx.shadowBlur = 0;
     }
 
-    // label on right
-    cx.fillStyle = band.col + 'cc';
-    cx.font = '8px monospace';
+    // label on right with dark background pill
+    const lbl = band.label;
+    cx.font = '10px monospace';
+    const tw = cx.measureText(lbl).width;
+    cx.fillStyle = 'rgba(0,0,0,0.6)';
+    cx.fillRect(W - tw - 22, y - 14, tw + 8, 16);
+    cx.fillStyle = band.col;
     cx.textAlign = 'right';
-    cx.fillText(band.label, rightX, y - 3);
+    cx.fillText(lbl, W - 14, y - 2);
   });
+
+  // pill on left for the RF layer
+  pill(cx, 14, H * 0.20, '#f59e0b', 'RF SIGNALS  always here');
 
   cx.textAlign = 'left';
   cx.restore();
@@ -618,6 +613,7 @@ function drawRF(t) {
 // ─── HUD — telemetry corners ─────────────────────────────────
 function drawHUD(t) {
   cx.save();
+  cx.shadowBlur = 3; cx.shadowColor = 'rgba(0,0,0,0.9)'; // text shadow for readability
   const pulse = 0.7 + Math.sin(t*1.5)*0.3;
 
   // ── Top-left: GPS ──
@@ -754,6 +750,28 @@ function drawSpectrumBar(t) {
 }
 
 // ─── Utils ───────────────────────────────────────────────────
+// Dark pill label — always readable on any background
+function pill(ctx, x, y, color, text) {
+  ctx.save();
+  ctx.font = 'bold 10px monospace';
+  const tw = ctx.measureText(text).width;
+  const ph = 17, pr = 4, px2 = x + tw + 14;
+  const py = y - 13;
+  ctx.fillStyle = 'rgba(0,0,0,0.72)';
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(x - 2, py, tw + 16, ph, pr);
+  } else {
+    ctx.rect(x - 2, py, tw + 16, ph);
+  }
+  ctx.fill();
+  ctx.fillStyle = color;
+  ctx.shadowBlur = 4; ctx.shadowColor = color;
+  ctx.fillText(text, x + 5, y);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
 function hexagon(ctx, x, y, r) {
   ctx.beginPath();
   for (let i=0;i<6;i++) {

@@ -99,9 +99,9 @@
     </div>
 
     <div class="limit-note">
-      Browser WiFi scanning is limited. This page uses the Connection API to read signal strength
-      of your <em>current</em> network and estimates nearby network count from Web Bluetooth scan data
-      where available. For a full scan list, use your phone's native WiFi settings screen.
+      Browsers can read your connection speed and RTT — but not the list of nearby networks.
+      That requires a native app. This page uses what it genuinely can read, and infers
+      network density from how congested your connection is.
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;margin-top:4px">
@@ -261,7 +261,7 @@ function renderNetworkList(networks) {
   const list = document.getElementById('wifi-list');
   if (!networks.length) { list.style.display = 'none'; return; }
   list.style.display = 'flex';
-  list.innerHTML = '<div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);padding:4px 0 8px">estimated nearby networks (simulated — browser cannot expose real scan)</div>';
+  list.innerHTML = '<div style="font-size:0.68rem;color:var(--dim);padding:4px 0 8px">Networks estimated from your connection type and speed. Browsers can\'t enumerate real WiFi SSIDs — only native apps can. Your phone\'s WiFi settings screen shows the actual list.</div>';
   networks.forEach(n => {
     const pct = Math.max(0, Math.min(100, (n.rssi + 90) / 60 * 100));
     const color = pct > 60 ? 'var(--green)' : pct > 30 ? 'var(--cyan)' : 'var(--dim)';
