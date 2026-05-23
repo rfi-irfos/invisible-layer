@@ -2,7 +2,7 @@
 
 **Your phone is a military-grade sensor array. Most people have no idea.**
 
-[![try it live →](https://img.shields.io/badge/try_it_live-→-00ff41?style=for-the-badge&labelColor=000000)](https://rfi-irfos.github.io/invisible-layer/)
+[![try it live →](https://img.shields.io/badge/try_it_live_%E2%86%92-open_on_your_phone-00ff41?style=for-the-badge&labelColor=000000&color=00ff41)](https://rfi-irfos.github.io/invisible-layer/)
 [![experiments](https://img.shields.io/badge/experiments-25-22d3ee?style=flat-square&labelColor=000000)](https://rfi-irfos.github.io/invisible-layer/)
 [![no install](https://img.shields.io/badge/no_install-browser_only-475569?style=flat-square&labelColor=000000)]()
 [![license](https://img.shields.io/badge/license-MIT-475569?style=flat-square&labelColor=000000)]()
@@ -11,7 +11,8 @@
 > Electromagnetic fields. Acoustic signatures. Motion. Light. Radio broadcasts from every device around you.
 > This is what it sees — and what others can infer from it.
 
-**[→ open on your phone now](https://rfi-irfos.github.io/invisible-layer/)**
+## **[→ rfi-irfos.github.io/invisible-layer](https://rfi-irfos.github.io/invisible-layer/)**
+### open on your phone. no install. no account. just the truth.
 
 ---
 
