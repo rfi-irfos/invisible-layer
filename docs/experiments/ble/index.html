@@ -2,360 +2,262 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>BLE broadcast scanner — invisible layer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>BLE scanner — invisible layer</title>
 <meta name="theme-color" content="#000000"/>
 <link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
 <style>
-  body { display: flex; flex-direction: column; align-items: center; }
+.device-list { display:flex; flex-direction:column; gap:8px; width:100%; }
+.device {
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:13px 15px;
+  display:flex; flex-direction:column; gap:6px;
+  animation: fadein 0.25s ease;
+}
+@keyframes fadein { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:none} }
+.device-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.device-name { font-size:0.82rem; color:#fff; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.rssi-strong{color:var(--green)} .rssi-mid{color:var(--amber)} .rssi-weak{color:var(--red)}
+.device-rssi { font-size:0.7rem; flex-shrink:0; }
+.rssi-bar { height:2px; background:var(--border); border-radius:1px; }
+.rssi-fill { height:100%; border-radius:1px; transition:width 0.4s ease, background 0.4s ease; }
+.device-meta { font-size:0.62rem; color:var(--dim); display:flex; gap:12px; }
 
-  .nav {
-    width: 100%; max-width: 640px;
-    padding: 16px 24px;
-    font-size: 0.7rem;
-    color: var(--dim);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-  .nav a { color: var(--dim); }
-  .nav a:hover { color: var(--cyan); }
-
-  .hero {
-    width: 100%; max-width: 640px;
-    padding: 40px 24px 32px;
-    display: flex; flex-direction: column; gap: 16px;
-  }
-
-  .hero-label {
-    font-size: 0.6rem; letter-spacing: 0.2em;
-    text-transform: uppercase; color: var(--cyan);
-  }
-  h1 { font-size: clamp(1.5rem, 6vw, 2.2rem); font-weight: 400; line-height: 1.15; }
-  .hero p { font-size: 0.82rem; color: var(--dim); line-height: 1.7; }
-
-  .shock-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--red);
-    border-radius: 4px;
-    padding: 16px 20px;
-    font-size: 0.78rem;
-    line-height: 1.6;
-    color: var(--dim);
-  }
-  .shock-box strong { color: var(--red); }
-
-  .controls {
-    width: 100%; max-width: 640px;
-    padding: 0 24px 24px;
-    display: flex; gap: 12px; flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .counter {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 12px 20px;
-    font-size: 0.75rem;
-    color: var(--dim);
-    display: flex; gap: 24px;
-  }
-  .counter-val { font-size: 1.6rem; color: var(--cyan); display: block; }
-
-  .device-list {
-    width: 100%; max-width: 640px;
-    padding: 0 24px 80px;
-    display: flex; flex-direction: column; gap: 8px;
-  }
-
-  .device {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 14px 18px;
-    display: flex; flex-direction: column; gap: 6px;
-    animation: fadein 0.3s ease;
-  }
-  @keyframes fadein { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: none; } }
-
-  .device-top { display: flex; justify-content: space-between; align-items: center; }
-  .device-name { font-size: 0.85rem; color: #fff; }
-  .device-rssi { font-size: 0.75rem; }
-  .rssi-strong { color: var(--green); }
-  .rssi-mid    { color: var(--amber); }
-  .rssi-weak   { color: var(--red); }
-  .device-addr { font-size: 0.65rem; color: var(--dim); letter-spacing: 0.05em; }
-  .device-meta { font-size: 0.65rem; color: var(--dim); }
-
-  .rssi-bar {
-    height: 3px;
-    background: var(--border);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-  .rssi-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.5s ease;
-  }
-
-  .empty-state {
-    font-size: 0.8rem;
-    color: var(--dim);
-    text-align: center;
-    padding: 48px 0;
-    display: flex; flex-direction: column; gap: 12px; align-items: center;
-  }
-
-  .info-box {
-    width: 100%; max-width: 640px;
-    padding: 0 24px 24px;
-  }
-  .info-box details {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 14px 18px;
-  }
-  .info-box summary {
-    font-size: 0.75rem;
-    color: var(--dim);
-    cursor: pointer;
-    letter-spacing: 0.05em;
-  }
-  .info-box details[open] summary { color: var(--cyan); margin-bottom: 12px; }
-  .info-box p { font-size: 0.75rem; color: var(--dim); line-height: 1.7; }
-  .info-box code { background: var(--border); padding: 1px 5px; border-radius: 2px; font-size: 0.7rem; }
+.unavail-notice {
+  width:100%;
+  background:var(--surface);
+  border:1px solid var(--amber);
+  border-left:3px solid var(--amber);
+  border-radius:4px;
+  padding:12px 15px;
+  font-size:0.72rem; color:var(--dim); line-height:1.6;
+}
+.unavail-notice strong { color:#fff; }
 </style>
 </head>
 <body>
+<div class="exp-shell">
 
-<div class="nav">
-  <a href="../../../">invisible layer</a>
-  <span>/</span>
-  <span>BLE broadcast scanner</span>
-</div>
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>BLE scanner</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
 
-<div class="hero">
-  <div class="hero-label" id="hero-label">experiment 01 · bluetooth le</div>
-  <h1>everything around you<br>is screaming.</h1>
-  <p>
-    Every Bluetooth device within ~10 meters is continuously broadcasting its presence.
-    Your phone. Their phones. Headphones. Watches. Speakers. Fitness trackers. Medical devices.
-    Every single one is sending packets into the air right now — whether they're connected to anything or not.
-  </p>
-  <div class="shock-box">
-    <strong>this is how retail stores track your path through the building.</strong>
-    Fixed BLE scanners at each aisle record your phone's MAC address as you pass.
-    Your dwell time at each product is logged. No app required on your end.
-    The Jida scooter app we reversed earlier uses the same principle —
-    except their <code>DEVICE_KEY</code> was hardcoded globally, so any scooter is unlockable.
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" id="exp-label">experiment 01 · bluetooth le</div>
+      <div class="exp-title">everything around you<br>is screaming.</div>
+      <div class="exp-desc">
+        Every Bluetooth device within ~10 meters is continuously broadcasting its presence —
+        phones, headphones, watches, trackers, medical devices.
+        Each one sends packets into the air up to 10 times per second,
+        whether connected to anything or not.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>this is how retail stores track your path through the building.</strong>
+      Fixed BLE scanners log your MAC address as you pass each aisle.
+      Dwell time at each product is recorded. No app required on your end.
+      The Jida scooter app had its <code>DEVICE_KEY</code> hardcoded globally —
+      anyone with the APK can unlock any Jida scooter worldwide.
+    </div>
+
+    <div id="unavail-notice" style="display:none" class="unavail-notice">
+      <strong>Web Bluetooth unavailable in this browser.</strong>
+      Live scanning requires Android + Chrome. Showing a
+      <strong>simulated demo</strong> with realistic device patterns instead.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-scan" onclick="startScan()">◉ scan live</button>
+      <button class="exp-btn ghost" id="btn-demo" onclick="startDemo()" style="display:none">▷ demo mode</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopAll()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="count-devices">0</span><span class="stat-lbl">devices</span></div>
+      <div class="stat-cell"><span class="stat-val" id="count-packets">0</span><span class="stat-lbl">packets</span></div>
+      <div class="stat-cell"><span class="stat-val" id="rssi-best">—</span><span class="stat-lbl">best rssi</span></div>
+    </div>
+
+    <div class="device-list" id="device-list">
+      <div style="text-align:center;padding:32px 0;color:var(--dim);font-size:0.78rem;" id="empty-state">
+        <div style="font-size:1.8rem;opacity:0.2;margin-bottom:10px">◉</div>
+        <div id="empty-label">press scan to reveal what's around you</div>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does this work?</summary>
+        <p>BLE devices advertise on channels 37, 38, 39 (2.402 / 2.426 / 2.480 GHz) up to 10× per second.
+        Each packet contains MAC address, device name, signal strength (RSSI), and optional manufacturer data.</p>
+        <p>RSSI is in dBm. <code>-40 dBm</code> = very close. <code>-90 dBm</code> = edge of range.
+        Every 6 dBm ≈ 2× distance change. Web Bluetooth API lets a browser listen with user permission — no pairing needed.</p>
+      </details>
+    </div>
+
+  </div>
   </div>
 </div>
-
-<div id="ble-unavailable-banner" style="display:none;width:100%;max-width:640px;padding:0 24px 16px;">
-  <div style="background:var(--surface);border:1px solid var(--amber);border-left:3px solid var(--amber);
-    border-radius:4px;padding:14px 18px;font-size:0.75rem;color:var(--dim);line-height:1.7;">
-    <span style="color:var(--amber)">live BLE scanning unavailable in this browser.</span><br>
-    The Web Bluetooth API requires <strong style="color:#fff">Android + Chrome</strong> — it's a browser spec limit, not ours.<br>
-    Running a <strong style="color:#fff">simulated demo</strong> below with real device name patterns from a busy environment.
-    On Android Chrome this shows your actual surroundings.
-  </div>
-</div>
-
-<div class="controls">
-  <button class="btn" id="btn-scan" onclick="startScan()">◉ scan live</button>
-  <button class="btn" id="btn-demo" onclick="startDemo()" style="display:none;border-color:#475569;color:#64748b">▷ demo mode</button>
-  <button class="btn danger" id="btn-stop" onclick="stopAll()" style="display:none">■ stop</button>
-  <div class="counter">
-    <div><span class="counter-val" id="count-devices">0</span>devices found</div>
-    <div><span class="counter-val" id="count-packets">0</span>packets seen</div>
-  </div>
-</div>
-
-<div class="device-list" id="device-list">
-  <div class="empty-state" id="empty-state">
-    <span style="font-size:2rem;opacity:0.3">◉</span>
-    <span id="empty-label">press scan to reveal what's around you</span>
-  </div>
-</div>
-
-<div class="info-box">
-  <details>
-    <summary>▶ how does this work?</summary>
-    <p>
-      Bluetooth Low Energy (BLE) devices advertise themselves on channels 37, 38, and 39 (2.402, 2.426, 2.480 GHz).
-      They send advertisement packets up to 10 times per second containing their MAC address,
-      device name, signal strength (RSSI), and optional manufacturer data.
-    </p>
-    <p style="margin-top:10px">
-      Web Bluetooth API on Chrome/Android lets a webpage scan for these broadcasts with user permission.
-      No pairing required. We just listen.
-    </p>
-    <p style="margin-top:10px">
-      Signal strength (RSSI) is in dBm. <code>-40 dBm</code> = very close. <code>-90 dBm</code> = edge of range.
-      Each 6 dBm difference ≈ 2× distance change.
-    </p>
-  </details>
-</div>
-
 <script>
-const bleAvailable = typeof navigator !== 'undefined' && !!navigator.bluetooth;
-let scanning = false, demoTimer = null;
+const bleAvailable = !!navigator?.bluetooth;
+let scanning = false, demoTimer = null, packets = 0;
 const devices = new Map();
-let packetCount = 0;
 
-// On load: show appropriate UI
 window.addEventListener('DOMContentLoaded', function() {
   if (!bleAvailable) {
-    document.getElementById('ble-unavailable-banner').style.display = 'block';
+    document.getElementById('unavail-notice').style.display = 'block';
     document.getElementById('btn-scan').style.display = 'none';
     document.getElementById('btn-demo').style.display = 'inline-flex';
-    document.getElementById('hero-label').textContent = 'experiment 01 · bluetooth le · demo mode';
-    document.getElementById('empty-label').textContent = 'press demo to see what a real scan looks like';
+    document.getElementById('exp-label').textContent = 'experiment 01 · demo mode';
+    document.getElementById('empty-label').textContent = 'press demo to simulate a scan';
   }
 });
 
-// ── Live BLE scan (Android Chrome) ──────────────────────────────
 async function startScan() {
   try {
-    document.getElementById('btn-scan').style.display = 'none';
-    document.getElementById('btn-stop').style.display = 'inline-flex';
-    setEmptyState('<span style="font-size:2rem;opacity:0.6;animation:pulse 1s ease-in-out infinite">◉</span><span>scanning for BLE broadcasts...</span>');
+    setBtns(false, false, true);
+    setEmpty('<span style="animation:pulse 1s ease-in-out infinite;display:inline-block">◉</span> scanning...');
     scanning = true;
-
     if (navigator.bluetooth.requestLEScan) {
       await navigator.bluetooth.requestLEScan({ acceptAllAdvertisements: true });
-      navigator.bluetooth.addEventListener('advertisementreceived', onAdvertisement);
+      navigator.bluetooth.addEventListener('advertisementreceived', onAdvert);
     } else {
-      const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: [] });
-      ingestDevice(device.id, device.name || null, -65 + Math.floor(Math.random()*20), null);
-      clearEmptyState();
+      const d = await navigator.bluetooth.requestDevice({ acceptAllDevices:true, optionalServices:[] });
+      ingest(d.id, d.name||null, -65+rand(20), null);
+      clearEmpty();
     }
   } catch(e) {
     stopAll();
-    if (e.name !== 'NotFoundError') setEmptyState('<span style="color:var(--red)">error: ' + e.message + '</span>');
+    if (e.name !== 'NotFoundError') setEmpty('error: ' + e.message);
   }
 }
 
-function onAdvertisement(e) {
+function onAdvert(e) {
   if (!scanning) return;
-  packetCount++;
-  document.getElementById('count-packets').textContent = packetCount;
   const mfr = e.manufacturerData ? [...e.manufacturerData.keys()][0] : null;
-  ingestDevice(e.device.id, e.device.name || e.name || null, e.rssi, mfr);
-  clearEmptyState();
+  ingest(e.device.id, e.device.name||e.name||null, e.rssi, mfr);
+  tick();
+  clearEmpty();
 }
 
-// ── Demo mode (all browsers) ────────────────────────────────────
-const DEMO_DEVICES = [
-  { id: 'a1:b2:c3:d4:e5:f6', name: 'iPhone 14 Pro',         mfr: 0x004c, rssi: -45 },
-  { id: 'b2:c3:d4:e5:f6:a1', name: null,                    mfr: 0x004c, rssi: -52 },
-  { id: 'c3:d4:e5:f6:a1:b2', name: 'Galaxy Buds2 Pro',      mfr: 0x0075, rssi: -58 },
-  { id: 'd4:e5:f6:a1:b2:c3', name: 'Tile Mate',             mfr: 0x00e0, rssi: -71 },
-  { id: 'e5:f6:a1:b2:c3:d4', name: 'Mi Smart Band 7',       mfr: 0x0157, rssi: -63 },
-  { id: 'f6:a1:b2:c3:d4:e5', name: null,                    mfr: null,   rssi: -84 },
-  { id: 'aa:bb:cc:dd:ee:ff', name: 'Pixel Watch 2',         mfr: 0x00e0, rssi: -49 },
-  { id: 'bb:cc:dd:ee:ff:aa', name: 'XOSS G+',               mfr: null,   rssi: -76 },
-  { id: 'cc:dd:ee:ff:aa:bb', name: null,                    mfr: 0x004c, rssi: -88 },
-  { id: 'dd:ee:ff:aa:bb:cc', name: 'WH-1000XM5',            mfr: 0x012d, rssi: -55 },
-  { id: 'ee:ff:aa:bb:cc:dd', name: 'Govee H6052',           mfr: 0x0001, rssi: -67 },
-  { id: 'ff:aa:bb:cc:dd:ee', name: 'Jida Bike',             mfr: null,   rssi: -61 },
+const DEMO = [
+  {id:'a1:b2:c3:d4:e5:f6', name:'iPhone 15 Pro',     mfr:0x004c, rssi:-43},
+  {id:'b2:c3:d4:e5:f6:a1', name:null,                mfr:0x004c, rssi:-51},
+  {id:'c3:d4:e5:f6:a1:b2', name:'Galaxy Buds2 Pro',  mfr:0x0075, rssi:-57},
+  {id:'d4:e5:f6:a1:b2:c3', name:'Tile Mate',         mfr:0x00e0, rssi:-70},
+  {id:'e5:f6:a1:b2:c3:d4', name:'Mi Band 7',         mfr:0x0157, rssi:-62},
+  {id:'f6:a1:b2:c3:d4:e5', name:null,                mfr:null,   rssi:-83},
+  {id:'aa:bb:cc:dd:ee:ff', name:'Pixel Watch 2',     mfr:0x00e0, rssi:-48},
+  {id:'bb:cc:dd:ee:ff:aa', name:'XOSS G+',           mfr:null,   rssi:-75},
+  {id:'cc:dd:ee:ff:aa:bb', name:null,                mfr:0x004c, rssi:-87},
+  {id:'dd:ee:ff:aa:bb:cc', name:'WH-1000XM5',        mfr:0x012d, rssi:-54},
+  {id:'ee:ff:aa:bb:cc:dd', name:'Govee H6052',       mfr:0x0001, rssi:-66},
+  {id:'ff:aa:bb:cc:dd:ee', name:'Jida Bike',         mfr:null,   rssi:-61},
 ];
 
 function startDemo() {
-  document.getElementById('btn-demo').style.display = 'none';
-  document.getElementById('btn-stop').style.display = 'inline-flex';
-  setEmptyState('<span style="font-size:2rem;opacity:0.6;animation:pulse 1s ease-in-out infinite">◉</span><span>simulated scan running...</span>');
+  setBtns(false, false, true);
+  setEmpty('<span style="animation:pulse 1s ease-in-out infinite;display:inline-block">◉</span> simulating...');
   scanning = true;
-
   let i = 0;
-  function tick() {
+  function drip() {
     if (!scanning) return;
-    if (i < DEMO_DEVICES.length) {
-      const d = DEMO_DEVICES[i++];
-      const jitter = Math.floor(Math.random() * 6) - 3;
-      ingestDevice(d.id, d.name, d.rssi + jitter, d.mfr);
-      packetCount++;
-      document.getElementById('count-packets').textContent = packetCount;
-      clearEmptyState();
-      demoTimer = setTimeout(tick, 350 + Math.random() * 500);
+    if (i < DEMO.length) {
+      const d = DEMO[i++];
+      ingest(d.id, d.name, d.rssi + rand(6)-3, d.mfr);
+      tick();
+      clearEmpty();
+      demoTimer = setTimeout(drip, 300 + rand(500));
     } else {
-      // keep "pinging" existing devices with RSSI drift
       demoTimer = setInterval(function() {
         if (!scanning) return;
         const keys = [...devices.keys()];
-        const id = keys[Math.floor(Math.random() * keys.length)];
+        if (!keys.length) return;
+        const id = keys[rand(keys.length)];
         const d = devices.get(id);
         if (!d) return;
-        const newRssi = Math.max(-95, Math.min(-35, d.rssi + Math.floor(Math.random()*6)-3));
-        devices.set(id, {...d, rssi: newRssi});
-        const el = document.getElementById('dev-' + CSS.escape(id));
-        if (el) updateDevice(el, d.name, newRssi);
-        packetCount++;
-        document.getElementById('count-packets').textContent = packetCount;
-      }, 600);
+        const r = Math.max(-95, Math.min(-35, d.rssi + rand(6)-3));
+        devices.set(id, {...d, rssi:r});
+        const el = document.getElementById('dev-'+CSS.escape(id));
+        if (el) updateEl(el, d.name, r);
+        tick();
+      }, 500);
     }
   }
-  tick();
+  drip();
 }
 
-// ── Shared helpers ───────────────────────────────────────────────
-function ingestDevice(id, name, rssi, mfr) {
-  devices.set(id, { name, rssi, mfr });
+function ingest(id, name, rssi, mfr) {
+  devices.set(id, {name, rssi, mfr});
   document.getElementById('count-devices').textContent = devices.size;
-  const existing = document.getElementById('dev-' + CSS.escape(id));
-  existing ? updateDevice(existing, name, rssi) : renderDevice(id, name, rssi, mfr);
+  const ex = document.getElementById('dev-'+CSS.escape(id));
+  ex ? updateEl(ex, name, rssi) : renderEl(id, name, rssi, mfr);
+}
+
+function tick() {
+  packets++;
+  document.getElementById('count-packets').textContent = packets;
+  const best = Math.max(...[...devices.values()].map(d=>d.rssi||(-999)));
+  document.getElementById('rssi-best').textContent = best > -999 ? best+' dBm' : '—';
 }
 
 function stopAll() {
   scanning = false;
   clearTimeout(demoTimer); clearInterval(demoTimer);
-  navigator.bluetooth?.removeEventListener?.('advertisementreceived', onAdvertisement);
-  document.getElementById('btn-stop').style.display = 'none';
-  bleAvailable
-    ? (document.getElementById('btn-scan').style.display = 'inline-flex')
-    : (document.getElementById('btn-demo').style.display = 'inline-flex');
+  navigator.bluetooth?.removeEventListener?.('advertisementreceived', onAdvert);
+  if (bleAvailable) setBtns(true,false,false);
+  else              setBtns(false,true,false);
 }
 
-function rssiColor(r) { return r===null?'rssi-mid':r>-60?'rssi-strong':r>-75?'rssi-mid':'rssi-weak'; }
-function rssiLabel(r) { return r===null?'?':r>-60?r+' dBm · close':r>-75?r+' dBm · nearby':r+' dBm · distant'; }
-function rssiWidth(r) { return r===null?30:Math.max(5,Math.min(100,((r+100)/60)*100)); }
-function rssiBarColor(r) { return r===null?'#475569':r>-60?'#00ff41':r>-75?'#f59e0b':'#f87171'; }
+function setBtns(scan,demo,stop) {
+  document.getElementById('btn-scan').style.display = scan?'inline-flex':'none';
+  document.getElementById('btn-demo').style.display = demo?'inline-flex':'none';
+  document.getElementById('btn-stop').style.display = stop?'inline-flex':'none';
+}
 
-function renderDevice(id, name, rssi, mfr) {
+function rssiCls(r) { return r>-60?'rssi-strong':r>-75?'rssi-mid':'rssi-weak'; }
+function rssiLbl(r) { return r===null?'?':r>-60?r+' dBm · close':r>-75?r+' dBm · nearby':r+' dBm · far'; }
+function rssiW(r)   { return r===null?20:Math.max(4,Math.min(100,((r+100)/60)*100)); }
+function rssiClr(r) { return r>-60?'#00ff41':r>-75?'#f59e0b':'#f87171'; }
+function rand(n)    { return Math.floor(Math.random()*n); }
+
+function renderEl(id, name, rssi, mfr) {
   const el = document.createElement('div');
-  el.className = 'device'; el.id = 'dev-' + id;
+  el.className='device'; el.id='dev-'+id;
   el.innerHTML = `
     <div class="device-top">
-      <span class="device-name">${name || '&lt;unnamed&gt;'}</span>
-      <span class="device-rssi ${rssiColor(rssi)}">${rssiLabel(rssi)}</span>
+      <span class="device-name">${name||'&lt;unnamed&gt;'}</span>
+      <span class="device-rssi ${rssiCls(rssi)}">${rssiLbl(rssi)}</span>
     </div>
-    <div class="rssi-bar"><div class="rssi-fill" style="width:${rssiWidth(rssi)}%;background:${rssiBarColor(rssi)}"></div></div>
-    <div class="device-addr">${id}</div>
-    ${mfr!==null?`<div class="device-meta">manufacturer id: 0x${mfr.toString(16).padStart(4,'0')}</div>`:''}
-  `;
+    <div class="rssi-bar"><div class="rssi-fill" style="width:${rssiW(rssi)}%;background:${rssiClr(rssi)}"></div></div>
+    <div class="device-meta">
+      <span>${id}</span>
+      ${mfr!=null?`<span>mfr 0x${mfr.toString(16).padStart(4,'0')}</span>`:''}
+    </div>`;
   document.getElementById('device-list').appendChild(el);
 }
 
-function updateDevice(el, name, rssi) {
-  const ne=el.querySelector('.device-name'), re=el.querySelector('.device-rssi'), fe=el.querySelector('.rssi-fill');
-  if(name&&ne) ne.textContent=name;
-  if(re){ re.className='device-rssi '+rssiColor(rssi); re.textContent=rssiLabel(rssi); }
-  if(fe&&rssi!==null){ fe.style.width=rssiWidth(rssi)+'%'; fe.style.background=rssiBarColor(rssi); }
+function updateEl(el, name, rssi) {
+  const n=el.querySelector('.device-name'), r=el.querySelector('.device-rssi'), f=el.querySelector('.rssi-fill');
+  if(name&&n) n.textContent=name;
+  if(r){ r.className='device-rssi '+rssiCls(rssi); r.textContent=rssiLbl(rssi); }
+  if(f&&rssi!=null){ f.style.width=rssiW(rssi)+'%'; f.style.background=rssiClr(rssi); }
 }
 
-function setEmptyState(html) {
-  const e = document.getElementById('empty-state');
-  if (e) e.innerHTML = html;
-}
-function clearEmptyState() {
-  const e = document.getElementById('empty-state');
-  if (e) e.remove();
-}
+function setEmpty(html) { const e=document.getElementById('empty-state'); if(e) e.innerHTML=html; }
+function clearEmpty()   { const e=document.getElementById('empty-state'); if(e) e.remove(); }
 </script>
 </body>
 </html>

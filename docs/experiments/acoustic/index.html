@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>FFT spectrum — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+#canvas-fft {
+  width:100%; height:220px;
+  display:block; cursor:crosshair;
+}
+#canvas-waterfall {
+  width:100%; height:140px;
+  display:block;
+}
+.freq-label {
+  display:flex; justify-content:space-between;
+  font-size:0.58rem; color:var(--dim);
+  padding:4px 0 0;
+  letter-spacing:0.04em;
+}
+.peak-list {
+  width:100%;
+  display:flex; flex-direction:column; gap:6px;
+}
+.peak-row {
+  display:flex; align-items:center; gap:12px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:5px;
+  padding:10px 14px;
+  font-size:0.75rem;
+}
+.peak-freq { color:var(--cyan); width:80px; flex-shrink:0; }
+.peak-bar-wrap { flex:1; height:4px; background:var(--border); border-radius:2px; }
+.peak-bar { height:100%; border-radius:2px; background:var(--cyan); }
+.peak-note { color:var(--dim); font-size:0.65rem; flex-shrink:0; }
+
+.crosshair-info {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:8px 14px;
+  font-size:0.72rem;
+  color:var(--dim);
+  min-height:32px;
+  width:100%;
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>FFT spectrum</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment 03 · microphone · all browsers</div>
+      <div class="exp-title">what the air<br>is carrying right now.</div>
+      <div class="exp-desc">
+        The full acoustic spectrum of your environment — from infrasound rumble to near-ultrasonic.
+        Mains hum at 50 or 60Hz. HVAC resonance. The unique acoustic fingerprint of every room.
+        Sounds you cannot hear but your phone already captures.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>your room has a unique acoustic signature.</strong>
+      Reflection patterns, resonant frequencies, background hum —
+      combined, they can identify a specific room with &gt;90% accuracy.
+      Advertisers have used ultrasonic beacons embedded in TV ads
+      to detect which room you're in across multiple devices simultaneously.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startMic()">◉ enable microphone</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopMic()" style="display:none">■ stop</button>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span style="font-size:0.65rem;color:var(--dim)">range:</span>
+        <button class="exp-btn ghost" id="range-full"  onclick="setRange('full')"  style="padding:6px 10px;font-size:0.65rem">full</button>
+        <button class="exp-btn ghost" id="range-low"   onclick="setRange('low')"   style="padding:6px 10px;font-size:0.65rem">0–500 Hz</button>
+        <button class="exp-btn ghost" id="range-mains" onclick="setRange('mains')" style="padding:6px 10px;font-size:0.65rem">mains</button>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-peak">—</span><span class="stat-lbl">peak freq</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-db">—</span><span class="stat-lbl">peak dB</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-noise">—</span><span class="stat-lbl">noise floor</span></div>
+    </div>
+
+    <div class="vis-frame">
+      <div class="vis-label" id="vis-label">waiting for microphone</div>
+      <canvas id="canvas-fft"></canvas>
+      <div class="freq-label" id="freq-label" style="padding:0 8px 6px">
+        <span>0 Hz</span><span>—</span><span>22 kHz</span>
+      </div>
+    </div>
+
+    <div class="crosshair-info" id="crosshair-info">tap the spectrum to inspect a frequency</div>
+
+    <div style="width:100%">
+      <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">waterfall — last 10 seconds</div>
+      <div class="vis-frame">
+        <canvas id="canvas-waterfall"></canvas>
+      </div>
+    </div>
+
+    <div style="width:100%">
+      <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">detected peaks</div>
+      <div class="peak-list" id="peak-list">
+        <div style="font-size:0.72rem;color:var(--dim);text-align:center;padding:16px">start microphone to detect peaks</div>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does this work?</summary>
+        <p>The Web Audio API feeds your microphone through an <code>AnalyserNode</code> running a
+        Fast Fourier Transform (FFT). This converts the time-domain audio signal into frequency bins —
+        each bin shows how much energy exists at a specific frequency.</p>
+        <p>With an FFT size of 4096 and 44.1kHz sample rate, each bin covers ~10.8Hz.
+        The waterfall chart scrolls new spectrum lines downward over time so you can see how frequencies evolve.
+        Peaks are detected when a bin exceeds the noise floor by &gt;15 dB.</p>
+        <p>Known signatures: <code>50Hz</code> = European mains · <code>60Hz</code> = North American mains ·
+        <code>100/120Hz</code> = LED flicker harmonic · <code>18–22kHz</code> = ultrasonic beacon or pest repeller.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<script>
+let audioCtx, analyser, source, stream, rafId;
+let running = false;
+let rangeMode = 'full';
+
+const FFT_SIZE = 4096;
+const PEAK_THRESH_DB = 15;
+
+// waterfall buffer: rows of Uint8Array
+const WATERFALL_ROWS = 80;
+const waterfallBuf = [];
+
+const KNOWN = {
+  50:  '⚡ EU mains',   60:  '⚡ US mains',
+  100: '⚡ EU 2nd',     120: '⚡ US 2nd',
+  150: '⚡ EU 3rd',     180: '⚡ US 3rd',
+  440: '♪ A4',         880: '♪ A5',
+};
+function knownLabel(hz) {
+  for (const [f,l] of Object.entries(KNOWN)) {
+    if (Math.abs(hz - f) < 3) return l;
+  }
+  if (hz > 17000) return '⚠ ultrasonic';
+  return '';
+}
+
+async function startMic() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false }, video:false });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = FFT_SIZE;
+    analyser.smoothingTimeConstant = 0.7;
+    source = audioCtx.createMediaStreamSource(stream);
+    source.connect(analyser);
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('vis-label').textContent = 'live';
+    draw();
+  } catch(e) {
+    document.getElementById('vis-label').textContent = 'mic error: ' + e.message;
+  }
+}
+
+function stopMic() {
+  running = false;
+  cancelAnimationFrame(rafId);
+  stream?.getTracks().forEach(t=>t.stop());
+  audioCtx?.close();
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('vis-label').textContent = 'stopped';
+}
+
+function setRange(mode) {
+  rangeMode = mode;
+  ['full','low','mains'].forEach(m => {
+    document.getElementById('range-'+m).classList.toggle('active', m===mode);
+    document.getElementById('range-'+m).style.borderColor = m===mode ? 'var(--cyan)' : '#475569';
+    document.getElementById('range-'+m).style.color = m===mode ? 'var(--cyan)' : '#64748b';
+  });
+}
+
+function getRangeBins(bufLen, sampleRate) {
+  const nyq = sampleRate / 2;
+  if (rangeMode === 'low')   return [0, Math.floor(bufLen * 500  / nyq)];
+  if (rangeMode === 'mains') return [Math.floor(bufLen * 30 / nyq), Math.floor(bufLen * 250 / nyq)];
+  return [0, bufLen];
+}
+
+function draw() {
+  if (!running) return;
+  rafId = requestAnimationFrame(draw);
+
+  const buf = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(buf);
+
+  const sampleRate = audioCtx.sampleRate;
+  const nyq = sampleRate / 2;
+  const [startBin, endBin] = getRangeBins(buf.length, sampleRate);
+  const freqPerBin = nyq / buf.length;
+
+  // ── FFT canvas ──
+  const fc = document.getElementById('canvas-fft');
+  const dpr = window.devicePixelRatio || 1;
+  const W = fc.offsetWidth, H = 220;
+  if (fc.width !== W*dpr) { fc.width=W*dpr; fc.height=H*dpr; }
+  const ctx = fc.getContext('2d');
+  ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+
+  const sliceW = W / (endBin - startBin);
+  let peakVal=0, peakBin=0, noiseSum=0;
+
+  // grid lines
+  ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
+  [0.25,0.5,0.75].forEach(f => {
+    ctx.beginPath(); ctx.moveTo(0,H*f); ctx.lineTo(W,H*f); ctx.stroke();
+  });
+
+  for (let i=startBin; i<endBin; i++) {
+    const v = buf[i];
+    const x = (i-startBin)*sliceW;
+    const barH = (v/255)*H;
+    const t = v/255;
+    const r = Math.floor(t<0.5 ? 0 : (t-0.5)*2*255);
+    const g = Math.floor(t<0.5 ? t*2*220 : 220-(t-0.5)*2*120);
+    const b = Math.floor(t<0.5 ? 255-(t*2*255) : 0);
+    ctx.fillStyle=`rgb(${r},${g},${b})`;
+    ctx.fillRect(x, H-barH, sliceW+0.5, barH);
+    noiseSum += v;
+    if (v>peakVal) { peakVal=v; peakBin=i; }
+  }
+  ctx.setTransform(1,0,0,1,0,0);
+
+  // freq labels
+  const startHz = startBin * freqPerBin;
+  const endHz   = endBin   * freqPerBin;
+  document.getElementById('freq-label').innerHTML =
+    `<span>${fmtHz(startHz)}</span><span>${fmtHz((startHz+endHz)/2)}</span><span>${fmtHz(endHz)}</span>`;
+
+  // stats
+  const peakHz  = peakBin * freqPerBin;
+  const peakDb  = 20 * Math.log10(peakVal/255 + 0.001);
+  const noiseDb = 20 * Math.log10((noiseSum/(endBin-startBin))/255 + 0.001);
+  document.getElementById('stat-peak').textContent  = fmtHz(peakHz);
+  document.getElementById('stat-db').textContent    = peakDb.toFixed(1)+' dB';
+  document.getElementById('stat-noise').textContent = noiseDb.toFixed(1)+' dB';
+
+  // ── waterfall ──
+  waterfallBuf.unshift(buf.slice(startBin, endBin));
+  if (waterfallBuf.length > WATERFALL_ROWS) waterfallBuf.pop();
+
+  const wc = document.getElementById('canvas-waterfall');
+  const WW = wc.offsetWidth, WH = 140;
+  if (wc.width !== WW*dpr) { wc.width=WW*dpr; wc.height=WH*dpr; }
+  const wctx = wc.getContext('2d');
+  wctx.scale(dpr,dpr); wctx.clearRect(0,0,WW,WH);
+  const rowH = WH / WATERFALL_ROWS;
+  const bins = endBin - startBin;
+  waterfallBuf.forEach((row,ri) => {
+    const y = ri*rowH;
+    row.forEach((v,bi) => {
+      const x = bi*(WW/bins);
+      const t = v/255;
+      const r2 = Math.floor(t*255);
+      const g2 = Math.floor(t<0.5?t*2*80:80+(t-0.5)*2*175);
+      const b2 = Math.floor(t<0.5?t*2*160:0);
+      wctx.fillStyle=`rgba(${r2},${g2},${b2},0.9)`;
+      wctx.fillRect(x,y,WW/bins+0.5,rowH+0.5);
+    });
+  });
+  wctx.setTransform(1,0,0,1,0,0);
+
+  // ── detect peaks ──
+  detectPeaks(buf, startBin, endBin, freqPerBin, noiseDb);
+}
+
+let lastPeakUpdate = 0;
+function detectPeaks(buf, startBin, endBin, freqPerBin, noiseDb) {
+  if (Date.now() - lastPeakUpdate < 500) return;
+  lastPeakUpdate = Date.now();
+  const noiseThresh = (noiseDb + PEAK_THRESH_DB) / 20;
+  const noiseLinear = Math.pow(10, noiseThresh) * 255;
+  const peaks = [];
+  for (let i=startBin+1; i<endBin-1; i++) {
+    if (buf[i]>buf[i-1] && buf[i]>buf[i+1] && buf[i]>noiseLinear && peaks.length<8) {
+      peaks.push({hz: i*freqPerBin, val: buf[i]});
+      i += 3;
+    }
+  }
+  peaks.sort((a,b)=>b.val-a.val);
+  const list = document.getElementById('peak-list');
+  if (!peaks.length) {
+    list.innerHTML='<div style="font-size:0.72rem;color:var(--dim);text-align:center;padding:16px">no significant peaks detected</div>';
+    return;
+  }
+  list.innerHTML = peaks.map(p => {
+    const pct = Math.round((p.val/255)*100);
+    const note = knownLabel(Math.round(p.hz));
+    return `<div class="peak-row">
+      <span class="peak-freq">${fmtHz(p.hz)}</span>
+      <div class="peak-bar-wrap"><div class="peak-bar" style="width:${pct}%"></div></div>
+      <span class="peak-note">${note}</span>
+    </div>`;
+  }).join('');
+}
+
+// tap to inspect
+document.getElementById('canvas-fft').addEventListener('click', function(e) {
+  if (!analyser) return;
+  const rect = this.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const pct = x / rect.width;
+  const sampleRate = audioCtx.sampleRate;
+  const nyq = sampleRate/2;
+  const [startBin, endBin] = getRangeBins(analyser.frequencyBinCount, sampleRate);
+  const hz = (startBin + pct*(endBin-startBin)) * (nyq/analyser.frequencyBinCount);
+  const buf = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(buf);
+  const bin = Math.round(hz / (nyq/analyser.frequencyBinCount));
+  const val = buf[Math.min(bin, buf.length-1)];
+  const db = 20*Math.log10(val/255+0.001);
+  const note = knownLabel(Math.round(hz));
+  document.getElementById('crosshair-info').textContent =
+    fmtHz(hz) + '  ·  ' + db.toFixed(1) + ' dB' + (note?' · '+note:'');
+});
+
+function fmtHz(hz) {
+  if (hz >= 1000) return (hz/1000).toFixed(hz>=10000?1:2)+' kHz';
+  return Math.round(hz)+' Hz';
+}
+</script>
+</body>
+</html>
