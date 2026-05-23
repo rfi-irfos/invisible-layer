@@ -210,6 +210,21 @@ body { display:flex; flex-direction:column; align-items:center; }
   </div>
 </div>
 
+<!-- ── mobile prompt (desktop only) ── -->
+<div id="mobile-prompt" style="display:none;width:100%;max-width:680px;padding:0 16px 16px;">
+  <div style="background:var(--surface);border:1px solid var(--green);border-radius:8px;
+    padding:14px 18px;font-size:0.75rem;color:var(--dim);line-height:1.7;
+    display:flex;align-items:center;gap:14px;">
+    <span style="font-size:1.4rem;flex-shrink:0">📱</span>
+    <span>
+      <strong style="color:#fff">open this on your phone</strong> for the full experience —
+      live sensor readings, BLE scanner, motion detection, and more.
+      Desktop browsers don't expose the hardware. Your phone already has everything.
+      <br><strong style="color:var(--green)">rfi-irfos.github.io/invisible-layer</strong>
+    </span>
+  </div>
+</div>
+
 <!-- ── FILTER BAR ── -->
 <div class="filter-bar">
   <div class="filter-inner">
@@ -512,6 +527,10 @@ function filter(cat, btn) {
   // UA entropy
   const tokens = navigator.userAgent.split(/[\s;()\/]/).filter(Boolean).length;
   document.getElementById('sc-ua').textContent = tokens + ' tokens';
+
+  // show desktop prompt
+  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  if (!isMobile) document.getElementById('mobile-prompt').style.display = 'block';
 
   // sensor count
   let count = 2; // motion + orientation always attempted
