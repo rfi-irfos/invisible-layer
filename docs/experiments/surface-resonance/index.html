@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Surface resonance — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.res-canvas-wrap {
+  width: 100%;
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.res-canvas-wrap canvas { width: 100%; display: block; }
+.res-label {
+  position: absolute; top: 8px; left: 12px;
+  font-size: 0.58rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--dim);
+}
+
+.material-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 0 10px;
+}
+.material-name {
+  font-size: clamp(1.8rem, 8vw, 2.8rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--cyan);
+  transition: color 0.4s;
+}
+.material-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.material-freq { font-size: 0.72rem; color: var(--dim); margin-top: 2px; }
+
+.material-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+}
+.mat-row {
+  display: flex;
+  background: var(--surface);
+  padding: 9px 14px;
+  gap: 12px;
+  align-items: center;
+}
+.mat-range { font-size: 0.65rem; color: var(--dim); width: 90px; flex-shrink: 0; }
+.mat-name { font-size: 0.72rem; color: var(--text); flex: 1; }
+.mat-why { font-size: 0.62rem; color: var(--dim); flex: 2; }
+.mat-row.active { background: rgba(34,211,238,0.06); }
+.mat-row.active .mat-name { color: var(--cyan); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>surface resonance</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · accelerometer</div>
+      <div class="exp-title">tap the table.<br>your phone knows what it's made of.</div>
+      <div class="exp-desc">
+        Every material has a natural resonant frequency — the note it prefers to vibrate at.
+        Steel rings at a different pitch than wood, which sounds different to glass.
+        Lay your phone flat, give the surface a sharp tap, and the accelerometer captures the
+        echo — a burst of vibration that tells you something about what's underneath.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>Smart home devices may be able to map your floor plan from acoustic vibrations alone.</strong>
+      Research at MIT showed that by analysing surface-conducted sound from a phone placed on different
+      surfaces across a room, it's possible to estimate room dimensions, identify furniture arrangements,
+      and detect wall materials — all without a microphone. The phone's accelerometer acts as a contact
+      microphone for the surface it's resting on.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startResonance()">◉ start sensor</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopResonance()" style="display:none">■ stop</button>
+    </div>
+
+    <div style="text-align:center;padding:8px 0;font-size:0.68rem;color:var(--dim)" id="tap-prompt">
+      lay phone flat on a surface, then tap the surface sharply
+    </div>
+
+    <div class="material-display">
+      <div class="material-name" id="mat-name">—</div>
+      <div class="material-unit">detected surface type</div>
+      <div class="material-freq" id="mat-freq">dominant frequency: —</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-peak">—</span><span class="stat-lbl">peak Hz</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-energy">—</span><span class="stat-lbl">impact m/s²</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-taps">0</span><span class="stat-lbl">taps detected</span></div>
+    </div>
+
+    <div class="res-canvas-wrap" style="aspect-ratio:3/1">
+      <canvas id="wave-canvas"></canvas>
+      <div class="res-label">accelerometer waveform</div>
+    </div>
+
+    <div class="res-canvas-wrap" style="aspect-ratio:3/1; margin-top:0;">
+      <canvas id="fft-canvas"></canvas>
+      <div class="res-label">frequency content (0–50 Hz)</div>
+    </div>
+
+    <div class="material-grid">
+      <div class="mat-row" id="mat-concrete">
+        <span class="mat-range">&lt; 5 Hz</span>
+        <span class="mat-name">concrete / steel</span>
+        <span class="mat-why">very dense, little flex, fast energy dissipation</span>
+      </div>
+      <div class="mat-row" id="mat-wood">
+        <span class="mat-range">5 – 12 Hz</span>
+        <span class="mat-name">wood / composite</span>
+        <span class="mat-why">moderate flex, structured resonance modes</span>
+      </div>
+      <div class="mat-row" id="mat-glass">
+        <span class="mat-range">12 – 25 Hz</span>
+        <span class="mat-name">glass / hard plastic</span>
+        <span class="mat-why">rigid but thin — higher frequency ring-down</span>
+      </div>
+      <div class="mat-row" id="mat-metal">
+        <span class="mat-range">25 – 50 Hz</span>
+        <span class="mat-name">thin metal / hollow</span>
+        <span class="mat-why">thin shell resonates at higher frequencies</span>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does surface resonance identification work?</summary>
+        <p>When you tap a surface, you create a broad-spectrum impulse — a sharp burst of energy
+        across many frequencies simultaneously. The surface then acts as a filter: it absorbs some
+        frequencies and sustains others based on its mass, stiffness, and damping properties.</p>
+        <p>A phone accelerometer captures this as a decaying oscillation. By computing the frequency
+        spectrum of the first 500ms after impact, we find which frequencies dominate the ring-down —
+        the characteristic tone of the material. Dense, stiff materials (concrete, steel) dissipate
+        energy quickly and ring at low frequencies. Light, rigid materials (glass, thin metal) ring
+        higher and longer.</p>
+        <p>This is a simplified approximation. Professional structural health monitoring uses
+        piezoelectric sensors and much more sophisticated signal processing, but the principle is identical.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let running = false;
+const BUF_LEN = 512;
+const magBuf = new Array(BUF_LEN).fill(0);
+let bufHead = 0;
+let taps = 0, lastTap = 0, capturing = false, captureFrame = [];
+
+const waveCanvas = document.getElementById('wave-canvas');
+const fftCanvas  = document.getElementById('fft-canvas');
+const wctx = waveCanvas.getContext('2d');
+const fctx = fftCanvas.getContext('2d');
+
+function resizeCanvases() {
+  [waveCanvas, fftCanvas].forEach(c => {
+    const r = c.parentElement.getBoundingClientRect();
+    c.width = r.width * devicePixelRatio;
+    c.height = r.height * devicePixelRatio;
+  });
+}
+resizeCanvases();
+window.addEventListener('resize', resizeCanvases);
+
+let gx = 0, gy = 0, gz = 9.8;
+const ALPHA = 0.85;
+let sessionMax = 0;
+
+function startResonance() {
+  const go = () => {
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('tap-prompt').textContent = 'tap the surface sharply to capture resonance';
+    document.getElementById('tap-prompt').style.color = 'var(--green)';
+    window.addEventListener('devicemotion', onMotion);
+    requestAnimationFrame(renderLoop);
+  };
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(s => { if (s === 'granted') go(); }).catch(() => {});
+  } else if (typeof DeviceMotionEvent !== 'undefined') { go(); }
+  else { document.getElementById('tap-prompt').textContent = 'accelerometer not available'; }
+}
+
+function stopResonance() {
+  running = false;
+  window.removeEventListener('devicemotion', onMotion);
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('tap-prompt').textContent = 'stopped';
+}
+
+function onMotion(e) {
+  if (!running || !e.accelerationIncludingGravity) return;
+  const rx = e.accelerationIncludingGravity.x || 0;
+  const ry = e.accelerationIncludingGravity.y || 0;
+  const rz = e.accelerationIncludingGravity.z || 0;
+  gx = ALPHA * gx + (1 - ALPHA) * rx;
+  gy = ALPHA * gy + (1 - ALPHA) * ry;
+  gz = ALPHA * gz + (1 - ALPHA) * rz;
+  const ax = rx - gx, ay = ry - gy, az = rz - gz;
+  const mag = Math.sqrt(ax*ax + ay*ay + az*az);
+  const i = bufHead % BUF_LEN;
+  magBuf[i] = mag;
+  bufHead++;
+
+  // Tap detection
+  const now = Date.now();
+  if (mag > 4 && now - lastTap > 600) {
+    lastTap = now;
+    taps++;
+    document.getElementById('stat-taps').textContent = taps;
+    document.getElementById('stat-energy').textContent = mag.toFixed(2);
+    // Capture ring-down
+    captureFrame = [];
+    capturing = true;
+    setTimeout(() => {
+      capturing = false;
+      analyzeCapture();
+    }, 600);
+  }
+  if (capturing) captureFrame.push(mag);
+}
+
+function dft(signal, targetHz, sampleRate) {
+  const N = signal.length;
+  const k = Math.round(targetHz * N / sampleRate);
+  let re = 0, im = 0;
+  for (let n = 0; n < N; n++) {
+    const angle = 2 * Math.PI * k * n / N;
+    re += signal[n] * Math.cos(angle);
+    im -= signal[n] * Math.sin(angle);
+  }
+  return Math.sqrt(re * re + im * im);
+}
+
+function analyzeCapture() {
+  if (captureFrame.length < 20) return;
+  const SR = 100; // approximate accelerometer sample rate
+  const maxHz = 50;
+  let peakAmp = 0, peakHz = 0;
+  const spectrum = [];
+  for (let hz = 1; hz <= maxHz; hz++) {
+    const amp = dft(captureFrame, hz, SR);
+    spectrum.push(amp);
+    if (amp > peakAmp) { peakAmp = amp; peakHz = hz; }
+  }
+
+  document.getElementById('stat-peak').textContent = peakHz;
+  document.getElementById('mat-freq').textContent = 'dominant frequency: ' + peakHz + ' Hz';
+
+  // Material identification
+  const mat = peakHz < 5  ? ['concrete / steel', 'var(--dim)',   'mat-concrete'] :
+              peakHz < 12 ? ['wood / composite', 'var(--green)', 'mat-wood']    :
+              peakHz < 25 ? ['glass / hard plastic', 'var(--cyan)', 'mat-glass']:
+                            ['thin metal / hollow', 'var(--amber)', 'mat-metal'];
+
+  document.getElementById('mat-name').textContent = mat[0];
+  document.getElementById('mat-name').style.color = mat[1];
+
+  ['mat-concrete','mat-wood','mat-glass','mat-metal'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+  document.getElementById(mat[2]).classList.add('active');
+
+  // Draw FFT
+  const W = fftCanvas.width / devicePixelRatio;
+  const H = fftCanvas.height / devicePixelRatio;
+  fctx.clearRect(0, 0, W, H);
+  const maxS = Math.max(...spectrum, 1);
+  const barW = W / maxHz;
+  spectrum.forEach((v, i) => {
+    const hz = i + 1;
+    const h = (v / maxS) * H * 0.85;
+    const hue = hz < 5 ? 200 : hz < 12 ? 120 : hz < 25 ? 190 : 40;
+    fctx.fillStyle = `hsla(${hue},70%,55%,0.8)`;
+    fctx.fillRect(i * barW, H - h, barW - 0.5, h);
+  });
+  // Peak marker
+  fctx.fillStyle = 'var(--red)';
+  fctx.font = '9px monospace';
+  fctx.textAlign = 'center';
+  fctx.fillText(peakHz + 'Hz', (peakHz - 1) * barW + barW / 2, H - (peakAmp / maxS) * H * 0.85 - 5);
+
+  document.getElementById('tap-prompt').textContent = 'detected: ' + mat[0] + ' — tap again to update';
+}
+
+function renderLoop() {
+  if (!running) return;
+  requestAnimationFrame(renderLoop);
+
+  const ordered = new Array(BUF_LEN);
+  for (let i = 0; i < BUF_LEN; i++) ordered[i] = magBuf[(bufHead + i) % BUF_LEN];
+  const maxV = Math.max(...ordered, 1);
+
+  const W = waveCanvas.width / devicePixelRatio;
+  const H = waveCanvas.height / devicePixelRatio;
+  wctx.clearRect(0, 0, W, H);
+
+  wctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  wctx.lineWidth = 1;
+  wctx.beginPath(); wctx.moveTo(0, H / 2); wctx.lineTo(W, H / 2); wctx.stroke();
+
+  wctx.beginPath();
+  ordered.forEach((v, i) => {
+    const x = (i / BUF_LEN) * W;
+    const y = H / 2 - (v / maxV) * (H / 2 - 4);
+    i === 0 ? wctx.moveTo(x, y) : wctx.lineTo(x, y);
+  });
+  wctx.strokeStyle = 'rgba(34,211,238,0.8)';
+  wctx.lineWidth = 1.5;
+  wctx.stroke();
+
+  // Mirror
+  wctx.beginPath();
+  ordered.forEach((v, i) => {
+    const x = (i / BUF_LEN) * W;
+    const y = H / 2 + (v / maxV) * (H / 2 - 4);
+    i === 0 ? wctx.moveTo(x, y) : wctx.lineTo(x, y);
+  });
+  wctx.strokeStyle = 'rgba(34,211,238,0.3)';
+  wctx.lineWidth = 1;
+  wctx.stroke();
+}
+</script>
+</body>
+</html>

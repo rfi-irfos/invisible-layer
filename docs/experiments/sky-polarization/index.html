@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Sky polarization — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.sky-stage {
+  width: 100%;
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.sky-stage video, .sky-stage canvas.overlay {
+  width: 100%; display: block;
+}
+.sky-stage canvas.overlay {
+  position: absolute; top: 0; left: 0;
+  pointer-events: none;
+}
+
+.compass-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.bearing-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0 8px;
+}
+.bearing-val {
+  font-size: clamp(3rem, 12vw, 4.4rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--cyan);
+  transition: color 0.4s;
+}
+.bearing-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.bearing-status { font-size: 0.68rem; letter-spacing: 0.08em; color: var(--dim); margin-top: 2px; }
+
+.info-rows {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+}
+.i-row {
+  display: flex;
+  background: var(--surface);
+  padding: 9px 14px;
+  gap: 12px;
+  align-items: center;
+}
+.i-key { font-size: 0.65rem; color: var(--dim); width: 120px; flex-shrink: 0; }
+.i-val { font-size: 0.72rem; color: var(--text); flex: 1; }
+.i-val.active { color: var(--cyan); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>sky polarization</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · camera + orientation</div>
+      <div class="exp-title">sunlight is polarized.<br>bees navigate by it. you can too.</div>
+      <div class="exp-desc">
+        When sunlight scatters through the atmosphere, it becomes polarized — the light waves
+        align in predictable patterns relative to the sun's position. Bees, ants, and migrating
+        birds use this "skylight compass" to navigate even when the sun is hidden. Modern phone
+        camera sensors are partially sensitive to polarization, and we can exploit this to
+        estimate sun bearing from a patch of blue sky.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>The Viking "sunstone" is now confirmed to be a real navigation tool — a calcite crystal that detects sky polarization.</strong>
+      In 2013, researchers found a calcite crystal in a Tudor-era shipwreck that matched the optical
+      properties of legendary Norse sunstones. Tests showed the stone could locate the sun within
+      ±1° of arc — accurate enough to navigate the North Atlantic — on overcast days when the sun
+      was completely invisible. An ancient GPS, working on the same physics your phone's camera sees today.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startSky()">◉ start sky scan</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopSky()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="bearing-display">
+      <div class="bearing-val" id="bearing-val" style="color:var(--dim)">—</div>
+      <div class="bearing-unit">° · estimated sun bearing</div>
+      <div class="bearing-status" id="bearing-status">point at a patch of blue sky, 90° from the sun</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-bright">—</span><span class="stat-lbl">sky brightness</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-pol">—</span><span class="stat-lbl">pol. contrast %</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-heading">—</span><span class="stat-lbl">phone heading</span></div>
+    </div>
+
+    <div class="sky-stage" style="aspect-ratio:4/3" id="sky-stage">
+      <video id="sky-video" autoplay playsinline muted></video>
+      <canvas class="overlay" id="sky-overlay"></canvas>
+    </div>
+
+    <div class="info-rows">
+      <div class="i-row">
+        <span class="i-key">camera heading</span>
+        <span class="i-val" id="i-heading">—</span>
+      </div>
+      <div class="i-row">
+        <span class="i-key">sky brightness</span>
+        <span class="i-val" id="i-bright">—</span>
+      </div>
+      <div class="i-row">
+        <span class="i-key">blue channel ratio</span>
+        <span class="i-val" id="i-blue">—</span>
+      </div>
+      <div class="i-row">
+        <span class="i-key">polarization contrast</span>
+        <span class="i-val" id="i-pol">—</span>
+      </div>
+      <div class="i-row">
+        <span class="i-key">estimated sun bearing</span>
+        <span class="i-val active" id="i-sun">—</span>
+      </div>
+      <div class="i-row">
+        <span class="i-key">confidence</span>
+        <span class="i-val" id="i-conf">—</span>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does sky polarization navigation work?</summary>
+        <p>Sunlight is initially unpolarized. When it scatters off air molecules (Rayleigh scattering),
+        it becomes partially polarized in a pattern that forms a great circle 90° away from the sun.
+        The maximum polarization always lies at 90° from the sun's azimuth.</p>
+        <p>Bees and ants have specialised ommatidia in their compound eyes that detect this pattern
+        across the whole sky simultaneously, giving them an accurate compass even when clouds cover
+        the sun — as long as a small patch of blue sky remains visible.</p>
+        <p>In this experiment, we use a cruder method: phone cameras have RGB Bayer sensors that
+        are partially sensitive to polarization angle. By analysing the brightness asymmetry and
+        blue channel intensity across different heading angles, we can estimate the polarization
+        direction — and from that, the sun bearing.</p>
+        <p><strong>For best results:</strong> go outside on a clear day. Point the camera at blue sky
+        that is roughly 90° away from where you think the sun is. Slowly rotate and watch the
+        polarization contrast reading change.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let stream = null, videoEl = null, overlayCanvas = null, octx = null;
+let running = false, animId = null;
+let heading = 0; // from compass
+const sCanvas = document.createElement('canvas');
+sCanvas.width = 32; sCanvas.height = 24;
+const sctx = sCanvas.getContext('2d');
+
+// Heading from device
+function startCompass() {
+  const onOrient = (e) => {
+    if (e.webkitCompassHeading != null) {
+      heading = e.webkitCompassHeading;
+    } else if (e.alpha != null) {
+      heading = (360 - e.alpha) % 360;
+    }
+    document.getElementById('stat-heading').textContent = Math.round(heading) + '°';
+  };
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission().then(s => {
+      if (s === 'granted') window.addEventListener('deviceorientation', onOrient);
+    }).catch(() => {});
+  } else {
+    window.addEventListener('deviceorientation', onOrient);
+    window.addEventListener('deviceorientationabsolute', onOrient);
+  }
+}
+
+async function startSky() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 } }
+    });
+    videoEl = document.getElementById('sky-video');
+    videoEl.srcObject = stream;
+    await videoEl.play();
+
+    overlayCanvas = document.getElementById('sky-overlay');
+    const stage = document.getElementById('sky-stage');
+    overlayCanvas.width = stage.clientWidth * devicePixelRatio;
+    overlayCanvas.height = (stage.clientWidth * 3 / 4) * devicePixelRatio;
+    octx = overlayCanvas.getContext('2d');
+
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('bearing-status').textContent = 'scanning — point at blue sky, 90° from sun';
+    document.getElementById('bearing-status').style.color = 'var(--cyan)';
+
+    startCompass();
+    animId = requestAnimationFrame(analyseLoop);
+  } catch (e) {
+    document.getElementById('bearing-status').textContent = 'camera access denied';
+    document.getElementById('bearing-status').style.color = 'var(--red)';
+  }
+}
+
+function stopSky() {
+  running = false;
+  if (animId) cancelAnimationFrame(animId);
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('bearing-status').textContent = 'stopped';
+  document.getElementById('bearing-status').style.color = 'var(--dim)';
+}
+
+// Rolling polarization contrast tracker
+const polHistory = [];
+const headingAtPol = [];
+const HISTORY = 40;
+
+function analyseLoop() {
+  if (!running) return;
+  animId = requestAnimationFrame(analyseLoop);
+
+  sctx.drawImage(videoEl, 0, 0, 32, 24);
+  const px = sctx.getImageData(0, 0, 32, 24).data;
+
+  let r = 0, g = 0, b = 0, lum = 0;
+  const N = 32 * 24;
+  for (let i = 0; i < px.length; i += 4) {
+    r += px[i]; g += px[i+1]; b += px[i+2];
+    lum += 0.299 * px[i] + 0.587 * px[i+1] + 0.114 * px[i+2];
+  }
+  r /= N; g /= N; b /= N; lum /= N;
+  const total = r + g + b || 1;
+  const bp = b / total;
+
+  // Polarization proxy: blue channel excess over expected (sky blue is enriched when polarized)
+  const polContrast = Math.max(0, (bp - 0.33) / 0.33 * 100);
+
+  polHistory.push(polContrast);
+  headingAtPol.push(heading);
+  if (polHistory.length > HISTORY) { polHistory.shift(); headingAtPol.shift(); }
+
+  // Find heading where polContrast was highest — that's 90° from sun
+  let maxPol = 0, maxIdx = 0;
+  polHistory.forEach((p, i) => { if (p > maxPol) { maxPol = p; maxIdx = i; } });
+  const peakHeading = headingAtPol[maxIdx] || heading;
+  // Sun is 90° from peak polarization direction
+  const sunBearing = Math.round((peakHeading + 90) % 360);
+
+  const confidence = polHistory.length < 10 ? 'low — keep rotating' :
+                     maxPol < 5 ? 'low — may not be blue sky' :
+                     maxPol < 15 ? 'moderate' : 'good';
+
+  document.getElementById('bearing-val').textContent = sunBearing + '°';
+  document.getElementById('bearing-val').style.color = confidence === 'good' ? 'var(--green)' : confidence === 'moderate' ? 'var(--cyan)' : 'var(--dim)';
+  document.getElementById('bearing-status').textContent = 'sun estimated ' + sunBearing + '° — ' + heading2cardinal(sunBearing);
+  document.getElementById('stat-bright').textContent = Math.round(lum);
+  document.getElementById('stat-pol').textContent = polContrast.toFixed(1);
+
+  document.getElementById('i-heading').textContent = Math.round(heading) + '° (' + heading2cardinal(heading) + ')';
+  document.getElementById('i-bright').textContent = Math.round(lum) + (lum > 180 ? ' (very bright)' : lum > 80 ? ' (good)' : ' (too dark?)');
+  document.getElementById('i-blue').textContent = (bp * 100).toFixed(1) + '%' + (bp > 0.36 ? ' (polarized sky signal)' : ' (low sky signal)');
+  document.getElementById('i-pol').textContent = polContrast.toFixed(1) + '%';
+  document.getElementById('i-sun').textContent = sunBearing + '° (' + heading2cardinal(sunBearing) + ')';
+  document.getElementById('i-conf').textContent = confidence;
+
+  // Overlay: polarization arc visualisation
+  const OW = overlayCanvas.width / devicePixelRatio;
+  const OH = overlayCanvas.height / devicePixelRatio;
+  octx.clearRect(0, 0, OW, OH);
+
+  // Draw polarization strength as a coloured ring
+  const cx = OW / 2, cy = OH / 2;
+  const r2 = Math.min(OW, OH) * 0.25;
+  const intensity = Math.min(1, polContrast / 30);
+  octx.strokeStyle = `rgba(34,211,238,${0.3 + intensity * 0.6})`;
+  octx.lineWidth = 3;
+  octx.beginPath();
+  octx.arc(cx, cy, r2, 0, Math.PI * 2);
+  octx.stroke();
+
+  // Sun direction indicator
+  const sunRad = (sunBearing - 90) * Math.PI / 180;
+  const sx = cx + Math.cos(sunRad) * r2;
+  const sy = cy + Math.sin(sunRad) * r2;
+  octx.fillStyle = 'rgba(245,158,11,0.9)';
+  octx.beginPath();
+  octx.arc(sx, sy, 8, 0, Math.PI * 2);
+  octx.fill();
+  octx.fillStyle = '#fff';
+  octx.font = '11px monospace';
+  octx.textAlign = 'center';
+  octx.fillText('☀', sx, sy + 4);
+
+  octx.fillStyle = 'rgba(34,211,238,0.7)';
+  octx.font = '9px monospace';
+  octx.textAlign = 'center';
+  octx.fillText('pol. max →', cx, cy - r2 - 8);
+}
+
+function heading2cardinal(deg) {
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+</script>
+</body>
+</html>

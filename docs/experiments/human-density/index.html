@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Human density — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.density-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 0 10px;
+}
+.density-count {
+  font-size: clamp(3rem, 13vw, 5rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--cyan);
+  transition: color 0.4s;
+}
+.density-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.density-env { font-size: 0.68rem; margin-top: 4px; letter-spacing: 0.08em; color: var(--dim); }
+
+.signal-rows {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+}
+.sig-row {
+  display: flex;
+  background: var(--surface);
+  padding: 9px 14px;
+  gap: 12px;
+  align-items: center;
+}
+.sig-key { font-size: 0.65rem; color: var(--dim); width: 120px; flex-shrink: 0; }
+.sig-val { font-size: 0.72rem; color: var(--text); flex: 1; }
+.sig-val.good { color: var(--green); }
+.sig-val.warn { color: var(--amber); }
+
+.crowd-bar {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  padding: 14px;
+}
+.crowd-bar-track {
+  width: 100%;
+  height: 16px;
+  background: var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.crowd-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--green), var(--cyan), var(--amber), var(--red));
+  transition: width 0.6s ease;
+}
+.crowd-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.58rem;
+  color: var(--dim);
+  margin-top: 6px;
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>human density</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · passive signals</div>
+      <div class="exp-title">how many people<br>are around you right now?</div>
+      <div class="exp-desc">
+        Your phone constantly receives signals from every device in range — WiFi probes, Bluetooth
+        advertisements, and RF noise. The density of these signals correlates with the number of
+        people nearby. Each person carries 1–4 wireless devices that are continuously broadcasting.
+        We combine everything the browser lets us see to estimate crowd density.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>Retailers pay companies to count shoppers by tracking their phones' WiFi probes.</strong>
+      Every phone constantly sends "probe requests" — broadcast signals looking for known WiFi networks.
+      Companies like Euclid Analytics and RetailNext place sensors in shops that count and track
+      unique devices moving through the store, measuring dwell time and path through each section.
+      This happens without any app, without your knowledge, and without any consent mechanism — it
+      is simply how WiFi works.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startDensity()">◉ start reading</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopDensity()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="density-display">
+      <div class="density-count" id="density-count">—</div>
+      <div class="density-unit">estimated people nearby</div>
+      <div class="density-env" id="density-env">waiting</div>
+    </div>
+
+    <div class="crowd-bar">
+      <div style="font-size:0.62rem;color:var(--dim)">crowd density estimate</div>
+      <div class="crowd-bar-track">
+        <div class="crowd-bar-fill" id="crowd-fill" style="width:0%"></div>
+      </div>
+      <div class="crowd-label">
+        <span>alone</span>
+        <span>small group</span>
+        <span>busy</span>
+        <span>crowded</span>
+      </div>
+    </div>
+
+    <div class="signal-rows">
+      <div class="sig-row">
+        <span class="sig-key">bluetooth devices</span>
+        <span class="sig-val" id="sig-ble">—</span>
+      </div>
+      <div class="sig-row">
+        <span class="sig-key">network type</span>
+        <span class="sig-val" id="sig-net">—</span>
+      </div>
+      <div class="sig-row">
+        <span class="sig-key">connection RTT</span>
+        <span class="sig-val" id="sig-rtt">—</span>
+      </div>
+      <div class="sig-row">
+        <span class="sig-key">ambient noise</span>
+        <span class="sig-val" id="sig-audio">—</span>
+      </div>
+      <div class="sig-row">
+        <span class="sig-key">motion state</span>
+        <span class="sig-val" id="sig-motion">—</span>
+      </div>
+      <div class="sig-row">
+        <span class="sig-key">density confidence</span>
+        <span class="sig-val" id="sig-conf">—</span>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how can a phone estimate crowd density?</summary>
+        <p>Professional crowd density estimation uses several RF signals:</p>
+        <ul style="font-size:0.72rem;color:var(--dim);line-height:1.9;padding-left:20px;margin-top:6px">
+          <li><strong style="color:#fff">WiFi probe requests</strong>: each phone sends these continuously while the screen is on — typically ~1 per second. A commercial WiFi scanner sees dozens per second in a crowd.</li>
+          <li><strong style="color:#fff">Bluetooth LE advertisements</strong>: AirDrop, wearables, and headphones broadcast every 100–300ms. More devices = more people.</li>
+          <li><strong style="color:#fff">Network congestion</strong>: RTT increases in crowded spaces as many devices share the same cell tower or access point.</li>
+          <li><strong style="color:#fff">Acoustic ambience</strong>: crowd noise has a characteristic frequency spectrum — elevated midrange, increased variance.</li>
+        </ul>
+        <p>Browser limitations: we can't enumerate WiFi probes or scan all BLE devices without user interaction.
+        The BLE count here uses the Web Bluetooth API's scan (where available). The estimate is honest
+        about its uncertainty.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let running = false, bleCount = 0;
+let motionVar = 0, audioRMS = 0;
+let motionRunning = false, audioRunning = false;
+let updateInterval = null;
+
+const BUF = 100;
+const magBuf = new Array(BUF).fill(9.8);
+let mHead = 0;
+let audioCtx = null, analyser = null, audioSrc = null;
+const audioBuf = new Float32Array(2048);
+
+function startDensity() {
+  running = true;
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-stop').style.display = 'inline-flex';
+  document.getElementById('density-env').textContent = 'reading sensors...';
+
+  // Motion
+  startMotion();
+  // Audio (ambient)
+  startAudio();
+  // BLE scan
+  startBLE();
+
+  updateInterval = setInterval(updateEstimate, 1000);
+}
+
+function stopDensity() {
+  running = false;
+  clearInterval(updateInterval);
+  if (motionRunning) window.removeEventListener('devicemotion', onMotion);
+  if (audioCtx) audioCtx.close();
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('density-env').textContent = 'stopped';
+}
+
+function startMotion() {
+  const go = () => {
+    motionRunning = true;
+    window.addEventListener('devicemotion', onMotion);
+  };
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(s => { if (s === 'granted') go(); }).catch(() => {});
+  } else if (typeof DeviceMotionEvent !== 'undefined') { go(); }
+}
+
+function onMotion(e) {
+  if (!running || !e.accelerationIncludingGravity) return;
+  const ax = e.accelerationIncludingGravity.x || 0;
+  const ay = e.accelerationIncludingGravity.y || 0;
+  const az = e.accelerationIncludingGravity.z || 0;
+  const mag = Math.sqrt(ax*ax + ay*ay + az*az);
+  magBuf[mHead % BUF] = mag;
+  mHead++;
+  const mean = magBuf.reduce((a, b) => a + b, 0) / BUF;
+  motionVar = Math.sqrt(magBuf.reduce((s, v) => s + (v - mean) ** 2, 0) / BUF);
+}
+
+async function startAudio() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: {
+      echoCancellation: false, noiseSuppression: false, autoGainControl: false
+    }});
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    audioSrc = audioCtx.createMediaStreamSource(stream);
+    audioSrc.connect(analyser);
+    audioRunning = true;
+  } catch (e) { /* mic not available */ }
+}
+
+async function startBLE() {
+  if (!navigator.bluetooth || !navigator.bluetooth.requestLEScan) return;
+  try {
+    const scan = await navigator.bluetooth.requestLEScan({ acceptAllAdvertisements: true });
+    navigator.bluetooth.addEventListener('advertisementreceived', () => { bleCount++; });
+    setTimeout(() => { try { scan.stop(); } catch (e) {} }, 10000);
+  } catch (e) { /* not available or denied */ }
+}
+
+function updateEstimate() {
+  if (!running) return;
+
+  // Read audio
+  if (audioRunning && analyser) {
+    analyser.getFloatTimeDomainData(audioBuf);
+    let rms = 0;
+    for (let i = 0; i < audioBuf.length; i++) rms += audioBuf[i] * audioBuf[i];
+    audioRMS = Math.sqrt(rms / audioBuf.length);
+  }
+
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const rtt = conn && conn.rtt != null ? conn.rtt : 50;
+  const netType = conn ? (conn.effectiveType || conn.type || '—') : '—';
+
+  // Score signals
+  let score = 0;
+  let confidence = 0;
+  let signals = 0;
+
+  // BLE: each 10 devices = ~5 people
+  if (bleCount > 0) {
+    score += bleCount / 2;
+    confidence += 30;
+    signals++;
+  }
+
+  // Network RTT: congestion proxy (higher RTT = more users on same AP/cell)
+  if (conn && conn.rtt != null) {
+    const rttScore = Math.max(0, (rtt - 20) / 10);
+    score += rttScore;
+    confidence += 20;
+    signals++;
+  }
+
+  // Audio RMS: crowd noise proxy
+  if (audioRunning) {
+    const audioScore = Math.min(50, audioRMS * 1000);
+    score += audioScore;
+    confidence += 25;
+    signals++;
+  }
+
+  // Motion: if on the move in a crowd (moderate variance)
+  if (motionRunning) {
+    const motionScore = motionVar > 1 && motionVar < 5 ? 5 : 0;
+    score += motionScore;
+    confidence += 15;
+    signals++;
+  }
+
+  if (signals === 0) confidence = 10;
+
+  const estimated = Math.round(Math.min(200, score));
+  const pct = Math.min(100, score / 50 * 100);
+  const envType = estimated === 0 ? 'alone or quiet space' :
+                  estimated < 5  ? 'small group nearby' :
+                  estimated < 15 ? 'busy environment' :
+                  estimated < 40 ? 'crowded space' : 'very dense crowd';
+
+  document.getElementById('density-count').textContent = estimated > 0 ? '~' + estimated : '0';
+  document.getElementById('density-count').style.color = estimated > 30 ? 'var(--red)' : estimated > 10 ? 'var(--amber)' : 'var(--cyan)';
+  document.getElementById('density-env').textContent = envType;
+  document.getElementById('crowd-fill').style.width = pct + '%';
+
+  document.getElementById('sig-ble').textContent = bleCount > 0 ? bleCount + ' advertisements received' : 'not scanning (requires Chrome + Android)';
+  document.getElementById('sig-ble').className = 'sig-val ' + (bleCount > 0 ? 'good' : '');
+  document.getElementById('sig-net').textContent = netType;
+  document.getElementById('sig-rtt').textContent = conn && conn.rtt != null ? conn.rtt + ' ms' + (rtt > 100 ? ' (congested)' : '') : '—';
+  document.getElementById('sig-rtt').className = 'sig-val ' + (rtt > 100 ? 'warn' : 'good');
+  document.getElementById('sig-audio').textContent = audioRunning ? (audioRMS * 1000).toFixed(1) + ' (RMS × 1000)' : 'mic not available';
+  document.getElementById('sig-motion').textContent = motionRunning ? (motionVar < 0.5 ? 'stationary' : motionVar < 2 ? 'fidgeting' : 'walking') : 'not available';
+  document.getElementById('sig-conf').textContent = confidence + '% (' + signals + ' active signals)';
+  document.getElementById('sig-conf').className = 'sig-val ' + (confidence > 50 ? 'good' : 'warn');
+}
+</script>
+</body>
+</html>

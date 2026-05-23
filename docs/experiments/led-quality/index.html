@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>LED quality — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.cri-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0 8px;
+}
+.cri-val {
+  font-size: clamp(3rem, 13vw, 5rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  transition: color 0.4s;
+}
+.cri-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.cri-verdict { font-size: 0.68rem; letter-spacing: 0.08em; margin-top: 4px; }
+
+.spec-canvas-wrap {
+  width: 100%;
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.spec-canvas-wrap canvas { width: 100%; display: block; }
+.spec-label {
+  position: absolute; top: 8px; left: 12px;
+  font-size: 0.58rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--dim);
+}
+
+.quality-rows {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+}
+.q-row {
+  display: flex;
+  background: var(--surface);
+  padding: 9px 14px;
+  gap: 12px;
+  align-items: center;
+}
+.q-key { font-size: 0.65rem; color: var(--dim); width: 120px; flex-shrink: 0; }
+.q-val { font-size: 0.72rem; color: var(--text); flex: 1; }
+.q-val.good { color: var(--green); }
+.q-val.ok   { color: var(--cyan); }
+.q-val.warn { color: var(--amber); }
+.q-val.bad  { color: var(--red); }
+
+.instr-box {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px;
+  font-size: 0.7rem;
+  line-height: 1.7;
+  color: var(--dim);
+}
+.instr-box strong { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>LED quality</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · camera</div>
+      <div class="exp-title">not all light<br>is the same light.</div>
+      <div class="exp-desc">
+        Cheap LED bulbs flood the room with light — but half the colours in the visible spectrum
+        may be missing entirely. A good LED fills in the gaps; a bad one doesn't, and your brain
+        pays the cost in eye strain, colour distortion, and disturbed sleep. Point your camera at
+        any light source and see what it's actually giving you.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>The blue light spike in cheap LEDs disrupts melatonin production more than any other artificial light.</strong>
+      Most LED lighting peaks sharply at 450nm (deep blue) with a drop-off across the rest of the spectrum.
+      This blue spike suppresses melatonin by up to 85% compared to incandescent light, according to Harvard
+      Medical School research. A CRI (Colour Rendering Index) below 80 means 20%+ of colour information
+      is missing — red meat looks grey, human skin looks sickly, and the visual cortex works harder to
+      compensate, causing fatigue.
+    </div>
+
+    <div class="instr-box">
+      <strong>How to use this:</strong> Point the camera at any artificial light source — a ceiling LED,
+      a desk lamp, a TV backlight, an outdoor streetlight. The camera sensor acts as a crude spectrometer:
+      we analyse the RGB channel ratios to estimate colour temperature and quality. For best results, fill
+      the frame with the light source or a white surface lit by it.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startLED()">◉ analyse light</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopLED()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="cri-display">
+      <div class="cri-val" id="cri-val" style="color:var(--dim)">—</div>
+      <div class="cri-unit">estimated CRI · colour rendering index (0–100)</div>
+      <div class="cri-verdict" id="cri-verdict" style="color:var(--dim)">waiting for camera</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-cct">—</span><span class="stat-lbl">CCT (K)</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-blue">—</span><span class="stat-lbl">blue ratio %</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-green">—</span><span class="stat-lbl">green ratio %</span></div>
+    </div>
+
+    <div class="spec-canvas-wrap" style="aspect-ratio:3/1">
+      <canvas id="spec-canvas"></canvas>
+      <div class="spec-label">RGB channel spectrum</div>
+    </div>
+
+    <div class="quality-rows">
+      <div class="q-row">
+        <span class="q-key">light type</span>
+        <span class="q-val" id="q-type">—</span>
+      </div>
+      <div class="q-row">
+        <span class="q-key">colour temperature</span>
+        <span class="q-val" id="q-cct">—</span>
+      </div>
+      <div class="q-row">
+        <span class="q-key">CRI estimate</span>
+        <span class="q-val" id="q-cri">—</span>
+      </div>
+      <div class="q-row">
+        <span class="q-key">blue spike risk</span>
+        <span class="q-val" id="q-blue">—</span>
+      </div>
+      <div class="q-row">
+        <span class="q-key">sleep impact</span>
+        <span class="q-val" id="q-sleep">—</span>
+      </div>
+      <div class="q-row">
+        <span class="q-key">verdict</span>
+        <span class="q-val" id="q-verdict">—</span>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ what is CRI and why does it matter?</summary>
+        <p>CRI (Colour Rendering Index) measures how accurately a light source reproduces colours
+        compared to natural daylight. A CRI of 100 is perfect (sunlight); incandescent bulbs score ~100;
+        cheap LEDs often score 70–80. Below 80, colours look off — reds appear muted, skin tones look
+        washed out, and food looks less appetising.</p>
+        <p>The camera measures RGB ratios — a crude proxy for spectrum. Real CRI requires a spectrometer.
+        But the RGB ratios reliably indicate:</p>
+        <ul style="font-size:0.72rem;color:var(--dim);line-height:1.9;padding-left:20px;margin-top:6px">
+          <li><strong style="color:#fff">Colour temperature</strong>: warm (2700K–3000K) vs neutral (4000K) vs cool (5000K+)</li>
+          <li><strong style="color:#fff">Blue/green dominance</strong>: high blue = cheap LED or "daylight" bias</li>
+          <li><strong style="color:#fff">Red deficiency</strong>: low red channel = poor CRI, suppressed melatonin</li>
+        </ul>
+        <p>Note: your phone camera applies auto white balance, which partially corrects colour temperature.
+        Disable AWB if you can (camera apps) or hold the camera near the light source for a raw reading.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let stream = null, videoEl = null, animId = null;
+let running = false, frameCount = 0;
+const sCanvas = document.createElement('canvas');
+sCanvas.width = 64; sCanvas.height = 48;
+const sctx = sCanvas.getContext('2d');
+
+// History for smoothing
+const rHist = [], gHist = [], bHist = [];
+const HIST_LEN = 30;
+
+const specCanvas = document.getElementById('spec-canvas');
+const sCtx = specCanvas.getContext('2d');
+function resizeCanvas() {
+  const r = specCanvas.parentElement.getBoundingClientRect();
+  specCanvas.width = r.width * devicePixelRatio;
+  specCanvas.height = r.height * devicePixelRatio;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+async function startLED() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 640 } }
+    });
+    videoEl = document.createElement('video');
+    videoEl.srcObject = stream;
+    videoEl.playsInline = true;
+    await videoEl.play();
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('cri-verdict').textContent = 'analysing — point at any light source or white surface';
+    document.getElementById('cri-verdict').style.color = 'var(--amber)';
+    animId = requestAnimationFrame(analyseLoop);
+  } catch (e) {
+    document.getElementById('cri-verdict').textContent = 'camera access denied';
+    document.getElementById('cri-verdict').style.color = 'var(--red)';
+  }
+}
+
+function stopLED() {
+  running = false;
+  if (animId) cancelAnimationFrame(animId);
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('cri-verdict').textContent = 'stopped';
+  document.getElementById('cri-verdict').style.color = 'var(--dim)';
+}
+
+function analyseLoop() {
+  if (!running) return;
+  animId = requestAnimationFrame(analyseLoop);
+  frameCount++;
+  if (frameCount % 3 !== 0) return;
+
+  sctx.drawImage(videoEl, 0, 0, 64, 48);
+  const px = sctx.getImageData(0, 0, 64, 48).data;
+  let r = 0, g = 0, b = 0;
+  for (let i = 0; i < px.length; i += 4) {
+    r += px[i]; g += px[i+1]; b += px[i+2];
+  }
+  const n = 64 * 48;
+  r /= n; g /= n; b /= n;
+  const total = r + g + b || 1;
+  const rp = r / total, gp = g / total, bp = b / total;
+
+  rHist.push(rp); gHist.push(gp); bHist.push(bp);
+  if (rHist.length > HIST_LEN) { rHist.shift(); gHist.shift(); bHist.shift(); }
+  const mr = rHist.reduce((a, v) => a + v, 0) / rHist.length;
+  const mg = gHist.reduce((a, v) => a + v, 0) / gHist.length;
+  const mb = bHist.reduce((a, v) => a + v, 0) / bHist.length;
+
+  updateAnalysis(mr, mg, mb, r, g, b);
+  drawSpectrum(mr, mg, mb);
+}
+
+function updateAnalysis(rp, gp, bp, rRaw, gRaw, bRaw) {
+  // Colour temperature estimate from red/blue ratio
+  const rb = rRaw / (bRaw || 1);
+  const cct = rb > 2.0 ? 2700 :   // very warm
+              rb > 1.5 ? 3000 :
+              rb > 1.1 ? 4000 :
+              rb > 0.9 ? 5000 :
+              rb > 0.7 ? 6000 : 7500; // very cool
+
+  // Blue spike: if blue proportion > 38%, it's elevated
+  const blueSpike = bp > 0.38;
+  const blueRisk = bp > 0.42 ? 'high' : bp > 0.38 ? 'moderate' : 'low';
+
+  // Crude CRI estimate: good light has balanced RGB; CRI drops with blue dominance and red deficiency
+  const balance = 1 - Math.abs(rp - gp) - Math.abs(gp - bp) - Math.abs(rp - bp);
+  const redPenalty = Math.max(0, 0.33 - rp) * 3;
+  const criEst = Math.max(50, Math.min(99, Math.round((balance * 0.6 + (1 - redPenalty) * 0.4) * 100)));
+
+  // Light type classification
+  const lightType = cct < 2900 ? 'incandescent / halogen / warm LED' :
+                    cct < 3500 ? 'warm white LED (CRI typically 85–95)' :
+                    cct < 4500 ? 'neutral white LED (CRI typically 80–90)' :
+                    cct < 6000 ? 'cool white LED / fluorescent (CRI 70–85)' :
+                                 'daylight LED / tube light / monitor (CRI 60–80)';
+
+  const sleepImpact = cct > 5000 ? 'high — suppresses melatonin strongly' :
+                      cct > 4000 ? 'moderate — use f.lux / Night Shift after dark' :
+                                   'low — warm light, OK in evenings';
+
+  const verdictText = criEst >= 90 ? 'excellent quality light' :
+                      criEst >= 80 ? 'good — suitable for all tasks' :
+                      criEst >= 70 ? 'acceptable — some colour distortion' :
+                                     'poor — significant colour rendering loss';
+  const verdictCls = criEst >= 90 ? 'good' : criEst >= 80 ? 'ok' : criEst >= 70 ? 'warn' : 'bad';
+
+  document.getElementById('cri-val').textContent = criEst;
+  document.getElementById('cri-val').style.color = criEst >= 90 ? 'var(--green)' : criEst >= 80 ? 'var(--cyan)' : criEst >= 70 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('cri-verdict').textContent = verdictText;
+  document.getElementById('cri-verdict').style.color = criEst >= 90 ? 'var(--green)' : criEst >= 80 ? 'var(--cyan)' : criEst >= 70 ? 'var(--amber)' : 'var(--red)';
+
+  document.getElementById('stat-cct').textContent = cct + 'K';
+  document.getElementById('stat-blue').textContent = (bp * 100).toFixed(1) + '%';
+  document.getElementById('stat-green').textContent = (gp * 100).toFixed(1) + '%';
+
+  document.getElementById('q-type').textContent = lightType;
+  document.getElementById('q-cct').textContent = cct + 'K — ' + (cct < 3500 ? 'warm' : cct < 5000 ? 'neutral' : 'cool daylight');
+  document.getElementById('q-cri').textContent = criEst + ' / 100';
+  document.getElementById('q-cri').className = 'q-val ' + verdictCls;
+  document.getElementById('q-blue').textContent = blueRisk + ' (' + (bp * 100).toFixed(1) + '% of emission)';
+  document.getElementById('q-blue').className = 'q-val ' + (blueRisk === 'high' ? 'bad' : blueRisk === 'moderate' ? 'warn' : 'good');
+  document.getElementById('q-sleep').textContent = sleepImpact;
+  document.getElementById('q-sleep').className = 'q-val ' + (cct > 5000 ? 'bad' : cct > 4000 ? 'warn' : 'good');
+  document.getElementById('q-verdict').textContent = verdictText;
+  document.getElementById('q-verdict').className = 'q-val ' + verdictCls;
+}
+
+function drawSpectrum(rp, gp, bp) {
+  const W = specCanvas.width / devicePixelRatio;
+  const H = specCanvas.height / devicePixelRatio;
+  sCtx.clearRect(0, 0, W, H);
+
+  // Visible spectrum background
+  const specGrad = sCtx.createLinearGradient(0, 0, W, 0);
+  specGrad.addColorStop(0,    'rgba(148,0,211,0.3)');   // violet
+  specGrad.addColorStop(0.15, 'rgba(0,0,255,0.3)');     // blue
+  specGrad.addColorStop(0.3,  'rgba(0,200,255,0.3)');   // cyan
+  specGrad.addColorStop(0.45, 'rgba(0,255,0,0.3)');     // green
+  specGrad.addColorStop(0.6,  'rgba(255,255,0,0.3)');   // yellow
+  specGrad.addColorStop(0.75, 'rgba(255,127,0,0.3)');   // orange
+  specGrad.addColorStop(1,    'rgba(255,0,0,0.3)');     // red
+  sCtx.fillStyle = specGrad;
+  sCtx.fillRect(0, 0, W, H);
+
+  // R, G, B channel bars
+  const bars = [
+    { pct: 1 - rp, x: W * 0.85, color: 'rgba(248,113,113,0.9)', label: 'R' + (rp*100).toFixed(0)+'%' },
+    { pct: 1 - gp, x: W * 0.45, color: 'rgba(0,255,65,0.9)',    label: 'G' + (gp*100).toFixed(0)+'%' },
+    { pct: 1 - bp, x: W * 0.15, color: 'rgba(34,211,238,0.9)',  label: 'B' + (bp*100).toFixed(0)+'%' },
+  ];
+  bars.forEach(bar => {
+    const bw = 28;
+    const bh = bar.pct * H * 0.85;
+    const by = H - bh - H * 0.1;
+    sCtx.fillStyle = bar.color;
+    sCtx.fillRect(bar.x - bw/2, by, bw, bh);
+    sCtx.fillStyle = '#fff';
+    sCtx.font = '9px monospace';
+    sCtx.textAlign = 'center';
+    sCtx.fillText(bar.label, bar.x, by - 4);
+  });
+
+  // Wavelength labels
+  sCtx.fillStyle = 'rgba(100,116,139,0.5)';
+  sCtx.font = '8px monospace';
+  [['400nm', 0.02], ['500nm', 0.3], ['600nm', 0.6], ['700nm', 0.95]].forEach(([l, p]) => {
+    sCtx.textAlign = 'left';
+    sCtx.fillText(l, p * W, H - 3);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Infrasound — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.infra-vis {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.infra-vis canvas { width: 100%; display: block; }
+.infra-label {
+  position: absolute; top: 8px; left: 12px;
+  font-size: 0.58rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--dim);
+}
+
+.freq-highlight-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+}
+.freq-row {
+  display: flex;
+  background: var(--surface);
+  padding: 9px 14px;
+  gap: 12px;
+  align-items: center;
+}
+.freq-hz { font-size: 0.65rem; color: var(--dim); width: 70px; flex-shrink: 0; }
+.freq-src { font-size: 0.68rem; color: var(--text); flex: 1; }
+.freq-bar { width: 60px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+.freq-bar-fill { height: 100%; border-radius: 2px; background: var(--green); transition: width 0.3s; }
+
+.dominant-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0 8px;
+}
+.dominant-hz {
+  font-size: clamp(2.8rem, 11vw, 4rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--green);
+  transition: color 0.4s;
+}
+.dominant-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.dominant-src { font-size: 0.68rem; letter-spacing: 0.08em; color: var(--dim); margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>infrasound</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · microphone</div>
+      <div class="exp-title">sounds you can't<br>hear are everywhere.</div>
+      <div class="exp-desc">
+        Below 20Hz, sound becomes infrasound — below the threshold of human hearing.
+        But your microphone doesn't care. Earthquakes, storms, industrial machinery,
+        traffic rumble, HVAC systems — all of it sits down here in the infrasonic band,
+        constantly shaking the air and your walls. You just can't tell.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>Infrasound at 18.98Hz has been linked to feelings of unease, dread, and "presence".</strong>
+      In 1998, Vic Tandy found that a lab he worked in produced 18.98Hz standing waves from a fan —
+      staff reported ghost sightings and nausea. The frequency matches the resonant frequency
+      of the human eyeball. Military researchers have explored infrasound as a non-lethal weapon.
+      Some haunted houses have been found to contain infrasonic resonances from faulty plumbing.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startInfra()">◉ start listening</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopInfra()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="dominant-display">
+      <div class="dominant-hz" id="dom-hz">—</div>
+      <div class="dominant-unit">Hz · dominant infrasonic frequency</div>
+      <div class="dominant-src" id="dom-src">waiting</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-level">—</span><span class="stat-lbl">level dBFS</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-peak">—</span><span class="stat-lbl">peak Hz</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-energy">—</span><span class="stat-lbl">band energy</span></div>
+    </div>
+
+    <div class="infra-vis" style="aspect-ratio:3/1">
+      <canvas id="infra-canvas"></canvas>
+      <div class="infra-label">0 – 20 Hz · infrasonic spectrum</div>
+    </div>
+
+    <div class="freq-highlight-grid" id="freq-grid">
+      <div class="freq-row">
+        <span class="freq-hz">~0.1 Hz</span>
+        <span class="freq-src">Ocean swell / seiche oscillations</span>
+        <div class="freq-bar"><div class="freq-bar-fill" id="bar-01" style="width:0%"></div></div>
+      </div>
+      <div class="freq-row">
+        <span class="freq-hz">~1–3 Hz</span>
+        <span class="freq-src">Building sway in wind</span>
+        <div class="freq-bar"><div class="freq-bar-fill" id="bar-1" style="width:0%"></div></div>
+      </div>
+      <div class="freq-row">
+        <span class="freq-hz">~4–8 Hz</span>
+        <span class="freq-src">Traffic rumble / HVAC duct resonance</span>
+        <div class="freq-bar"><div class="freq-bar-fill" id="bar-4" style="width:0%"></div></div>
+      </div>
+      <div class="freq-row">
+        <span class="freq-hz">~12–14 Hz</span>
+        <span class="freq-src">Industrial machinery / large fans</span>
+        <div class="freq-bar"><div class="freq-bar-fill" id="bar-12" style="width:0%"></div></div>
+      </div>
+      <div class="freq-row">
+        <span class="freq-hz">~18–19 Hz</span>
+        <span class="freq-src">Eyeball resonance / "ghost frequency"</span>
+        <div class="freq-bar"><div class="freq-bar-fill" id="bar-18" style="width:0%;background:var(--amber)"></div></div>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ why can microphones hear what we can't?</summary>
+        <p>Human ears have resonant structures tuned to roughly 20Hz–20kHz. The basilar membrane in your
+        inner ear simply doesn't vibrate efficiently below ~20Hz. But microphones are flat membranes —
+        they respond to any pressure wave. The Web Audio API's FFT analyser can resolve down to around
+        1–2Hz with a 32768-sample FFT at 44.1kHz (giving ~1.3Hz per bin).</p>
+        <p>The challenge: phone microphones are designed for speech (300Hz–3.4kHz is their sweet spot),
+        and their frequency response rolls off sharply below 100Hz. We're working near the noise floor,
+        so results will vary heavily by phone and environment. But real infrasound sources — big fans,
+        nearby traffic, ventilation ducts — can be surprisingly strong.</p>
+        <p>Try: stand near an AC unit, a fridge compressor, or a window facing a busy road.
+        The infrasonic output from these can reach 80–90dB SPL right at the source.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+const FFT_SIZE = 32768;
+const SAMPLE_RATE_ASSUMED = 44100;
+const HZ_PER_BIN = SAMPLE_RATE_ASSUMED / FFT_SIZE; // ~1.35 Hz/bin
+const MAX_HZ = 20;
+const MAX_BIN = Math.floor(MAX_HZ / HZ_PER_BIN); // ~15 bins
+
+let audioCtx = null, analyser = null, source = null, animId = null;
+let running = false;
+
+const canvas = document.getElementById('infra-canvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+async function startInfra() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: {
+      echoCancellation: false, noiseSuppression: false, autoGainControl: false
+    }});
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = FFT_SIZE;
+    analyser.smoothingTimeConstant = 0.85;
+    source = audioCtx.createMediaStreamSource(stream);
+    source.connect(analyser);
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    animId = requestAnimationFrame(renderLoop);
+  } catch(e) {
+    document.getElementById('dom-src').textContent = 'microphone access denied';
+    document.getElementById('dom-src').style.color = 'var(--red)';
+  }
+}
+
+function stopInfra() {
+  running = false;
+  if (animId) cancelAnimationFrame(animId);
+  if (source) source.disconnect();
+  if (audioCtx) audioCtx.close();
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('dom-src').textContent = 'stopped';
+}
+
+const data = new Float32Array(FFT_SIZE / 2);
+
+const knownBands = [
+  { id: 'bar-01', lo: 0,  hi: 1  },
+  { id: 'bar-1',  lo: 1,  hi: 4  },
+  { id: 'bar-4',  lo: 4,  hi: 11 },
+  { id: 'bar-12', lo: 11, hi: 17 },
+  { id: 'bar-18', lo: 17, hi: 20 },
+];
+
+const knownSrcs = [
+  [0, 1,   'ocean / seiche'],
+  [1, 4,   'building sway'],
+  [4, 11,  'traffic / HVAC'],
+  [11, 17, 'industrial machinery'],
+  [17, 20, 'ghost frequency / eyeball resonance'],
+];
+
+function hz2bin(hz) { return Math.round(hz / HZ_PER_BIN); }
+function binPower(lo, hi) {
+  const loB = hz2bin(lo), hiB = Math.min(hz2bin(hi), data.length - 1);
+  if (loB >= hiB) return data[loB];
+  let sum = 0;
+  for (let b = loB; b <= hiB; b++) sum += data[b];
+  return sum / (hiB - loB + 1);
+}
+
+function renderLoop() {
+  if (!running) return;
+  animId = requestAnimationFrame(renderLoop);
+  analyser.getFloatFrequencyData(data);
+
+  const W = canvas.width / devicePixelRatio;
+  const H = canvas.height / devicePixelRatio;
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw spectrum from 0 to 20Hz
+  const bins = MAX_BIN;
+  const barW = W / bins;
+  let peakBin = 1, peakVal = -160;
+  let totalEnergy = 0;
+
+  for (let b = 1; b < bins; b++) {
+    const v = data[b];
+    if (v > peakVal) { peakVal = v; peakBin = b; }
+    totalEnergy += v;
+    const norm = Math.max(0, (v + 120) / 80);
+    const h = norm * H * 0.85;
+    const hue = b < 5 ? 120 : b < 12 ? 60 : b < 17 ? 30 : 10;
+    ctx.fillStyle = `hsla(${hue},80%,50%,0.7)`;
+    ctx.fillRect(b * barW, H - h, barW - 0.5, h);
+  }
+
+  // Hz labels
+  ctx.fillStyle = 'rgba(100,116,139,0.6)';
+  ctx.font = '8px monospace';
+  ctx.textAlign = 'center';
+  [5, 10, 15, 20].forEach(hz => {
+    const x = (hz / MAX_HZ) * W;
+    ctx.fillText(hz + 'Hz', x, H - 4);
+  });
+
+  // Eyeball resonance highlight
+  const eyeX = (18.98 / MAX_HZ) * W;
+  ctx.strokeStyle = 'rgba(245,158,11,0.3)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(eyeX, 0); ctx.lineTo(eyeX, H); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Update stats
+  const peakHz = peakBin * HZ_PER_BIN;
+  const avgEnergy = totalEnergy / bins;
+  document.getElementById('stat-level').textContent = peakVal.toFixed(1);
+  document.getElementById('stat-peak').textContent = peakHz.toFixed(1);
+  document.getElementById('stat-energy').textContent = avgEnergy.toFixed(1);
+
+  document.getElementById('dom-hz').textContent = peakHz.toFixed(1);
+  document.getElementById('dom-hz').style.color = peakHz > 17 ? 'var(--amber)' : 'var(--green)';
+
+  // Identify dominant source
+  let src = 'ambient noise floor';
+  for (const [lo, hi, label] of knownSrcs) {
+    if (peakHz >= lo && peakHz < hi) { src = label; break; }
+  }
+  document.getElementById('dom-src').textContent = src;
+
+  // Update known band bars
+  knownBands.forEach(band => {
+    const pw = binPower(band.lo, band.hi);
+    const pct = Math.max(0, Math.min(100, (pw + 100) / 80 * 100));
+    document.getElementById(band.id).style.width = pct + '%';
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Retroreflector — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.retro-stage {
+  width: 100%;
+  position: relative;
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.retro-stage video,
+.retro-stage canvas.overlay {
+  width: 100%;
+  display: block;
+}
+.retro-stage canvas.overlay {
+  position: absolute;
+  top: 0; left: 0;
+  pointer-events: none;
+}
+.retro-hud {
+  position: absolute;
+  top: 10px; right: 12px;
+  font-size: 0.62rem;
+  color: var(--green);
+  text-align: right;
+  line-height: 1.6;
+}
+.retro-hud .label { color: var(--dim); font-size: 0.55rem; }
+
+.hotspot-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 0 8px;
+}
+.hotspot-num {
+  font-size: clamp(3rem, 12vw, 4.4rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--red);
+  transition: color 0.3s;
+}
+.hotspot-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.hotspot-status { font-size: 0.68rem; letter-spacing: 0.08em; color: var(--dim); margin-top: 2px; }
+
+.instr-box {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px;
+  font-size: 0.7rem;
+  line-height: 1.7;
+  color: var(--dim);
+}
+.instr-box strong { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>retroreflector</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · camera</div>
+      <div class="exp-title">hidden cameras<br>betray themselves with light.</div>
+      <div class="exp-desc">
+        Hidden camera lenses are coated in glass with a specific property: they retroreflect light
+        back toward its source. When your phone's flashlight illuminates a room, a concealed camera
+        lens will glow with a bright, distinctive dot — while everything else scatters light
+        in all directions. This is how professional counter-surveillance sweeps work, and your phone
+        already has everything needed.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>Hidden cameras are found in Airbnbs, hotel rooms, and changing rooms every week.</strong>
+      In 2019, a couple in South Korea found 1,600 guests had been livestreamed from hidden cameras
+      in motels. In 2023, a camera disguised as a smoke detector in an Irish Airbnb recorded guests
+      for months. The retroreflector effect is real — security researchers and law enforcement have
+      used phone camera + flashlight to find covert cameras for years.
+    </div>
+
+    <div class="instr-box">
+      <strong>How to sweep a room:</strong>
+      <br>1. Turn off all lights so the room is as dark as possible.
+      <br>2. Press start — this activates the rear camera and flash.
+      <br>3. Slowly pan the camera around the room, looking at the live view.
+      <br>4. Any hidden camera lens will appear as a bright, twinkling or glowing dot that doesn't look like a reflection from flat surfaces.
+      <br><br>
+      <strong>What to look for:</strong> The overlay highlights bright isolated spots in the frame.
+      Retroreflectors appear as pinpoints much brighter than surrounding surfaces — often with a slight
+      colour tinge (red/orange from lens coating). Check air vents, smoke detectors, clocks, USB chargers, and picture frames.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startRetro()">◉ start sweep</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopRetro()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="hotspot-count">
+      <div class="hotspot-num" id="hotspot-num" style="color:var(--green)">0</div>
+      <div class="hotspot-unit">bright spots detected</div>
+      <div class="hotspot-status" id="hotspot-status">waiting for camera</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-bright">—</span><span class="stat-lbl">max brightness</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-spots">—</span><span class="stat-lbl">hot spots</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-thresh">—</span><span class="stat-lbl">threshold</span></div>
+    </div>
+
+    <div class="retro-stage" style="aspect-ratio:4/3" id="retro-stage">
+      <video id="retro-video" autoplay playsinline muted></video>
+      <canvas class="overlay" id="retro-overlay"></canvas>
+      <div class="retro-hud">
+        <div class="label">spots</div>
+        <div id="hud-spots">—</div>
+        <div class="label" style="margin-top:6px">max px</div>
+        <div id="hud-max">—</div>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ the physics of retroreflection</summary>
+        <p>A retroreflector sends light back toward exactly the source direction, regardless of the
+        angle of incidence. Camera lenses achieve this unintentionally: the convex front element
+        focuses incoming light to a point, which then bounces off the sensor (or an internal reflective
+        element) and retraces the same path out. From the camera's perspective, the lens appears as
+        a very bright, directional point source.</p>
+        <p>This effect is maximised when your light source and camera are at nearly the same position —
+        which is exactly the case when you use a phone's rear flash and rear camera together.
+        Professional RF detectors and lens detectors exploit the same physics at longer range using
+        laser illuminators and polarised optics.</p>
+        <p>Limitations of this browser approach: we can't control flash timing precisely, so we look for
+        statistically bright isolated pixels rather than true retroreflector signatures. Real covert
+        camera lenses are typically 3–8mm in diameter and appear as isolated bright pinpoints, distinct
+        from the smeared reflections you get from flat surfaces like glass or mirrors.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let stream = null, videoEl = null, overlayCanvas = null, octx = null;
+let running = false, animId = null, spotCount = 0;
+let track = null; // for torch
+
+const sCanvas = document.createElement('canvas');
+sCanvas.width = 80; sCanvas.height = 60;
+const sctx = sCanvas.getContext('2d');
+
+async function startRetro() {
+  try {
+    const constraints = {
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 960 } }
+    };
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    videoEl = document.getElementById('retro-video');
+    videoEl.srcObject = stream;
+    await videoEl.play();
+
+    // Try to enable torch
+    track = stream.getVideoTracks()[0];
+    try {
+      await track.applyConstraints({ advanced: [{ torch: true }] });
+    } catch (e) { /* torch not supported — that's ok */ }
+
+    overlayCanvas = document.getElementById('retro-overlay');
+    const stage = document.getElementById('retro-stage');
+    overlayCanvas.width = stage.clientWidth * devicePixelRatio;
+    overlayCanvas.height = (stage.clientWidth * 3 / 4) * devicePixelRatio;
+    octx = overlayCanvas.getContext('2d');
+
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('hotspot-status').textContent = 'scanning — keep it dark, move slowly';
+    document.getElementById('hotspot-status').style.color = 'var(--green)';
+    animId = requestAnimationFrame(detectLoop);
+  } catch (e) {
+    document.getElementById('hotspot-status').textContent = 'camera access denied';
+    document.getElementById('hotspot-status').style.color = 'var(--red)';
+  }
+}
+
+function stopRetro() {
+  running = false;
+  if (animId) cancelAnimationFrame(animId);
+  if (track) { try { track.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {} }
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('hotspot-status').textContent = 'stopped';
+  document.getElementById('hotspot-status').style.color = 'var(--dim)';
+}
+
+function detectLoop() {
+  if (!running) return;
+  animId = requestAnimationFrame(detectLoop);
+
+  // Sample at low resolution
+  sctx.drawImage(videoEl, 0, 0, 80, 60);
+  const px = sctx.getImageData(0, 0, 80, 60).data;
+
+  // Find average brightness
+  let total = 0;
+  for (let i = 0; i < px.length; i += 4) {
+    total += 0.299 * px[i] + 0.587 * px[i+1] + 0.114 * px[i+2];
+  }
+  const avg = total / (80 * 60);
+  const threshold = Math.max(avg * 3.5, 200);
+
+  document.getElementById('stat-thresh').textContent = Math.round(threshold);
+  document.getElementById('stat-bright').textContent = Math.round(avg);
+
+  // Find hot spots (pixels significantly above average)
+  const spots = [];
+  for (let y = 0; y < 60; y++) {
+    for (let x = 0; x < 80; x++) {
+      const i = (y * 80 + x) * 4;
+      const lum = 0.299 * px[i] + 0.587 * px[i+1] + 0.114 * px[i+2];
+      if (lum > threshold) {
+        spots.push({ x: x / 80, y: y / 60, lum });
+      }
+    }
+  }
+
+  // Cluster nearby spots
+  const clusters = [];
+  const used = new Set();
+  for (let i = 0; i < spots.length; i++) {
+    if (used.has(i)) continue;
+    const cluster = [spots[i]];
+    used.add(i);
+    for (let j = i + 1; j < spots.length; j++) {
+      if (used.has(j)) continue;
+      const dx = spots[i].x - spots[j].x;
+      const dy = spots[i].y - spots[j].y;
+      if (Math.sqrt(dx*dx + dy*dy) < 0.05) {
+        cluster.push(spots[j]);
+        used.add(j);
+      }
+    }
+    const cx = cluster.reduce((s, p) => s + p.x, 0) / cluster.length;
+    const cy = cluster.reduce((s, p) => s + p.y, 0) / cluster.length;
+    const maxLum = Math.max(...cluster.map(p => p.lum));
+    clusters.push({ x: cx, y: cy, lum: maxLum, size: cluster.length });
+  }
+
+  const numClusters = clusters.length;
+  document.getElementById('stat-spots').textContent = numClusters;
+  document.getElementById('hotspot-num').textContent = numClusters;
+  document.getElementById('hotspot-num').style.color = numClusters > 0 ? 'var(--red)' : 'var(--green)';
+  document.getElementById('hotspot-status').textContent = numClusters > 0
+    ? numClusters + ' suspicious bright spot' + (numClusters > 1 ? 's' : '') + ' — investigate highlighted areas'
+    : 'no suspicious spots — continue scanning';
+  document.getElementById('hud-spots').textContent = numClusters;
+  document.getElementById('hud-max').textContent = clusters.length ? Math.round(Math.max(...clusters.map(c => c.lum))) : '—';
+
+  // Draw overlay
+  const OW = overlayCanvas.width / devicePixelRatio;
+  const OH = overlayCanvas.height / devicePixelRatio;
+  octx.clearRect(0, 0, OW, OH);
+
+  clusters.forEach(c => {
+    const cx = c.x * OW;
+    const cy = c.y * OH;
+    const r = Math.max(20, c.size * 3);
+    // Pulsing ring
+    octx.strokeStyle = 'rgba(248,113,113,0.9)';
+    octx.lineWidth = 2;
+    octx.beginPath();
+    octx.arc(cx, cy, r, 0, Math.PI * 2);
+    octx.stroke();
+    // Inner dot
+    octx.fillStyle = 'rgba(248,113,113,0.5)';
+    octx.beginPath();
+    octx.arc(cx, cy, 5, 0, Math.PI * 2);
+    octx.fill();
+    // Label
+    octx.fillStyle = 'rgba(248,113,113,1)';
+    octx.font = '10px monospace';
+    octx.textAlign = 'center';
+    octx.fillText('! ' + Math.round(c.lum), cx, cy - r - 4);
+  });
+}
+</script>
+</body>
+</html>

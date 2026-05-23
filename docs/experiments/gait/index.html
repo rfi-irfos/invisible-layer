@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Gait biometric — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.gait-canvas-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.gait-canvas-wrap canvas { width: 100%; display: block; }
+
+.step-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 0 8px;
+}
+.step-count {
+  font-size: clamp(3rem, 12vw, 4.4rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--cyan);
+  transition: color 0.2s;
+}
+.step-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.step-status { font-size: 0.68rem; letter-spacing: 0.08em; margin-top: 4px; color: var(--dim); }
+
+.gait-profile {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.gait-profile-header {
+  padding: 8px 14px;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border-bottom: 1px solid var(--border);
+}
+.gait-rows { display: flex; flex-direction: column; gap: 1px; background: var(--border); }
+.gait-row {
+  display: flex;
+  background: var(--surface);
+  padding: 9px 14px;
+  gap: 12px;
+  align-items: center;
+}
+.gait-key { font-size: 0.65rem; color: var(--dim); width: 120px; flex-shrink: 0; }
+.gait-val { font-size: 0.72rem; color: var(--text); }
+.gait-val.highlight { color: var(--cyan); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>gait biometric</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · motion biometric</div>
+      <div class="exp-title">the way you walk<br>is uniquely yours.</div>
+      <div class="exp-desc">
+        Walk across the room with your phone in your pocket or hand. The accelerometer
+        measures your step cadence, stride length, vertical bounce, and lateral sway.
+        Together these form a gait signature — a biometric fingerprint that stays stable
+        across sessions, even as you change shoes, bags, or how you're carrying the phone.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>You can be identified from 100 metres of walking with 95% accuracy — no camera needed.</strong>
+      Academic gait recognition using phone accelerometers achieves better than fingerprint recognition
+      at identifying individuals across a crowd. Chinese street cameras now routinely use gait
+      recognition as a backup when faces are covered. In 2018, police in Beijing identified a fugitive
+      who was deliberately obscuring his face, purely from the way he walked.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startGait()">◉ start walking</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopGait()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="step-display">
+      <div class="step-count" id="step-count">0</div>
+      <div class="step-unit">steps detected</div>
+      <div class="step-status" id="step-status">put the phone in your pocket and walk</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-cadence">—</span><span class="stat-lbl">steps/min</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-hz">—</span><span class="stat-lbl">step Hz</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-var">—</span><span class="stat-lbl">regularity %</span></div>
+    </div>
+
+    <div class="gait-canvas-wrap" style="aspect-ratio:3/1">
+      <canvas id="gait-canvas"></canvas>
+    </div>
+
+    <div class="gait-profile">
+      <div class="gait-profile-header">your gait signature (builds as you walk)</div>
+      <div class="gait-rows">
+        <div class="gait-row">
+          <span class="gait-key">step cadence</span>
+          <span class="gait-val highlight" id="prof-cadence">—</span>
+        </div>
+        <div class="gait-row">
+          <span class="gait-key">stride regularity</span>
+          <span class="gait-val highlight" id="prof-reg">—</span>
+        </div>
+        <div class="gait-row">
+          <span class="gait-key">vertical bounce</span>
+          <span class="gait-val highlight" id="prof-bounce">—</span>
+        </div>
+        <div class="gait-row">
+          <span class="gait-key">lateral sway</span>
+          <span class="gait-val highlight" id="prof-sway">—</span>
+        </div>
+        <div class="gait-row">
+          <span class="gait-key">pace type</span>
+          <span class="gait-val highlight" id="prof-type">—</span>
+        </div>
+        <div class="gait-row">
+          <span class="gait-key">fingerprint hash</span>
+          <span class="gait-val" id="prof-hash" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--dim)">— (need 20+ steps)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ what makes a gait biometric unique?</summary>
+        <p>Your walk is shaped by leg length, hip width, muscle tone, posture habits, injury history,
+        and shoe type. The accelerometer captures this as a time series of acceleration peaks.
+        From that we extract:</p>
+        <ul style="font-size:0.72rem;color:var(--dim);line-height:1.9;padding-left:20px;margin-top:6px">
+          <li><strong style="color:#fff">Cadence</strong> — steps per minute. Normal walking: 90–130 spm.</li>
+          <li><strong style="color:#fff">Stride regularity</strong> — how consistent each step is. Injury shows here first.</li>
+          <li><strong style="color:#fff">Vertical bounce</strong> — how much your body moves up and down per step.</li>
+          <li><strong style="color:#fff">Lateral sway</strong> — side-to-side motion. Wider gait = more sway.</li>
+        </ul>
+        <p>These features are stable across time and robust to changes in clothes, bags, and phone position.
+        Real surveillance gait recognition works at 50+ metres using video at low frame rate —
+        the shape of the curve, not the absolute values, is what gets matched.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let running = false;
+const BUF_LEN = 300;
+const magBuf = new Array(BUF_LEN).fill(9.8);
+const xBuf   = new Array(BUF_LEN).fill(0);
+let head = 0;
+let steps = 0, lastStepTime = 0;
+const stepIntervals = [];
+const stepPeaks = [];
+
+const canvas = document.getElementById('gait-canvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function startGait() {
+  const go = () => {
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('step-status').textContent = 'recording — walk normally';
+    document.getElementById('step-status').style.color = 'var(--green)';
+    window.addEventListener('devicemotion', onMotion);
+    requestAnimationFrame(renderLoop);
+    setInterval(updateProfile, 500);
+  };
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(s => { if (s === 'granted') go(); }).catch(() => {});
+  } else if (typeof DeviceMotionEvent !== 'undefined') { go(); }
+  else { document.getElementById('step-status').textContent = 'accelerometer not available'; }
+}
+
+function stopGait() {
+  running = false;
+  window.removeEventListener('devicemotion', onMotion);
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('step-status').textContent = 'stopped';
+  document.getElementById('step-status').style.color = 'var(--dim)';
+}
+
+// Low-pass gravity estimate
+let gx = 0, gy = 0, gz = 9.8;
+const ALPHA = 0.8;
+
+function onMotion(e) {
+  if (!running || !e.accelerationIncludingGravity) return;
+  const rx = e.accelerationIncludingGravity.x || 0;
+  const ry = e.accelerationIncludingGravity.y || 0;
+  const rz = e.accelerationIncludingGravity.z || 0;
+
+  gx = ALPHA * gx + (1 - ALPHA) * rx;
+  gy = ALPHA * gy + (1 - ALPHA) * ry;
+  gz = ALPHA * gz + (1 - ALPHA) * rz;
+
+  const ax = rx - gx, ay = ry - gy, az = rz - gz;
+  const mag = Math.sqrt(ax*ax + ay*ay + az*az);
+  const i = head % BUF_LEN;
+  magBuf[i] = mag;
+  xBuf[i] = ax;
+  head++;
+
+  // Step detection: local peak above threshold
+  const prev = magBuf[(head - 2 + BUF_LEN) % BUF_LEN];
+  const pprev = magBuf[(head - 3 + BUF_LEN) % BUF_LEN];
+  if (mag > 1.5 && mag > prev && mag > pprev) {
+    const now = Date.now();
+    if (now - lastStepTime > 280) {
+      const interval = now - lastStepTime;
+      if (lastStepTime > 0) stepIntervals.push(interval);
+      if (stepIntervals.length > 20) stepIntervals.shift();
+      stepPeaks.push(mag);
+      if (stepPeaks.length > 20) stepPeaks.shift();
+      lastStepTime = now;
+      steps++;
+      document.getElementById('step-count').textContent = steps;
+    }
+  }
+}
+
+function mean(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+function stdDev(arr) {
+  if (arr.length < 2) return 0;
+  const m = mean(arr);
+  return Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / arr.length);
+}
+
+function simpleHash(values) {
+  let h = 0x811c9dc5;
+  for (const v of values) {
+    const b = Math.round(v * 10) & 0xff;
+    h ^= b;
+    h = (h * 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0').toUpperCase();
+}
+
+function updateProfile() {
+  if (!running) return;
+  const magOrdered = new Array(BUF_LEN);
+  for (let i = 0; i < BUF_LEN; i++) magOrdered[i] = magBuf[(head + i) % BUF_LEN];
+  const xOrdered = new Array(BUF_LEN);
+  for (let i = 0; i < BUF_LEN; i++) xOrdered[i] = xBuf[(head + i) % BUF_LEN];
+
+  const vertBounce = Math.max(...magOrdered);
+  const lateralSway = stdDev(xOrdered);
+
+  if (stepIntervals.length < 2) {
+    document.getElementById('step-status').textContent = 'walk naturally — detecting steps...';
+    return;
+  }
+
+  const avgInterval = mean(stepIntervals);
+  const stepHz = 1000 / avgInterval;
+  const cadence = Math.round(stepHz * 60);
+  const intervalStd = stdDev(stepIntervals);
+  const regularity = Math.max(0, Math.round(100 - (intervalStd / avgInterval) * 100));
+
+  const paceType = stepHz < 0.8 ? 'very slow / shuffle' :
+                   stepHz < 1.2 ? 'slow walk' :
+                   stepHz < 1.8 ? 'normal walk' :
+                   stepHz < 2.5 ? 'brisk walk' : 'running / jogging';
+
+  document.getElementById('stat-cadence').textContent = cadence;
+  document.getElementById('stat-hz').textContent = stepHz.toFixed(2);
+  document.getElementById('stat-var').textContent = regularity + '%';
+  document.getElementById('step-status').textContent = paceType;
+  document.getElementById('step-status').style.color = 'var(--cyan)';
+
+  document.getElementById('prof-cadence').textContent = cadence + ' steps/min';
+  document.getElementById('prof-reg').textContent = regularity + '%  ' + (regularity > 90 ? '(very consistent)' : regularity > 70 ? '(normal)' : '(irregular)');
+  document.getElementById('prof-bounce').textContent = vertBounce.toFixed(2) + ' m/s² peak';
+  document.getElementById('prof-sway').textContent = lateralSway.toFixed(2) + ' m/s² std-dev';
+  document.getElementById('prof-type').textContent = paceType;
+
+  if (steps >= 20) {
+    const hashInput = [Math.round(stepHz * 100), Math.round(regularity), Math.round(vertBounce * 10), Math.round(lateralSway * 10)];
+    document.getElementById('prof-hash').textContent = simpleHash(hashInput);
+    document.getElementById('prof-hash').style.color = 'var(--green)';
+  }
+}
+
+function renderLoop() {
+  if (!running) return;
+  requestAnimationFrame(renderLoop);
+
+  const W = canvas.width / devicePixelRatio;
+  const H = canvas.height / devicePixelRatio;
+  ctx.clearRect(0, 0, W, H);
+
+  const ordered = new Array(BUF_LEN);
+  for (let i = 0; i < BUF_LEN; i++) ordered[i] = magBuf[(head + i) % BUF_LEN];
+  const maxV = Math.max(...ordered, 2);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+
+  // Step threshold line
+  const thY = H - (1.5 / maxV) * H * 0.85;
+  ctx.strokeStyle = 'rgba(245,158,11,0.2)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(0, thY); ctx.lineTo(W, thY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.beginPath();
+  ordered.forEach((v, i) => {
+    const x = (i / BUF_LEN) * W;
+    const y = H - (v / maxV) * H * 0.85;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(34,211,238,1)');
+  g.addColorStop(1, 'rgba(34,211,238,0.2)');
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+</script>
+</body>
+</html>

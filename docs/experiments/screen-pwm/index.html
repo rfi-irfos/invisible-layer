@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Screen PWM — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.pwm-canvas-wrap {
+  width: 100%;
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.pwm-canvas-wrap canvas { width: 100%; display: block; }
+.pwm-label {
+  position: absolute; top: 8px; left: 12px;
+  font-size: 0.58rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--dim);
+}
+
+.pwm-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0 8px;
+}
+.pwm-freq {
+  font-size: clamp(3rem, 12vw, 4.4rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  transition: color 0.4s;
+}
+.pwm-unit { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
+.pwm-verdict { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+.instr {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px;
+  font-size: 0.7rem;
+  line-height: 1.7;
+  color: var(--dim);
+}
+.instr strong { color: var(--text); }
+
+.result-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+}
+.res-row {
+  display: flex;
+  background: var(--surface);
+  padding: 9px 14px;
+  gap: 10px;
+  align-items: center;
+}
+.res-key { font-size: 0.65rem; color: var(--dim); width: 120px; flex-shrink: 0; }
+.res-val { font-size: 0.72rem; color: var(--text); flex: 1; }
+.res-val.good { color: var(--green); }
+.res-val.warn { color: var(--amber); }
+.res-val.bad  { color: var(--red); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>screen PWM</strong>
+      </div>
+    </div>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · camera</div>
+      <div class="exp-title">your screen flickers.<br>you can't see it.</div>
+      <div class="exp-desc">
+        Most screens dim their brightness not by reducing voltage, but by turning on and off very rapidly —
+        called PWM (pulse-width modulation). At 60Hz or higher, your eyes blend it into steady light.
+        But your brain still processes the flicker. Point a camera at any screen around you and let's
+        measure how fast it's pulsing.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>PWM flicker is linked to eye strain, headaches, and migraines — even when you feel fine.</strong>
+      Manufacturers rarely disclose PWM frequencies. Budget screens often flicker at 240Hz or even 60Hz.
+      Premium OLED screens use DC dimming (no flicker) at mid-to-high brightness, but switch to PWM at
+      low brightness — typically below 50% — where it's hardest to notice. EEG studies show measurable
+      changes in brain alpha-wave activity from screens flickering at these rates.
+    </div>
+
+    <div class="instr">
+      <strong>How to use this:</strong> Point your phone camera at <em>another screen</em> — a laptop,
+      TV, monitor, or tablet. Lower its brightness to 20–40% where PWM is most aggressive. Hold the
+      camera steady, about 20–30cm away. Press start.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startPWM()">◉ start camera</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopPWM()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="pwm-display">
+      <div class="pwm-freq" id="pwm-freq" style="color:var(--dim)">—</div>
+      <div class="pwm-unit">Hz · detected flicker frequency</div>
+      <div class="pwm-verdict" id="pwm-verdict" style="color:var(--dim)">waiting for camera</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-fps">—</span><span class="stat-lbl">camera fps</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-depth">—</span><span class="stat-lbl">flicker depth %</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-frames">0</span><span class="stat-lbl">frames sampled</span></div>
+    </div>
+
+    <div class="pwm-canvas-wrap" style="aspect-ratio:3/1">
+      <canvas id="pwm-canvas"></canvas>
+      <div class="pwm-label">brightness over time</div>
+    </div>
+
+    <div class="result-grid">
+      <div class="res-row">
+        <span class="res-key">screen type guess</span>
+        <span class="res-val" id="res-type">—</span>
+      </div>
+      <div class="res-row">
+        <span class="res-key">flicker depth</span>
+        <span class="res-val" id="res-depth">—</span>
+      </div>
+      <div class="res-row">
+        <span class="res-key">safety verdict</span>
+        <span class="res-val" id="res-safety">—</span>
+      </div>
+      <div class="res-row">
+        <span class="res-key">known matches</span>
+        <span class="res-val" id="res-match">—</span>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ how does PWM work, and why does it matter?</summary>
+        <p>LEDs can only be "on" or "off" — they can't partially dim the way an incandescent can.
+        To create the appearance of lower brightness, manufacturers switch them on and off at high
+        frequency: at 20% brightness, the LED is on 20% of the time and off 80% of the time, cycling
+        hundreds of times per second. This is PWM — pulse-width modulation.</p>
+        <p>The problem: at low frequencies (below ~1000Hz, especially below 250Hz), the visual cortex
+        detects the flicker even if you're not consciously aware of it. Studies show increased eye
+        muscle fatigue, reduced contrast sensitivity, and cortical loading from low-frequency PWM.
+        For people with photosensitive conditions, even 3000Hz can cause issues.</p>
+        <p>DC dimming (no flicker) is the alternative — it varies voltage instead. Most OLED phones
+        use DC dimming above ~40% brightness, but switch to PWM at low brightness because DC dimming
+        at very low levels causes color shifts and backlight uniformity problems.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let stream = null, videoEl = null, samplingCanvas = null, sctx = null;
+let running = false, frameCount = 0, animId = null;
+const BUF_LEN = 256;
+const brightBuf = new Array(BUF_LEN).fill(0);
+let bufHead = 0;
+let lastFrameTime = performance.now(), fps = 0, frameAccum = 0, lastFpsTime = performance.now();
+
+const canvas = document.getElementById('pwm-canvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+async function startPWM() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', frameRate: { ideal: 120, min: 30 } }
+    });
+    videoEl = document.createElement('video');
+    videoEl.srcObject = stream;
+    videoEl.playsInline = true;
+    await videoEl.play();
+    samplingCanvas = document.createElement('canvas');
+    samplingCanvas.width = 32; samplingCanvas.height = 18;
+    sctx = samplingCanvas.getContext('2d');
+    running = true;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('pwm-verdict').textContent = 'sampling frames...';
+    document.getElementById('pwm-verdict').style.color = 'var(--amber)';
+    animId = requestAnimationFrame(captureLoop);
+  } catch (e) {
+    document.getElementById('pwm-verdict').textContent = 'camera access denied';
+    document.getElementById('pwm-verdict').style.color = 'var(--red)';
+  }
+}
+
+function stopPWM() {
+  running = false;
+  if (animId) cancelAnimationFrame(animId);
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  document.getElementById('btn-start').style.display = 'inline-flex';
+  document.getElementById('btn-stop').style.display = 'none';
+  document.getElementById('pwm-verdict').textContent = 'stopped';
+  document.getElementById('pwm-verdict').style.color = 'var(--dim)';
+}
+
+function sampleBrightness() {
+  sctx.drawImage(videoEl, 0, 0, 32, 18);
+  const px = sctx.getImageData(0, 0, 32, 18).data;
+  let sum = 0;
+  for (let i = 0; i < px.length; i += 4) {
+    sum += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+  }
+  return sum / (32 * 18);
+}
+
+function captureLoop() {
+  if (!running) return;
+  animId = requestAnimationFrame(captureLoop);
+
+  const now = performance.now();
+  frameAccum++;
+  if (now - lastFpsTime >= 1000) {
+    fps = frameAccum;
+    frameAccum = 0;
+    lastFpsTime = now;
+    document.getElementById('stat-fps').textContent = fps;
+  }
+
+  const b = sampleBrightness();
+  brightBuf[bufHead % BUF_LEN] = b;
+  bufHead++;
+  frameCount++;
+  document.getElementById('stat-frames').textContent = frameCount;
+
+  if (frameCount % 4 === 0) {
+    analyzeAndDraw();
+  }
+}
+
+function analyzeAndDraw() {
+  const ordered = new Array(BUF_LEN);
+  for (let i = 0; i < BUF_LEN; i++) ordered[i] = brightBuf[(bufHead + i) % BUF_LEN];
+
+  const maxB = Math.max(...ordered);
+  const minB = Math.min(...ordered);
+  const depth = maxB > 0 ? (maxB - minB) / (maxB + minB) * 100 : 0;
+  document.getElementById('stat-depth').textContent = depth.toFixed(1) + '%';
+
+  // Draw brightness curve
+  const W = canvas.width / devicePixelRatio;
+  const H = canvas.height / devicePixelRatio;
+  ctx.clearRect(0, 0, W, H);
+  const range = maxB - minB || 1;
+  ctx.beginPath();
+  ordered.forEach((v, i) => {
+    const x = (i / BUF_LEN) * W;
+    const y = H - ((v - minB) / range) * H * 0.8 - H * 0.1;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, depth > 30 ? 'rgba(248,113,113,1)' : depth > 8 ? 'rgba(245,158,11,1)' : 'rgba(0,255,65,1)');
+  g.addColorStop(1, 'rgba(0,255,65,0.1)');
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // DFT for flicker frequency
+  if (fps < 20) return;
+  const N = Math.min(BUF_LEN, ordered.length);
+  let peakAmp = 0, peakFreq = 0;
+  const maxFreq = fps / 2;
+  for (let k = 1; k < N / 2; k++) {
+    let re = 0, im = 0;
+    for (let n = 0; n < N; n++) {
+      const angle = 2 * Math.PI * k * n / N;
+      re += ordered[n] * Math.cos(angle);
+      im -= ordered[n] * Math.sin(angle);
+    }
+    const amp = Math.sqrt(re * re + im * im);
+    if (amp > peakAmp) { peakAmp = amp; peakFreq = k * fps / N; }
+  }
+
+  if (depth < 0.5) {
+    document.getElementById('pwm-freq').textContent = 'DC';
+    document.getElementById('pwm-freq').style.color = 'var(--green)';
+    document.getElementById('pwm-verdict').textContent = 'no PWM detected — DC dimming or steady light';
+    document.getElementById('pwm-verdict').style.color = 'var(--green)';
+    document.getElementById('res-type').textContent = 'DC dimming or bright ambient light';
+    document.getElementById('res-depth').textContent = depth.toFixed(1) + '% (essentially flat)';
+    document.getElementById('res-safety').className = 'res-val good';
+    document.getElementById('res-safety').textContent = 'safe — no detectable flicker';
+    document.getElementById('res-match').textContent = 'OLED at high brightness, or DC-dimming panel';
+    return;
+  }
+
+  const hz = Math.round(peakFreq);
+  document.getElementById('pwm-freq').textContent = hz;
+  document.getElementById('pwm-freq').style.color = hz >= 1000 ? 'var(--green)' : hz >= 240 ? 'var(--cyan)' : hz >= 60 ? 'var(--amber)' : 'var(--red)';
+
+  const verdict = depth < 8  ? 'safe — low flicker depth (IEEE 1789)' :
+                  depth < 30 ? 'moderate risk — perceptible flicker range' :
+                               'high risk — significant flicker depth';
+  const verdictCls = depth < 8 ? 'good' : depth < 30 ? 'warn' : 'bad';
+  document.getElementById('pwm-verdict').textContent = verdict;
+  document.getElementById('pwm-verdict').style.color = depth < 8 ? 'var(--green)' : depth < 30 ? 'var(--amber)' : 'var(--red)';
+
+  const screenType = hz === 0 ? 'DC dimming' :
+                     hz <= 60 ? 'budget LCD (60Hz PWM — bad)' :
+                     hz <= 120 ? 'budget LCD or TV (120Hz PWM)' :
+                     hz <= 240 ? 'mid-range display (240Hz PWM)' :
+                     hz <= 360 ? 'high-refresh panel (360Hz)' : 'high-quality PWM or DC dimming';
+  const match = hz >= 59 && hz <= 61 ? 'typical budget monitor at low brightness' :
+                hz >= 119 && hz <= 121 ? 'TV or budget laptop panel' :
+                hz >= 239 && hz <= 241 ? 'Samsung AMOLED low brightness' :
+                hz >= 359 && hz <= 361 ? 'iPhone OLED at <40% brightness' : 'no exact match';
+
+  document.getElementById('res-type').textContent = screenType;
+  document.getElementById('res-depth').textContent = depth.toFixed(1) + '%';
+  document.getElementById('res-safety').className = 'res-val ' + verdictCls;
+  document.getElementById('res-safety').textContent = verdict;
+  document.getElementById('res-match').textContent = match;
+}
+</script>
+</body>
+</html>
