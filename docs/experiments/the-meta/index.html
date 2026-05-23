@@ -174,16 +174,20 @@ const sb = document.getElementById('spec-bar');
 const sc = sb.getContext('2d');
 let W=0, H=0;
 function resize() {
-  W = cv.width = window.innerWidth;
-  H = cv.height = window.innerHeight;
-  sb.width = window.innerWidth;
-  sb.height = 32;
+  const dpr = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  cv.width  = W * dpr; cv.height = H * dpr;
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  sb.width  = W * dpr; sb.height = 32 * dpr;
+  sc.setTransform(dpr, 0, 0, dpr, 0, 0);
+  initParticles();
 }
 resize();
 window.addEventListener('resize', resize);
 
 // ── Audio ──────────────────────────────────────────────────
-let aCtx, analyser, aData;
+let aCtx, analyser, aData, aTD;
 function startAudio() {
   navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})
     .then(stream => {
@@ -193,6 +197,7 @@ function startAudio() {
       analyser.smoothingTimeConstant = 0.7;
       aCtx.createMediaStreamSource(stream).connect(analyser);
       aData = new Float32Array(analyser.frequencyBinCount);
+      aTD   = new Float32Array(analyser.fftSize); // time-domain waveform
     }).catch(()=>{});
 }
 
@@ -262,17 +267,17 @@ function startGeo() {
 
 // ── Camera ─────────────────────────────────────────────────
 function startCamera() {
+  const attach = (stream) => {
+    const v = document.getElementById('cam-video');
+    v.srcObject = stream;
+    v.style.transform = 'scaleX(1)'; // never mirror — AR needs real-world orientation
+    return v.play().catch(()=>{});
+  };
   return navigator.mediaDevices.getUserMedia({
     video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
-  }).then(stream=>{
-    const v=document.getElementById('cam-video');
-    v.srcObject=stream;
-    v.style.transform='scaleX(1)'; // rear cam: not mirrored
-  }).catch(()=>navigator.mediaDevices.getUserMedia({video:true}).then(stream=>{
-    const v=document.getElementById('cam-video');
-    v.srcObject=stream;
-    v.style.transform='scaleX(-1)'; // front cam: mirror
-  }));
+  }).then(attach).catch(()=>
+    navigator.mediaDevices.getUserMedia({video:true}).then(attach)
+  );
 }
 
 // ── Boot ───────────────────────────────────────────────────
@@ -300,6 +305,7 @@ function loop() {
   // Update audio
   if (analyser && aData) {
     analyser.getFloatFrequencyData(aData);
+    if (aTD) analyser.getFloatTimeDomainData(aTD);
     const bins = aData.length;
     const bSize = Math.floor(bins / 8);
     let rms = 0, peak = -Infinity;
@@ -313,8 +319,8 @@ function loop() {
     }
     S.audioLevel = S.fftBands.reduce((a,v)=>a+v,0)/8;
     // spawn shockwave on loud transient
-    if (S.audioPeak > 0.65 && frame % 8 === 0) {
-      shockwaves.push({x:W*0.5, y:H*0.5, r:20, maxR:Math.min(W,H)*0.48, alpha:0.6, born:now});
+    if (S.audioPeak > 0.55 && frame % 6 === 0) {
+      shockwaves.push({x:W*0.5, y:H*0.5, r:10, maxR:Math.min(W,H)*0.52, alpha:0.7, born:now});
     }
   }
 
@@ -336,54 +342,86 @@ function loop() {
   if (L.spectrum) drawSpectrumBar(t);
 }
 
-// ─── SOUND — sine waves spanning full width ─────────────────
+// ─── SOUND — oscilloscope waveform + frequency bands ────────
 function drawSound(t) {
-  const yPositions = [0.20, 0.30, 0.40, 0.50, 0.60, 0.70];
-  const strokeColors = ['#00ff4166','#00ff4188','#00ff41bb','#00ff41bb','#00ff4188','#00ff4166'];
-
   cx.save();
 
-  // shockwaves on loud transients
-  shockwaves.forEach((sw, i) => {
+  // ── Shockwaves ──
+  for (let i = shockwaves.length - 1; i >= 0; i--) {
+    const sw = shockwaves[i];
     const age = (performance.now() - sw.born) / 1000;
-    sw.r = 20 + age * 180;
-    sw.alpha = Math.max(0, 0.5 - age * 0.5);
-    if (sw.alpha <= 0) { shockwaves.splice(i, 1); return; }
-    cx.beginPath();
-    cx.arc(sw.x, sw.y, sw.r, 0, Math.PI*2);
-    cx.strokeStyle = `rgba(0,255,65,${sw.alpha * 0.7})`;
-    cx.lineWidth = 2.5;
-    cx.shadowBlur = 12; cx.shadowColor = '#00ff41';
-    cx.stroke(); cx.shadowBlur = 0;
-    cx.beginPath();
-    cx.arc(sw.x, sw.y, sw.r * 0.55, 0, Math.PI*2);
-    cx.strokeStyle = `rgba(0,255,65,${sw.alpha * 0.3})`;
-    cx.lineWidth = 1; cx.stroke();
-  });
+    sw.r   = 10 + age * 220;
+    sw.alpha = Math.max(0, 0.65 - age * 0.55);
+    if (sw.alpha <= 0) { shockwaves.splice(i, 1); continue; }
+    // 3 concentric rings
+    [1.0, 0.65, 0.35].forEach((rFrac, ri) => {
+      const a = sw.alpha * (1 - ri * 0.28);
+      cx.beginPath();
+      cx.arc(sw.x, sw.y, sw.r * rFrac, 0, Math.PI*2);
+      cx.strokeStyle = `rgba(0,255,65,${a})`;
+      cx.lineWidth = ri === 0 ? 2.5 : 1;
+      cx.shadowBlur = ri === 0 ? 18 : 4;
+      cx.shadowColor = '#00ff41';
+      cx.stroke(); cx.shadowBlur = 0;
+    });
+  }
 
-  // 6 frequency band waves — stroke only (no muddy fill)
-  [0,1,2,3,4,5].forEach((b, idx) => {
-    const amp = S.fftBands[b] * H * 0.05 + 9;
-    const freq = (b + 1) * 0.8 + 1;
-    const baseY = H * yPositions[idx];
+  // ── Real time-domain oscilloscope waveform ──
+  if (aTD) {
+    const baseY = H * 0.5;
+    const maxAmp = H * 0.22;
     cx.beginPath();
-    for (let i = 0; i <= 120; i++) {
-      const x = (i / 120) * W;
-      const phase = t * freq * (0.8 + b * 0.15);
-      const y = baseY + Math.sin(i * 0.18 + phase) * amp
-                      + Math.sin(i * 0.07 + phase * 0.6) * amp * 0.4;
-      i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y);
+    const step = Math.max(1, Math.floor(aTD.length / (W * 2)));
+    for (let i = 0; i < W; i++) {
+      const idx = Math.floor(i / W * aTD.length);
+      const v   = aTD[idx];
+      const y   = baseY + v * maxAmp;
+      i === 0 ? cx.moveTo(i, y) : cx.lineTo(i, y);
     }
-    cx.strokeStyle = strokeColors[idx];
-    cx.lineWidth = idx === 2 || idx === 3 ? 2.5 : 1.8;
-    cx.shadowBlur = 8 + S.fftBands[b] * 16;
+    const glow = 6 + S.audioLevel * 28;
+    cx.strokeStyle = `rgba(0,255,65,${0.55 + S.audioLevel * 0.35})`;
+    cx.lineWidth   = 2;
+    cx.shadowBlur  = glow; cx.shadowColor = '#00ff41';
+    cx.stroke(); cx.shadowBlur = 0;
+
+    // ghost echo a few ms behind
+    cx.globalAlpha = 0.18;
+    cx.beginPath();
+    for (let i = 0; i < W; i++) {
+      const idx = Math.floor(i / W * aTD.length);
+      const v   = aTD[Math.max(0, idx - 20)];
+      const y   = baseY + v * maxAmp;
+      i === 0 ? cx.moveTo(i, y) : cx.lineTo(i, y);
+    }
+    cx.strokeStyle = '#00ff41';
+    cx.lineWidth   = 1;
+    cx.stroke();
+    cx.globalAlpha = 1;
+  }
+
+  // ── 6 frequency band waves (wider, more prominent) ──
+  const yPos   = [0.14, 0.23, 0.38, 0.62, 0.77, 0.86];
+  const alphas = ['55','77','99','99','77','55'];
+  [0,1,2,3,4,5].forEach((b, idx) => {
+    const amp  = S.fftBands[b] * H * 0.07 + 14;
+    const freq = (b + 1) * 0.8 + 1;
+    const baseY = H * yPos[idx];
+    cx.beginPath();
+    for (let i = 0; i <= W; i += 3) {
+      const phase = t * freq * (0.8 + b * 0.15);
+      const y = baseY + Math.sin(i * 0.16 + phase) * amp
+                      + Math.sin(i * 0.06 + phase * 0.6) * amp * 0.35;
+      i === 0 ? cx.moveTo(i, y) : cx.lineTo(i, y);
+    }
+    cx.strokeStyle = '#00ff41' + alphas[idx];
+    cx.lineWidth   = idx === 2 || idx === 3 ? 2.8 : 2;
+    cx.shadowBlur  = 10 + S.fftBands[b] * 18;
     cx.shadowColor = '#00ff41';
     cx.stroke(); cx.shadowBlur = 0;
   });
 
-  // pill label — left side, middle wave
   const db = Math.round(S.audioRMS * 120);
-  pill(cx, 14, H * 0.395, '#00ff41', 'SOUND  ' + db + ' dB');
+  pill(cx, 14, H * 0.38, '#00ff41', 'SOUND  ' + db + ' dB');
 
   cx.restore();
 }
@@ -478,8 +516,6 @@ function initParticles() {
     });
   }
 }
-setTimeout(initParticles, 100);
-window.addEventListener('resize', initParticles);
 
 function drawMotion(t) {
   const mag = Math.sqrt(S.ax*S.ax + S.ay*S.ay + S.az*S.az);
@@ -572,41 +608,31 @@ function drawRF(t) {
     const pulse = 0.5 + Math.sin(t * spd * Math.PI * 2) * 0.3;
     const waveAmp = isWifi ? 10 + rttAgit * 4 : 11;
 
-    const waveLen = W * 0.32;
+    const waveLen = W * 0.48;
     const offset = ((t * spd * 0.45) % 1) * (W + waveLen);
 
-    for (let p = 0; p < 3; p++) {
-      const ox = offset - p * waveLen * 0.38;
+    for (let p = 0; p < 4; p++) {
+      const ox = offset - p * waveLen * 0.34;
       if (ox < -waveLen || ox > W + waveLen) continue;
       cx.beginPath();
-      for (let x = Math.max(0, ox - waveLen); x <= Math.min(W, ox + waveLen); x += 3) {
+      for (let x = Math.max(0, ox - waveLen); x <= Math.min(W, ox + waveLen); x += 2) {
         const d = (x - ox) / waveLen;
-        const env = Math.exp(-d * d * 4);
-        const wy = y + Math.sin(d * Math.PI * 8 + t * spd * 6) * waveAmp * env;
+        const env = Math.exp(-d * d * 3);
+        const wy = y + Math.sin(d * Math.PI * 9 + t * spd * 6) * waveAmp * env;
         x === Math.max(0, ox - waveLen) ? cx.moveTo(x, wy) : cx.lineTo(x, wy);
       }
-      const alpha = Math.round((0.2 + pulse * 0.4 * (1 - p * 0.28)) * 255).toString(16).padStart(2, '0');
+      const alpha = Math.round((0.22 + pulse * 0.42 * (1 - p * 0.22)) * 255).toString(16).padStart(2, '0');
       cx.strokeStyle = band.col + alpha;
-      cx.lineWidth = p === 0 ? 2 : 1;
-      if (p === 0) { cx.shadowBlur = 10; cx.shadowColor = band.col; }
+      cx.lineWidth = p === 0 ? 2.2 : 1.2;
+      if (p === 0) { cx.shadowBlur = 12; cx.shadowColor = band.col; }
       cx.stroke(); cx.shadowBlur = 0;
     }
 
-    // label on right with dark background pill
-    const lbl = band.label;
-    cx.font = '10px monospace';
-    const tw = cx.measureText(lbl).width;
-    cx.fillStyle = 'rgba(0,0,0,0.6)';
-    cx.fillRect(W - tw - 22, y - 14, tw + 8, 16);
-    cx.fillStyle = band.col;
-    cx.textAlign = 'right';
-    cx.fillText(lbl, W - 14, y - 2);
+    // pill label — right side, offset from right edge
+    pill(cx, W - 140, y + 4, band.col, band.label);
   });
 
-  // pill on left for the RF layer
   pill(cx, 14, H * 0.20, '#f59e0b', 'RF SIGNALS  always here');
-
-  cx.textAlign = 'left';
   cx.restore();
 }
 
@@ -692,7 +718,7 @@ const specBands = [
 const audioActive = [0.14, 0.21]; // HF range visually maps to audio frequencies
 
 function drawSpectrumBar(t) {
-  const BW = sb.width, BH = 32;
+  const BW = W, BH = 32; // CSS pixels — DPR scale applied via setTransform
   sc.clearRect(0,0,BW,BH);
 
   // background
