@@ -19,8 +19,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:
 /* scanline overlay */
 #scanlines{
   position:fixed;inset:0;z-index:2;pointer-events:none;
-  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 4px);
-  mix-blend-mode:multiply;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.12) 3px,rgba(0,0,0,0.12) 4px);
+  mix-blend-mode:overlay;
 }
 /* vignette */
 #vignette{
@@ -359,7 +359,7 @@ function drawSound(t) {
 
   // main frequency waves
   bands.forEach((b, idx) => {
-    const amp = S.fftBands[b] * H * 0.04 + 2;
+    const amp = S.fftBands[b] * H * 0.05 + 8; // min 8px so always visible
     const freq = (b + 1) * 0.8 + 1;
     const baseY = H * yPositions[idx];
     const N = 120;
@@ -373,8 +373,11 @@ function drawSound(t) {
       i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y);
     }
     cx.strokeStyle = strokeColors[idx];
-    cx.lineWidth = idx === 2 || idx === 3 ? 1.5 : 1;
+    cx.lineWidth = idx === 2 || idx === 3 ? 2 : 1.5;
+    cx.shadowBlur = 6 + S.fftBands[b] * 14;
+    cx.shadowColor = strokeColors[idx];
     cx.stroke();
+    cx.shadowBlur = 0;
 
     // fill area under wave
     cx.lineTo(W, baseY);
@@ -435,7 +438,10 @@ function drawEM(t) {
     g.addColorStop(1, fieldColor + '00');
     cx.strokeStyle = g;
     cx.lineWidth = isAnom ? 1.5 : 1;
+    cx.shadowBlur = isAnom ? 12 : 6;
+    cx.shadowColor = fieldColor;
     cx.stroke();
+    cx.shadowBlur = 0;
   }
 
   // center hex grid — distorts with field
@@ -593,7 +599,9 @@ function drawRF(t) {
       }
       cx.strokeStyle = band.col + Math.round((0.15 + pulse*0.3*(1-p*0.3))*255).toString(16).padStart(2,'0');
       cx.lineWidth = p === 0 ? 1.5 : 0.8;
+      if (p === 0) { cx.shadowBlur = 8; cx.shadowColor = band.col; }
       cx.stroke();
+      cx.shadowBlur = 0;
     }
 
     // label on right
