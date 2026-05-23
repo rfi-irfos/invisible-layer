@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>invisible layer — your phone is already watching</title>
+<meta name="description" content="Every phone is a military-grade sensor array. Most people have no idea. 25 experiments that make the invisible visible."/>
+<meta property="og:title" content="invisible layer"/>
+<meta property="og:description" content="Your phone is already watching. Here's what it sees."/>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="assets/css/base.css"/>
+<style>
+  body { display: flex; flex-direction: column; align-items: center; }
+
+  .hero {
+    width: 100%;
+    max-width: 760px;
+    padding: 60px 24px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .hero-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--green);
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  .hero h1 span { color: var(--green); }
+
+  .hero-sub {
+    font-size: 0.9rem;
+    color: var(--dim);
+    line-height: 1.7;
+    max-width: 560px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .stat { display: flex; flex-direction: column; gap: 4px; }
+  .stat-val { font-size: 1.4rem; color: var(--cyan); }
+  .stat-lbl { font-size: 0.65rem; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .live-read {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    font-size: 0.75rem;
+    color: var(--dim);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .live-read-row { display: flex; justify-content: space-between; align-items: center; }
+  .live-read-val { color: var(--green); font-size: 0.8rem; }
+  .live-read-label { font-size: 0.65rem; letter-spacing: 0.08em; }
+
+  .cta-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  /* ── experiment grid ── */
+  .section {
+    width: 100%;
+    max-width: 760px;
+    padding: 0 24px 80px;
+  }
+  .section-header {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dim);
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s, background 0.15s;
+    cursor: pointer;
+  }
+  .card:hover { border-color: var(--cyan); background: var(--surface2); color: var(--text); }
+  .card:hover .card-icon { color: var(--green); }
+
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .card-icon { font-size: 1.3rem; line-height: 1; }
+  .card-title { font-size: 0.85rem; font-weight: 600; color: #fff; }
+  .card-desc { font-size: 0.7rem; color: var(--dim); line-height: 1.5; }
+  .card-sensor {
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    color: var(--dim);
+  }
+
+  .card.coming-soon { opacity: 0.4; cursor: default; pointer-events: none; }
+  .card.coming-soon:hover { border-color: var(--border); background: var(--surface); }
+
+  footer {
+    width: 100%;
+    max-width: 760px;
+    padding: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 0.65rem;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 40px;
+  }
+  footer a { color: var(--dim); }
+  footer a:hover { color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-label"><span class="pulse"></span> &nbsp;live sensor feed active</div>
+  <h1>your phone is<br><span>already watching.</span></h1>
+  <p class="hero-sub">
+    Right now, the device in your pocket is collecting data from a dozen sensors simultaneously.
+    Electromagnetic fields. Acoustic signatures. Motion. Light. Radio broadcasts from every device around you.
+    This is what it sees — and what others can infer from it.
+  </p>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-val" id="stat-sensors">12+</span>
+      <span class="stat-lbl">sensors active</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val" id="stat-hz">~200</span>
+      <span class="stat-lbl">readings/sec</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val">25</span>
+      <span class="stat-lbl">experiments</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val">0</span>
+      <span class="stat-lbl">installs needed</span>
+    </div>
+  </div>
+
+  <div class="live-read" id="live-read">
+    <div class="live-read-row">
+      <span class="live-read-label">accelerometer</span>
+      <span class="live-read-val" id="lr-accel">requesting...</span>
+    </div>
+    <div class="live-read-row">
+      <span class="live-read-label">orientation</span>
+      <span class="live-read-val" id="lr-orient">requesting...</span>
+    </div>
+    <div class="live-read-row">
+      <span class="live-read-label">user agent entropy</span>
+      <span class="live-read-val" id="lr-ua">—</span>
+    </div>
+    <div class="live-read-row">
+      <span class="live-read-label">network type</span>
+      <span class="live-read-val" id="lr-net">—</span>
+    </div>
+    <div class="live-read-row">
+      <span class="live-read-label">battery</span>
+      <span class="live-read-val" id="lr-bat">—</span>
+    </div>
+  </div>
+
+  <div class="cta-row">
+    <a href="docs/experiments/ble/" class="btn">▶ start with BLE scanner</a>
+    <a href="https://github.com/rfi-irfos/invisible-layer" class="btn" style="border-color:#475569;color:#475569">github</a>
+  </div>
+</div>
+
+<!-- ── ELECTROMAGNETIC ── -->
+<div class="section">
+  <div class="section-header">
+    <span>electromagnetic &amp; radio</span>
+    <span class="tag live">browser</span>
+  </div>
+  <div class="grid">
+    <a class="card" href="docs/experiments/ble/">
+      <div class="card-top"><span class="card-icon">◉</span><span class="tag live">live</span></div>
+      <div class="card-title">BLE broadcast scanner</div>
+      <div class="card-desc">Every device around you is screaming its presence into the air right now. Here's what's advertising itself within 10 meters.</div>
+      <div class="card-sensor">bluetooth le · web bluetooth api</div>
+    </a>
+    <a class="card" href="docs/experiments/em-field/">
+      <div class="card-top"><span class="card-icon">⌁</span><span class="tag live">live</span></div>
+      <div class="card-title">EM field detector</div>
+      <div class="card-desc">Walk near a power line, transformer, or appliance. Your magnetometer sees it. The field warps. Watch it happen in real time.</div>
+      <div class="card-sensor">magnetometer · deviceorientation api</div>
+    </a>
+    <a class="card" href="docs/experiments/compass-anomaly/">
+      <div class="card-top"><span class="card-icon">⊕</span><span class="tag warn">partial</span></div>
+      <div class="card-title">compass anomalies</div>
+      <div class="card-desc">Buildings are full of hidden infrastructure. Rebar, wiring, pipes. Your compass reveals the invisible skeleton of every structure you enter.</div>
+      <div class="card-sensor">magnetometer</div>
+    </a>
+    <a class="card coming-soon" href="#">
+      <div class="card-top"><span class="card-icon">⠿</span><span class="tag">soon</span></div>
+      <div class="card-title">WiFi density map</div>
+      <div class="card-desc">Walk through a space. Signal strength as spatial data. Map the invisible RF topology of a room.</div>
+      <div class="card-sensor">wifi · navigator api</div>
+    </a>
+  </div>
+</div>
+
+<!-- ── ACOUSTIC ── -->
+<div class="section">
+  <div class="section-header">
+    <span>acoustic</span>
+    <span class="tag live">mic required</span>
+  </div>
+  <div class="grid">
+    <a class="card" href="docs/experiments/acoustic/">
+      <div class="card-top"><span class="card-icon">◈</span><span class="tag live">live</span></div>
+      <div class="card-title">full spectrum FFT</div>
+      <div class="card-desc">The full frequency spectrum around you — mains hum at 50/60Hz, HVAC resonance, the acoustic signature of a room. What you can't hear, visualized.</div>
+      <div class="card-sensor">microphone · web audio api</div>
+    </a>
+    <a class="card" href="docs/experiments/mains-hum/">
+      <div class="card-top"><span class="card-icon">∿</span><span class="tag live">live</span></div>
+      <div class="card-title">mains hum detector</div>
+      <div class="card-desc">50Hz or 60Hz — tell which country you're in acoustically. Find hidden electrical equipment by its hum. Your walls are singing.</div>
+      <div class="card-sensor">microphone · fft</div>
+    </a>
+    <a class="card" href="docs/experiments/ultrasonic/">
+      <div class="card-top"><span class="card-icon">⊙</span><span class="tag warn">partial</span></div>
+      <div class="card-title">ultrasonic pest repellers</div>
+      <div class="card-desc">Those "silent" pest repellers emit 20–40kHz. Your phone hears them. Find out which of your neighbors has one running.</div>
+      <div class="card-sensor">microphone · high-freq fft</div>
+    </a>
+    <a class="card" href="docs/experiments/room-acoustics/">
+      <div class="card-top"><span class="card-icon">◎</span><span class="tag warn">partial</span></div>
+      <div class="card-title">room size from echo</div>
+      <div class="card-desc">A clap. The echo returns. Speed of sound + delay = distance to wall. Measure a room with nothing but your phone's mic.</div>
+      <div class="card-sensor">microphone · impulse response</div>
+    </a>
+    <a class="card" href="docs/experiments/infrasound/">
+      <div class="card-top"><span class="card-icon">⋯</span><span class="tag warn">partial</span></div>
+      <div class="card-title">infrasound</div>
+      <div class="card-desc">Below 20Hz — trucks, trains, industrial equipment, building resonance. You feel it but can't hear it. Your phone detects it.</div>
+      <div class="card-sensor">microphone · low-freq fft</div>
+    </a>
+  </div>
+</div>
+
+<!-- ── MOTION / STRUCTURAL ── -->
+<div class="section">
+  <div class="section-header">
+    <span>motion &amp; structural</span>
+    <span class="tag live">browser</span>
+  </div>
+  <div class="grid">
+    <a class="card" href="docs/experiments/motion/">
+      <div class="card-top"><span class="card-icon">⟁</span><span class="tag live">live</span></div>
+      <div class="card-title">surface resonance</div>
+      <div class="card-desc">Place your phone on a desk, floor, or wall. It picks up vibrations from footsteps, machines, traffic. Every surface is a membrane.</div>
+      <div class="card-sensor">accelerometer · devicemotion api</div>
+    </a>
+    <a class="card" href="docs/experiments/gait/">
+      <div class="card-top"><span class="card-icon">⤖</span><span class="tag warn">partial</span></div>
+      <div class="card-title">gait biometric</div>
+      <div class="card-desc">How you walk is as unique as a fingerprint. Your phone knows. Walk 10 steps and see your motion signature extracted in real time.</div>
+      <div class="card-sensor">accelerometer · gyroscope</div>
+    </a>
+    <a class="card" href="docs/experiments/seismic/">
+      <div class="card-top"><span class="card-icon">⋈</span><span class="tag warn">partial</span></div>
+      <div class="card-title">micro-seismic logger</div>
+      <div class="card-desc">Leave your phone on the floor overnight. In the morning, see every footstep, bus passing, and tremor that occurred while you slept.</div>
+      <div class="card-sensor">accelerometer · long-record</div>
+    </a>
+    <a class="card" href="docs/experiments/barometer/">
+      <div class="card-top"><span class="card-icon">⬡</span><span class="tag warn">partial</span></div>
+      <div class="card-title">floor-by-floor altimeter</div>
+      <div class="card-desc">Your phone's barometer is precise enough to detect each floor of a building. Your altitude is always known. So is the route you took.</div>
+      <div class="card-sensor">barometer · absolute pressure</div>
+    </a>
+  </div>
+</div>
+
+<!-- ── LIGHT / OPTICAL ── -->
+<div class="section">
+  <div class="section-header">
+    <span>light &amp; optical</span>
+    <span class="tag live">camera required</span>
+  </div>
+  <div class="grid">
+    <a class="card" href="docs/experiments/light-flicker/">
+      <div class="card-top"><span class="card-icon">⚡</span><span class="tag live">live</span></div>
+      <div class="card-title">LED flicker detector</div>
+      <div class="card-desc">Most LEDs flicker at 100/120Hz. Cheap ones flicker harder. Your camera captures it. See which lights in your home are strobing at you.</div>
+      <div class="card-sensor">camera · photodiode mode</div>
+    </a>
+    <a class="card" href="docs/experiments/screen-pwm/">
+      <div class="card-top"><span class="card-icon">▦</span><span class="tag warn">partial</span></div>
+      <div class="card-title">screen PWM dimming</div>
+      <div class="card-desc">Your own screen may be strobing to achieve dimming. Some displays PWM at 240Hz+. Point one phone's camera at another to reveal it.</div>
+      <div class="card-sensor">camera · high-speed sampling</div>
+    </a>
+    <a class="card" href="docs/experiments/retroreflector/">
+      <div class="card-top"><span class="card-icon">◆</span><span class="tag warn">partial</span></div>
+      <div class="card-title">retroreflector finder</div>
+      <div class="card-desc">Cameras, road signs, cat eyes, safety vests — all retroreflect. Use your phone's flash + camera to reveal them in a dark room.</div>
+      <div class="card-sensor">camera · flash</div>
+    </a>
+    <a class="card coming-soon" href="#">
+      <div class="card-top"><span class="card-icon">◐</span><span class="tag">soon</span></div>
+      <div class="card-title">sky polarization</div>
+      <div class="card-desc">The sky is polarized. Your camera can detect it with a polarizing filter. Navigate without GPS like a bee.</div>
+      <div class="card-sensor">camera · polarization</div>
+    </a>
+  </div>
+</div>
+
+<!-- ── THE META LAYER ── -->
+<div class="section">
+  <div class="section-header">
+    <span>the meta layer — what you reveal</span>
+    <span class="tag danger">uncomfortable</span>
+  </div>
+  <div class="grid">
+    <a class="card" href="docs/experiments/passive-telemetry/">
+      <div class="card-top"><span class="card-icon">◉</span><span class="tag danger">surveillance</span></div>
+      <div class="card-title">your passive telemetry</div>
+      <div class="card-desc">Right now your phone is generating ~200 sensor readings per second. Here's what can be inferred from them without you touching anything.</div>
+      <div class="card-sensor">all sensors · inference demo</div>
+    </a>
+    <a class="card" href="docs/experiments/what-you-reveal/">
+      <div class="card-top"><span class="card-icon">⊡</span><span class="tag danger">tracking</span></div>
+      <div class="card-title">what apps infer from motion</div>
+      <div class="card-desc">Walking vs. running vs. driving vs. on a bus. Asleep. In an elevator. Your motion data tells a complete story. Here's how it's read.</div>
+      <div class="card-sensor">accelerometer · gyroscope · inference</div>
+    </a>
+    <a class="card" href="docs/experiments/network-fingerprint/">
+      <div class="card-top"><span class="card-icon">⌖</span><span class="tag danger">identity</span></div>
+      <div class="card-title">network fingerprint</div>
+      <div class="card-desc">Your connection metadata — type, speed, latency pattern — combined with sensor data creates a fingerprint that follows you across sessions.</div>
+      <div class="card-sensor">navigator.connection · timing api</div>
+    </a>
+    <a class="card" href="docs/experiments/urban-canyon/">
+      <div class="card-top"><span class="card-icon">⊞</span><span class="tag warn">gps</span></div>
+      <div class="card-title">urban canyon detector</div>
+      <div class="card-desc">GPS accuracy degrades in dense cities. The pattern of degradation reveals building density. Your location is always inferrable even when GPS is blocked.</div>
+      <div class="card-sensor">gps · accuracy · inference</div>
+    </a>
+    <a class="card" href="docs/experiments/human-density/">
+      <div class="card-top"><span class="card-icon">⠿</span><span class="tag warn">wifi</span></div>
+      <div class="card-title">human density from WiFi</div>
+      <div class="card-desc">Count nearby WiFi probe requests. Each one is a person's phone shouting for familiar networks. Map human density without cameras.</div>
+      <div class="card-sensor">wifi probe requests · count</div>
+    </a>
+    <a class="card" href="docs/experiments/the-meta/">
+      <div class="card-top"><span class="card-icon">∞</span><span class="tag danger">conclusion</span></div>
+      <div class="card-title">the full picture</div>
+      <div class="card-desc">Every experiment on this page running simultaneously. This is what your phone generates every second of every day. This is what's collected.</div>
+      <div class="card-sensor">all sensors · combined</div>
+    </a>
+  </div>
+</div>
+
+<footer>
+  <span>invisible layer — open source, no tracking, no install</span>
+  <span>
+    <a href="https://github.com/rfi-irfos/invisible-layer">github</a> ·
+    made with <a href="https://ternlang.com">rfi-irfos</a>
+  </span>
+</footer>
+
+<script>
+// Live sensor readings on landing page
+(function() {
+  // Motion
+  if (typeof DeviceMotionEvent !== 'undefined') {
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      document.getElementById('lr-accel').textContent = 'tap any experiment to enable';
+    } else {
+      window.addEventListener('devicemotion', function(e) {
+        const a = e.accelerationIncludingGravity;
+        if (a) {
+          document.getElementById('lr-accel').textContent =
+            'x:' + (a.x||0).toFixed(1) + ' y:' + (a.y||0).toFixed(1) + ' z:' + (a.z||0).toFixed(1);
+        }
+      }, { once: false });
+    }
+  }
+
+  // Orientation
+  window.addEventListener('deviceorientation', function(e) {
+    if (e.alpha !== null) {
+      document.getElementById('lr-orient').textContent =
+        'α:' + (e.alpha||0).toFixed(0) + '° β:' + (e.beta||0).toFixed(0) + '° γ:' + (e.gamma||0).toFixed(0) + '°';
+    }
+  });
+
+  // Network
+  const nc = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (nc) {
+    document.getElementById('lr-net').textContent =
+      (nc.effectiveType || nc.type || '?') + (nc.downlink ? ' · ' + nc.downlink + ' Mbps' : '');
+  } else {
+    document.getElementById('lr-net').textContent = 'not exposed';
+  }
+
+  // Battery
+  if (navigator.getBattery) {
+    navigator.getBattery().then(function(b) {
+      document.getElementById('lr-bat').textContent =
+        Math.round(b.level * 100) + '% · ' + (b.charging ? 'charging' : 'on battery');
+    });
+  }
+
+  // UA entropy proxy
+  const ua = navigator.userAgent;
+  const tokens = ua.split(/[\s;()\/]/).filter(Boolean).length;
+  document.getElementById('lr-ua').textContent = tokens + ' tokens in UA string';
+})();
+</script>
+</body>
+</html>
