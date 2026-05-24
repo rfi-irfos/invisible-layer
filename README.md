@@ -34,8 +34,9 @@ The entities doing this know exactly what they are building. The people it is be
 
 Not an app. Not a product. Not a company with a privacy policy nobody reads. A mirror. Open it on your phone, and for the first time you see what has been running silently this entire time.
 
-## **[→ rfi-irfos.github.io/invisible-layer](https://rfi-irfos.github.io/invisible-layer/)**
-### open on your phone. no install. no account. no data collected. just the truth.
+[![try it live →](https://img.shields.io/badge/open_on_your_phone_%E2%86%92-rfi--irfos.github.io%2Finvisible--layer-22d3ee?style=for-the-badge&labelColor=0f172a&color=22d3ee)](https://rfi-irfos.github.io/invisible-layer/)
+
+**open on your phone. no install. no account. no data collected. just the truth.**
 
 ---
 
