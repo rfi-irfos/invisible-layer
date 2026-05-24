@@ -1,5 +1,7 @@
 # invisible layer
 
+[![open on your phone](https://img.shields.io/badge/open_on_your_phone_%E2%86%92-rfi--irfos.github.io%2Finvisible--layer-8b5cf6?style=for-the-badge&labelColor=0f172a&color=8b5cf6&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMSAxSDVhMSAxIDAgMCAwLTEgMXYxMmExIDEgMCAwIDAgMSAxaDZhMSAxIDAgMCAwIDEtMVYyYTEgMSAwIDAgMC0xLTF6TTggMTRhMSAxIDAgMSAxIDAtMiAxIDEgMCAwIDEgMCAyeiIvPjwvc3ZnPg==&logoColor=white)](https://rfi-irfos.github.io/invisible-layer/)
+
 ![experiments](https://img.shields.io/badge/experiments-25-22d3ee?style=flat&labelColor=0f172a)
 ![sensors](https://img.shields.io/badge/sensors-25%2B-a78bfa?style=flat&labelColor=0f172a)
 ![fingerprints](https://img.shields.io/badge/fingerprints_exposed-yours-ef4444?style=flat&labelColor=0f172a)
@@ -32,7 +34,7 @@ The entities doing this know exactly what they are building. The people it is be
 
 Not an app. Not a product. Not a company with a privacy policy nobody reads. A mirror. Open it on your phone, and for the first time you see what has been running silently this entire time.
 
-[![try it live →](https://img.shields.io/badge/open_on_your_phone_%E2%86%92-rfi--irfos.github.io%2Finvisible--layer-22d3ee?style=for-the-badge&labelColor=0f172a&color=22d3ee)](https://rfi-irfos.github.io/invisible-layer/)
+[![open on your phone](https://img.shields.io/badge/open_on_your_phone_%E2%86%92-rfi--irfos.github.io%2Finvisible--layer-8b5cf6?style=for-the-badge&labelColor=0f172a&color=8b5cf6&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMSAxSDVhMSAxIDAgMCAwLTEgMXYxMmExIDEgMCAwIDAgMSAxaDZhMSAxIDAgMCAwIDEtMVYyYTEgMSAwIDAgMC0xLTF6TTggMTRhMSAxIDAgMSAxIDAtMiAxIDEgMCAwIDEgMCAyeiIvPjwvc3ZnPg==&logoColor=white)](https://rfi-irfos.github.io/invisible-layer/)
 
 **open on your phone. no install. no account. no data collected. just the truth.**
 
