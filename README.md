@@ -1,9 +1,5 @@
 # invisible layer
 
-**"Is it too late?" — that is the wrong question. It has been past that since 2020.**
-
-The right question is: *now that you see it, what do you do?*
-
 ![experiments](https://img.shields.io/badge/experiments-25-22d3ee?style=flat&labelColor=0f172a)
 ![sensors](https://img.shields.io/badge/sensors-25%2B-a78bfa?style=flat&labelColor=0f172a)
 ![fingerprints](https://img.shields.io/badge/fingerprints_exposed-yours-ef4444?style=flat&labelColor=0f172a)
@@ -12,6 +8,10 @@ The right question is: *now that you see it, what do you do?*
 ![data collected](https://img.shields.io/badge/data_collected-zero-4ade80?style=flat&labelColor=0f172a)
 ![runs on](https://img.shields.io/badge/runs_on-your_phone-f97316?style=flat&labelColor=0f172a)
 ![license](https://img.shields.io/badge/license-MIT-60a5fa?style=flat&labelColor=0f172a)
+
+**"Is it too late?" — that is the wrong question. It has been past that since 2020.**
+
+The right question is: *now that you see it, what do you do?*
 
 ---
 
