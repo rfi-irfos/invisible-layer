@@ -197,7 +197,7 @@ async function startUltra() {
     document.getElementById('ultra-status').style.color = 'var(--amber)';
     rafId = requestAnimationFrame(tick);
   } catch(e) {
-    document.getElementById('ultra-status').textContent = 'mic unavailable: ' + e.message;
+    document.getElementById('ultra-status').textContent = 'microphone access needed — tap Allow when the browser asks';
     document.getElementById('ultra-status').style.color = 'var(--red)';
   }
 }

@@ -227,7 +227,7 @@ async function startLED() {
     document.getElementById('cri-verdict').style.color = 'var(--amber)';
     animId = requestAnimationFrame(analyseLoop);
   } catch (e) {
-    document.getElementById('cri-verdict').textContent = 'camera access denied';
+    document.getElementById('cri-verdict').textContent = 'camera access needed — tap Allow when the browser asks';
     document.getElementById('cri-verdict').style.color = 'var(--red)';
   }
 }

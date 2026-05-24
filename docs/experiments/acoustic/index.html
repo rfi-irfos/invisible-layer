@@ -184,7 +184,7 @@ async function startMic() {
     document.getElementById('vis-label').textContent = 'live';
     draw();
   } catch(e) {
-    document.getElementById('vis-label').textContent = 'mic error: ' + e.message;
+    document.getElementById('vis-label').textContent = 'microphone access needed — tap Allow when the browser asks';
   }
 }
 

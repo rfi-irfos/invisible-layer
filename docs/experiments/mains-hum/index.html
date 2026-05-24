@@ -221,7 +221,7 @@ async function startHum() {
     document.getElementById('hum-status').style.color = 'var(--green)';
     rafId = requestAnimationFrame(tick);
   } catch(e) {
-    document.getElementById('hum-status').textContent = 'mic unavailable: ' + e.message;
+    document.getElementById('hum-status').textContent = 'microphone access needed — tap Allow when the browser asks';
     document.getElementById('hum-status').style.color = 'var(--red)';
   }
 }

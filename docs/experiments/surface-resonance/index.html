@@ -212,7 +212,7 @@ function startResonance() {
       typeof DeviceMotionEvent.requestPermission === 'function') {
     DeviceMotionEvent.requestPermission().then(s => { if (s === 'granted') go(); }).catch(() => {});
   } else if (typeof DeviceMotionEvent !== 'undefined') { go(); }
-  else { document.getElementById('tap-prompt').textContent = 'accelerometer not available'; }
+  else { document.getElementById('tap-prompt').textContent = 'motion sensor not available on this device'; }
 }
 
 function stopResonance() {

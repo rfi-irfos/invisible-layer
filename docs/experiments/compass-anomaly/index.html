@@ -212,7 +212,7 @@ function startCompass() {
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
     DeviceOrientationEvent.requestPermission().then(s => { if (s === 'granted') go(); }).catch(() => {
-      document.getElementById('heading-status').textContent = 'permission denied';
+      document.getElementById('heading-status').textContent = 'motion access denied — allow motion in device settings';
       document.getElementById('heading-status').style.color = 'var(--red)';
     });
   } else { go(); }

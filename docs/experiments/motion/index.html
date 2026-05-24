@@ -189,13 +189,13 @@ function startRes() {
   if (typeof DeviceMotionEvent !== 'undefined' &&
       typeof DeviceMotionEvent.requestPermission === 'function') {
     DeviceMotionEvent.requestPermission().then(s => { if (s === 'granted') go(); }).catch(e => {
-      document.getElementById('res-status').textContent = 'permission denied';
+      document.getElementById('res-status').textContent = 'motion access denied — allow motion in device settings';
       document.getElementById('res-status').style.color = 'var(--red)';
     });
   } else if (typeof DeviceMotionEvent !== 'undefined') {
     go();
   } else {
-    document.getElementById('res-status').textContent = 'accelerometer unavailable';
+    document.getElementById('res-status').textContent = 'motion sensor not available on this device';
     document.getElementById('res-status').style.color = 'var(--red)';
   }
 }

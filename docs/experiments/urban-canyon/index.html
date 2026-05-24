@@ -192,7 +192,7 @@ window.addEventListener('resize', resizeCanvas);
 
 function startGPS() {
   if (!navigator.geolocation) {
-    document.getElementById('acc-status').textContent = 'geolocation not available';
+    document.getElementById('acc-status').textContent = 'GPS not available on this device';
     document.getElementById('acc-status').style.color = 'var(--red)';
     return;
   }
@@ -219,7 +219,7 @@ function stopGPS() {
 }
 
 function onError(e) {
-  document.getElementById('acc-status').textContent = 'GPS error: ' + e.message;
+  document.getElementById('acc-status').textContent = 'GPS signal lost — try moving outdoors with a clear view of the sky';
   document.getElementById('acc-status').style.color = 'var(--red)';
 }
 

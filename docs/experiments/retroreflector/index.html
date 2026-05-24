@@ -202,7 +202,7 @@ async function startRetro() {
     document.getElementById('hotspot-status').style.color = 'var(--green)';
     animId = requestAnimationFrame(detectLoop);
   } catch (e) {
-    document.getElementById('hotspot-status').textContent = 'camera access denied';
+    document.getElementById('hotspot-status').textContent = 'camera access needed — tap Allow when the browser asks';
     document.getElementById('hotspot-status').style.color = 'var(--red)';
   }
 }

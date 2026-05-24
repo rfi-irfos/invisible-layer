@@ -224,7 +224,7 @@ async function startPWM() {
     document.getElementById('pwm-verdict').style.color = 'var(--amber)';
     animId = requestAnimationFrame(captureLoop);
   } catch (e) {
-    document.getElementById('pwm-verdict').textContent = 'camera access denied';
+    document.getElementById('pwm-verdict').textContent = 'camera access needed — tap Allow when the browser asks';
     document.getElementById('pwm-verdict').style.color = 'var(--red)';
   }
 }

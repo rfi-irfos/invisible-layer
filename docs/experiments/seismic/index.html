@@ -196,11 +196,11 @@ function startSeismo() {
   if (typeof DeviceMotionEvent !== 'undefined' &&
       typeof DeviceMotionEvent.requestPermission === 'function') {
     DeviceMotionEvent.requestPermission().then(s => { if(s==='granted') go(); }).catch(() => {
-      document.getElementById('mag-status').textContent = 'permission denied';
+      document.getElementById('mag-status').textContent = 'motion access denied — allow motion in device settings';
       document.getElementById('mag-status').style.color = 'var(--red)';
     });
   } else if (typeof DeviceMotionEvent !== 'undefined') { go(); }
-  else { document.getElementById('mag-status').textContent = 'accelerometer not available'; }
+  else { document.getElementById('mag-status').textContent = 'motion sensor not available on this device'; }
 }
 
 function stopSeismo() {

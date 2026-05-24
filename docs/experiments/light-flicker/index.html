@@ -214,7 +214,7 @@ async function startFlicker() {
     document.getElementById('flicker-status').style.color = 'var(--cyan)';
     rafId = requestAnimationFrame(captureFrame);
   } catch(e) {
-    document.getElementById('flicker-status').textContent = 'camera unavailable: ' + e.message;
+    document.getElementById('flicker-status').textContent = 'camera access needed — tap Allow when the browser asks';
     document.getElementById('flicker-status').style.color = 'var(--red)';
   }
 }

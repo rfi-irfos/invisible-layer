@@ -283,7 +283,7 @@ async function doBleScan() {
     navigator.bluetooth.removeEventListener('advertisementreceived', handler);
     bleCount = count;
   } catch (e) {
-    document.getElementById('sig-ble').textContent = 'denied or unavailable';
+    document.getElementById('sig-ble').textContent = 'bluetooth not available in this browser';
   }
 }
 
@@ -357,7 +357,7 @@ function updateEstimate() {
   document.getElementById('sig-net').textContent = netType;
   document.getElementById('sig-rtt').textContent = conn && conn.rtt != null ? conn.rtt + ' ms' + (rtt > 100 ? ' (congested)' : '') : '—';
   document.getElementById('sig-rtt').className = 'sig-val ' + (rtt > 100 ? 'warn' : 'good');
-  document.getElementById('sig-audio').textContent = audioRunning ? (audioRMS * 1000).toFixed(1) + ' (RMS × 1000)' : 'mic not available';
+  document.getElementById('sig-audio').textContent = audioRunning ? (audioRMS * 1000).toFixed(1) + ' (noise level)' : 'mic not available';
   document.getElementById('sig-motion').textContent = motionRunning ? (motionVar < 0.5 ? 'stationary' : motionVar < 2 ? 'fidgeting' : 'walking') : 'not available';
   document.getElementById('sig-conf').textContent = confidence + '% (' + signals + ' active signals)';
   document.getElementById('sig-conf').className = 'sig-val ' + (confidence > 50 ? 'good' : 'warn');
