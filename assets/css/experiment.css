@@ -61,6 +61,23 @@ html, body {
 .exp-close:hover { color: #fff; border-color: #fff; }
 .exp-close:active { background: var(--surface2); }
 
+/* theme toggle button — same shape as close, sits beside it */
+.exp-theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--dim);
+  background: none;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.exp-theme-btn:hover { color: var(--text); border-color: var(--dim); background: var(--surface2); }
+
 /* scrollable body */
 .exp-body {
   flex: 1;
