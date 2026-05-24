@@ -412,6 +412,11 @@
       'exp.network-timing.shock': '<strong>the "login oracle" attack was documented in academic research since 2009.</strong> It used iframe loading times to detect Gmail, Facebook, and Twitter sessions. Modern browsers now add timing noise and block cross-origin reads — but the technique still works partially on some configurations.',
       'exp.network-timing.btn-start': '◉ probe login state',
       'exp.network-timing.summary': '▶ how does timing reveal login state?',
+      'exp.network-timing.stat.probed': 'probed',
+      'exp.network-timing.stat.detectable': 'ms measured',
+      'exp.network-timing.stat.blocked': 'browser protected',
+      'exp.network-timing.btn-probe': '◉ probe timing',
+      'exp.network-timing.timeline-title': 'browser mitigations timeline',
 
       // experiment strings — storage-quota
       'exp.storage-quota.label': 'experiment · browser APIs',
@@ -837,6 +842,11 @@
       'exp.network-timing.shock': '<strong>der "Login-Oracle"-Angriff ist seit 2009 dokumentiert.</strong> Er nutzte iFrame-Ladezeiten, um Gmail-, Facebook- und Twitter-Sitzungen zu erkennen. Moderne Browser fügen jetzt Timing-Rauschen hinzu und blockieren Cross-Origin-Lesezugriffe — aber die Technik funktioniert noch teilweise auf einigen Konfigurationen.',
       'exp.network-timing.btn-start': '◉ Login-Status prüfen',
       'exp.network-timing.summary': '▶ wie verraten Antwortzeiten den Login-Status?',
+      'exp.network-timing.stat.probed': 'geprüft',
+      'exp.network-timing.stat.detectable': 'ms gemessen',
+      'exp.network-timing.stat.blocked': 'Browser geschützt',
+      'exp.network-timing.btn-probe': '◉ Timing prüfen',
+      'exp.network-timing.timeline-title': 'Zeitleiste Browser-Schutzmaßnahmen',
 
       // experiment strings — storage-quota
       'exp.storage-quota.label': 'Experiment · Browser-APIs',
@@ -953,6 +963,115 @@
       'card.urban-canyon.desc': 'Le GPS se dégrade dans les villes denses. Le modèle de dégradation révèle la densité des bâtiments. Vous êtes toujours localisable.',
       'card.human-density.desc': 'Le RMS audio, la congestion du réseau et le nombre d\'annonces BLE se combinent pour estimer combien de personnes sont autour de vous.',
       'card.the-meta.desc': 'Tout fonctionne simultanément. C\'est ce que votre téléphone génère chaque seconde. C\'est ce qui est collecté.',
+
+      // experiment strings — wifi-density
+      'exp.wifi-density.label': 'expérience · scan WiFi',
+      'exp.wifi-density.title': 'chaque réseau visible<br>est une donnée.',
+      'exp.wifi-density.desc': 'Votre téléphone peut voir des dizaines de réseaux WiFi à la fois — chacun un petit émetteur radio diffusant son nom et sa puissance depuis un emplacement fixe. Le nombre de réseaux, leurs intensités et leurs noms révèlent votre environnement : banlieue, immeuble dense, tour de bureaux ou campagne.',
+      'exp.wifi-density.shock': '<strong>Google et Apple ont cartographié l\'emplacement de chaque réseau WiFi sur Terre grâce aux téléphones de leurs utilisateurs.</strong> Chaque fois qu\'un téléphone localise, il scanne les réseaux proches et rapporte leurs intensités — avec vos coordonnées GPS. Apple a plus de 100 millions de points d\'accès dans sa base. En 2010, les voitures Street View de Google ont collecté les données des réseaux ouverts.',
+      'exp.wifi-density.btn-start': '◉ démarrer le scan',
+      'exp.wifi-density.summary': '▶ qu\'indique la densité WiFi ?',
+
+      // experiment strings — room-acoustics
+      'exp.room-acoustics.label': 'expérience · acoustique',
+      'exp.room-acoustics.title': 'un clap révèle<br>la pièce autour de vous.',
+      'exp.room-acoustics.desc': 'Le son rebondit sur les murs et s\'atténue. La durée de cette atténuation — le temps de réverbération — dépend directement de la taille de la pièce et des matériaux des surfaces. Un clap dans une salle de bain résonne différemment que dans une chambre. Votre téléphone peut entendre la différence.',
+      'exp.room-acoustics.shock': '<strong>Les analystes audio légistes peuvent déterminer où un enregistrement a été réalisé grâce à sa signature d\'écho.</strong> L\'empreinte de réverbération d\'une pièce est unique — murs, meubles, tapis et hauteur de plafond laissent tous une signature sonore. Les agences de renseignement utilisent cela pour géolocaliser des enregistrements.',
+      'exp.room-acoustics.btn-start': '◉ commencer l\'écoute',
+      'exp.room-acoustics.summary': '▶ comment ça fonctionne ?',
+
+      // experiment strings — infrasound
+      'exp.infrasound.label': 'expérience · microphone',
+      'exp.infrasound.title': 'des sons inaudibles<br>sont partout autour de vous.',
+      'exp.infrasound.desc': 'En dessous de 20&thinsp;Hz, le son devient infrasonic — sous le seuil d\'audition humaine. Mais votre microphone s\'en moque. Tremblements de terre, tempêtes, machines industrielles, circulation, systèmes CVC — tout cela se trouve dans la bande infrasonique, agitant constamment l\'air et vos murs.',
+      'exp.infrasound.shock': '<strong>L\'infrasons à 18,98&thinsp;Hz a été associé à des sentiments de malaise, d\'angoisse et de "présence".</strong> En 1998, Vic Tandy a découvert qu\'un laboratoire produisait des ondes stationnaires à 18,98&thinsp;Hz depuis un ventilateur — le personnel rapportait des apparitions et des nausées. Cette fréquence correspond à la fréquence de résonance du globe oculaire humain.',
+      'exp.infrasound.btn-start': '◉ commencer l\'écoute',
+      'exp.infrasound.summary': '▶ pourquoi les micros entendent ce que nous ne pouvons pas ?',
+
+      // experiment strings — gait
+      'exp.gait.label': 'expérience · biométrie de mouvement',
+      'exp.gait.title': 'votre façon de marcher<br>est uniquement la vôtre.',
+      'exp.gait.desc': 'Traversez la pièce avec votre téléphone en poche ou en main. L\'accéléromètre mesure votre cadence de pas, la longueur de foulée, le rebond vertical et le balancement latéral. Ensemble, ils forment une signature de démarche — une empreinte biométrique stable entre les sessions, même si vous changez de chaussures.',
+      'exp.gait.shock': '<strong>Vous pouvez être identifié à partir de 100 mètres de marche avec 95% de précision — sans caméra.</strong> La reconnaissance de démarche par accéléromètre obtient de meilleurs résultats que la reconnaissance d\'empreintes digitales. Les caméras de rue chinoises utilisent désormais la reconnaissance de démarche quand les visages sont couverts.',
+      'exp.gait.btn-start': '◉ commencer à marcher',
+      'exp.gait.summary': '▶ qu\'est-ce qui rend une démarche biométrique unique ?',
+
+      // experiment strings — seismic
+      'exp.seismic.label': 'expérience 08 · accéléromètre',
+      'exp.seismic.title': 'le sol<br>ne s\'arrête jamais.',
+      'exp.seismic.desc': 'Posez votre téléphone à plat sur un bureau ou le sol et observez. Chaque camion qui passe, chaque pas dans le couloir, chaque train lointain — votre téléphone le capte. C\'est le même principe que les réseaux de sismographes professionnels. Votre accéléromètre MEMS est sensible à environ 0,001&thinsp;m/s².',
+      'exp.seismic.shock': '<strong>Des chercheurs ont suivi des personnes à travers des murs en utilisant uniquement des accéléromètres de téléphone.</strong> Une étude à Stanford a montré que la démarche mesurée par accéléromètre est aussi unique qu\'une empreinte digitale. Les vibrations de pas à travers le sol peuvent révéler la pièce occupée, le nombre de personnes présentes, et si vous êtes assis ou debout.',
+      'exp.seismic.btn-start': '◉ démarrer le capteur',
+      'exp.seismic.summary': '▶ comment ça fonctionne ?',
+
+      // experiment strings — barometer
+      'exp.barometer.label': 'expérience 09 · baromètre',
+      'exp.barometer.title': 'votre téléphone sait<br>à quel étage vous êtes.',
+      'exp.barometer.desc': 'La pression atmosphérique chute d\'environ 1,2&thinsp;hPa pour chaque 10 mètres d\'altitude. C\'est environ 1&thinsp;hPa par étage. Le capteur barométrique de votre téléphone est assez précis pour détecter cela — et assez sensible pour détecter l\'ascension d\'un escalier.',
+      'exp.barometer.shock': '<strong>Chaque application de covoiturage suit l\'étage du bâtiment où vous êtes.</strong> Uber, Lyft et Google Maps utilisent le baromètre pour savoir si vous êtes dans le hall ou au 12e étage — pour que la voiture vous attende à la bonne entrée. Les applications d\'assurance utilisent les mêmes données pour détecter si vous êtes à l\'hôpital. Sans GPS.',
+      'exp.barometer.btn-start': '◉ démarrer le capteur',
+      'exp.barometer.summary': '▶ comment ça fonctionne ?',
+
+      // experiment strings — screen-pwm
+      'exp.screen-pwm.label': 'expérience · caméra',
+      'exp.screen-pwm.title': 'votre écran scintille.<br>vous ne le voyez pas.',
+      'exp.screen-pwm.desc': 'La plupart des écrans réduisent leur luminosité non pas en diminuant la tension, mais en s\'allumant et s\'éteignant très rapidement — appelé PWM (modulation de largeur d\'impulsion). À 60&thinsp;Hz ou plus, vos yeux le fondent en lumière continue. Mais votre cerveau traite toujours le scintillement.',
+      'exp.screen-pwm.shock': '<strong>Le scintillement PWM est lié à la fatigue oculaire, aux maux de tête et aux migraines — même quand vous vous sentez bien.</strong> Les fabricants divulguent rarement les fréquences PWM. Les écrans bas de gamme scintillent souvent à 240&thinsp;Hz voire 60&thinsp;Hz. Les écrans OLED premium utilisent le DC dimming à luminosité élevée, mais basculent en PWM à faible luminosité.',
+      'exp.screen-pwm.btn-start': '◉ démarrer la caméra',
+      'exp.screen-pwm.summary': '▶ comment fonctionne le PWM, et pourquoi est-ce important ?',
+
+      // experiment strings — retroreflector
+      'exp.retroreflector.label': 'expérience · caméra',
+      'exp.retroreflector.title': 'les caméras cachées<br>se trahissent par la lumière.',
+      'exp.retroreflector.desc': 'Les objectifs des caméras cachées ont une propriété spécifique : ils rétroréfléchissent la lumière vers sa source. Quand la lampe de poche de votre téléphone éclaire une pièce, l\'objectif d\'une caméra dissimulée brillera d\'un point lumineux distinctif — tandis que tout le reste diffuse la lumière dans toutes les directions.',
+      'exp.retroreflector.shock': '<strong>Des caméras cachées sont découvertes chaque semaine dans des Airbnb, des chambres d\'hôtel et des cabines d\'essayage.</strong> En 2019, un couple en Corée du Sud a découvert que 1 600 clients avaient été diffusés en direct depuis des caméras cachées dans des motels. En 2023, une caméra déguisée en détecteur de fumée en Irlande a enregistré des clients pendant des mois.',
+      'exp.retroreflector.btn-start': '◉ démarrer le balayage',
+      'exp.retroreflector.summary': '▶ la physique de la rétroréflexion',
+
+      // experiment strings — sky-polarization
+      'exp.sky-polarization.label': 'expérience · caméra + orientation',
+      'exp.sky-polarization.title': 'la lumière du ciel est polarisée.<br>les abeilles s\'en servent. vous aussi.',
+      'exp.sky-polarization.desc': 'Quand la lumière solaire se diffuse dans l\'atmosphère, elle se polarise — les ondes lumineuses s\'alignent selon des schémas prévisibles relatifs à la position du soleil. Les abeilles, fourmis et oiseaux migrateurs utilisent cette "boussole céleste" pour naviguer même quand le soleil est caché.',
+      'exp.sky-polarization.shock': '<strong>La "pierre de soleil" viking est désormais confirmée comme un vrai outil de navigation — un cristal de calcite qui détecte la polarisation céleste.</strong> En 2013, des chercheurs ont trouvé un cristal de calcite dans une épave Tudor correspondant aux propriétés optiques des pierres de soleil nordiques légendaires. Précision de ±1° — suffisant pour traverser l\'Atlantique Nord par temps couvert.',
+      'exp.sky-polarization.btn-start': '◉ démarrer le scan céleste',
+      'exp.sky-polarization.summary': '▶ comment fonctionne la navigation par polarisation céleste ?',
+
+      // experiment strings — what-you-reveal
+      'exp.what-you-reveal.label': 'expérience · inférence de mouvement',
+      'exp.what-you-reveal.title': 'vos mouvements<br>sont une confession.',
+      'exp.what-you-reveal.desc': 'Les applications n\'ont pas besoin de caméra pour savoir ce que vous faites. La façon dont vous marchez, tapez, conduisez ou dormez — tout cela apparaît dans l\'accéléromètre. Bougez quelques secondes et regardez ce qui peut être déduit en temps réel, sans permission spéciale ni conscience de votre part.',
+      'exp.what-you-reveal.shock': '<strong>Votre rythme de frappe est aussi unique qu\'une empreinte digitale.</strong> Des recherches au MIT et Stanford ont montré que les données d\'accéléromètre — collectées silencieusement par des applications en arrière-plan — peuvent vous identifier avec 99% de précision d\'après la façon dont vous tenez votre téléphone en tapant. Les mêmes données prédisent votre âge, genre et état de santé.',
+      'exp.what-you-reveal.btn-start': '◉ commencer à me lire',
+      'exp.what-you-reveal.summary': '▶ qu\'est-ce qui peut vraiment être déduit du mouvement ?',
+
+      // experiment strings — urban-canyon
+      'exp.urban-canyon.label': 'expérience · GPS',
+      'exp.urban-canyon.title': 'les grands immeubles<br>cassent le GPS.',
+      'exp.urban-canyon.desc': 'En plein air, le GPS est précis à 2–5 mètres. Entrez dans une rue bordée de tours en verre et regardez ce nombre passer à 50 ou 200 mètres. Le signal rebondit sur les bâtiments avant d\'atteindre votre téléphone — et la réflexion ressemble exactement à un signal direct.',
+      'exp.urban-canyon.shock': '<strong>Les attaques de leurrage GPS font apparaître des navires à des centaines de kilomètres de leur route.</strong> En 2017, des navires en mer Noire signalaient des positions GPS à 32&thinsp;km à l\'intérieur des terres. En 2019, des dizaines de navires près de Shanghai étaient faussement positionnés au milieu de l\'aéroport de Pudong.',
+      'exp.urban-canyon.btn-start': '◉ démarrer le GPS',
+      'exp.urban-canyon.summary': '▶ qu\'est-ce qui cause l\'erreur GPS en canyon urbain ?',
+
+      // experiment strings — human-density
+      'exp.human-density.label': 'expérience · signaux passifs',
+      'exp.human-density.title': 'combien de personnes<br>sont autour de vous maintenant ?',
+      'exp.human-density.desc': 'Votre téléphone reçoit constamment des signaux de chaque appareil à portée — sondes WiFi, annonces Bluetooth, bruit RF. La densité de ces signaux est corrélée au nombre de personnes à proximité. Chaque personne porte 1 à 4 appareils sans fil qui diffusent continuellement.',
+      'exp.human-density.shock': '<strong>Les détaillants paient des entreprises pour compter les acheteurs en suivant les sondes WiFi de leurs téléphones.</strong> Chaque téléphone envoie constamment des "probe requests" — des signaux cherchant les réseaux WiFi connus. Des capteurs en magasin comptent et suivent les appareils uniques, mesurant le temps de présence et le trajet en rayon. Sans app, sans connaissance, sans consentement.',
+      'exp.human-density.btn-start': '◉ commencer la lecture',
+      'exp.human-density.summary': '▶ comment un téléphone peut-il estimer la densité d\'une foule ?',
+
+      // experiment strings — network-timing
+      'exp.network-timing.label': 'couche méta · timing fetch · aucune permission requise',
+      'exp.network-timing.title': 'les temps de réponse<br>révèlent vos sessions.',
+      'exp.network-timing.desc': 'Les ressources authentifiées mises en cache par votre navigateur se chargent plus vite que les non-authentifiées. En chronométrant des requêtes fetch vers des indicateurs de connexion connus, une page peut déduire à quels grands services vous êtes connecté — rien que par le timing, sans lire les cookies.',
+      'exp.network-timing.shock': '<strong>L\'attaque "login oracle" est documentée en recherche académique depuis 2009.</strong> Elle utilisait les temps de chargement d\'iframes pour détecter les sessions Gmail, Facebook et Twitter. Les navigateurs modernes ajoutent du bruit de timing et bloquent les lectures cross-origin — mais la technique fonctionne encore partiellement sur certaines configurations.',
+      'exp.network-timing.btn-start': '◉ sonder le timing',
+      'exp.network-timing.summary': '▶ comment les temps de réponse révèlent-ils l\'état de connexion ?',
+      'exp.network-timing.stat.probed': 'sondé',
+      'exp.network-timing.stat.detectable': 'ms mesuré',
+      'exp.network-timing.stat.blocked': 'navigateur protégé',
+      'exp.network-timing.btn-probe': '◉ sonder le timing',
+      'exp.network-timing.timeline-title': 'chronologie des protections navigateur',
 
       // nav filter — digital fingerprint
       'nav.filter.fp': 'empreinte digitale',
