@@ -51,6 +51,7 @@
 }
 .site-icon-btn:hover { color: var(--text); background: var(--surface2); }
 .site-icon-btn svg { width: 18px; height: 18px; fill: currentColor; }
+.site-lang-btn { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; font-weight: 600; }
 
 /* Mobile menu drawer */
 .mobile-drawer {
@@ -303,6 +304,8 @@ body { display:flex; flex-direction:column; align-items:center; }
       <svg id="theme-icon-light" viewBox="0 0 16 16" style="display:none"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/></svg>
       <svg id="theme-icon-hc" viewBox="0 0 16 16" style="display:none"><path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/></svg>
     </button>
+    <!-- Language toggle -->
+    <button class="site-icon-btn site-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()" title="Sprache / Language">DE</button>
     <!-- Mobile menu -->
     <button class="site-icon-btn" id="menu-btn" onclick="toggleMenu()" aria-label="Menu" title="Menu">
       <svg id="menu-icon-open" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/></svg>
@@ -341,8 +344,8 @@ body { display:flex; flex-direction:column; align-items:center; }
     <span>sensor feed active</span>
     <span id="sensor-count-label" style="color:var(--dim)">— detecting environment</span>
   </div>
-  <h1>your phone<br>is <em>already</em><br>watching.</h1>
-  <p class="hero-sub">
+  <h1 data-i18n="hero.h1">your phone<br>is <em>already</em><br>watching.</h1>
+  <p class="hero-sub" data-i18n="hero.sub">
     Right now, your device is reading a dozen physical layers of reality simultaneously —
     electromagnetic fields, acoustic signatures, motion, radio broadcasts from every device around you.
     Most people have no idea. 25 experiments that change that.
@@ -361,7 +364,7 @@ body { display:flex; flex-direction:column; align-items:center; }
   </div>
 
   <div class="cta-row">
-    <a class="cta-primary" href="docs/experiments/the-meta/">&#9711; open meta layer</a>
+    <a class="cta-primary" href="docs/experiments/the-meta/" data-i18n="hero.cta.meta">&#9711; open meta layer</a>
     <a class="cta-primary" style="background:none;border:1px solid var(--green);color:var(--green);" href="docs/experiments/ble/">BLE scanner</a>
   </div>
 </div>
@@ -379,12 +382,12 @@ body { display:flex; flex-direction:column; align-items:center; }
 <!-- ── FILTER BAR ── -->
 <div class="filter-bar">
   <div class="filter-inner">
-    <button class="filter-btn active" onclick="filter('all',this)">all</button>
-    <button class="filter-btn" onclick="filter('rf',this)">rf &amp; radio</button>
-    <button class="filter-btn" onclick="filter('acoustic',this)">acoustic</button>
-    <button class="filter-btn" onclick="filter('motion',this)">motion</button>
-    <button class="filter-btn" onclick="filter('light',this)">light</button>
-    <button class="filter-btn" onclick="filter('meta',this)">meta layer</button>
+    <button class="filter-btn active" onclick="filter('all',this)" data-i18n="nav.filter.all">all</button>
+    <button class="filter-btn" onclick="filter('rf',this)" data-i18n="nav.filter.rf">rf &amp; radio</button>
+    <button class="filter-btn" onclick="filter('acoustic',this)" data-i18n="nav.filter.acoustic">acoustic</button>
+    <button class="filter-btn" onclick="filter('motion',this)" data-i18n="nav.filter.motion">motion</button>
+    <button class="filter-btn" onclick="filter('light',this)" data-i18n="nav.filter.light">light</button>
+    <button class="filter-btn" onclick="filter('meta',this)" data-i18n="nav.filter.meta">meta layer</button>
   </div>
 </div>
 
@@ -793,5 +796,6 @@ function filter(cat, btn) {
   document.getElementById('sensor-count-label').textContent = '— ' + count + '+ sensors readable now';
 })();
 </script>
+<script src="assets/js/i18n.js"></script>
 </body>
 </html>

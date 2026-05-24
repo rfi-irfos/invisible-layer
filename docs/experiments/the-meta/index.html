@@ -18,7 +18,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:
 .ar-brand-sub{font-size:0.5rem;color:rgba(255,255,255,0.25);letter-spacing:0.1em}
 .ar-close{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid rgba(255,255,255,0.2);border-radius:50%;color:rgba(255,255,255,0.5);font-size:0.85rem;text-decoration:none;transition:all 0.15s;}
 .ar-close:hover{background:rgba(255,255,255,0.15);border-color:#fff;color:#fff}
-#spec-bar{position:fixed;bottom:90px;left:0;width:100%;height:36px;z-index:10;pointer-events:none;display:block;}
+#spec-bar{position:fixed;bottom:90px;left:0;width:100%;height:36px;z-index:10;pointer-events:none;display:block;transition:bottom 0.2s;}
 .layer-tray{position:fixed;bottom:0;left:0;right:0;z-index:10;padding:8px 10px max(10px,env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(0,0,0,0.9),transparent);display:flex;gap:5px;flex-wrap:wrap;justify-content:center;}
 .chip{display:flex;align-items:center;gap:5px;padding:6px 11px;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:100px;font-size:0.55rem;color:rgba(255,255,255,0.35);letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:all 0.15s;}
 .chip.on{border-color:var(--c);color:var(--c);background:rgba(0,0,0,0.75)}
@@ -125,6 +125,15 @@ window.addEventListener('resize', setupCanvas);
 var L={sound:true,em:true,motion:true,gyro:true,rf:true,altitude:true,hud:true,spectrum:true};
 function tog(chip){var k=chip.dataset.l;L[k]=!L[k];chip.classList.toggle('on',L[k]);}
 
+// ── Tray height — measured at boot so spec-bar clears it ──────────
+var TRAY_H=92;
+function measureTray(){
+  var el=document.querySelector('.layer-tray');
+  if(!el)return;
+  TRAY_H=el.getBoundingClientRect().height+6;
+  document.getElementById('spec-bar').style.bottom=TRAY_H+'px';
+}
+
 // ── Sensor state ──────────────────────────────────────────────────
 var S={
   audioLevel:0,audioPeak:0,audioRMS:0,fftBands:[0,0,0,0,0,0,0,0],fftFull:null,
@@ -156,23 +165,49 @@ function startAudio(){
 }
 
 // ── Magnetometer ─────────────────────────────────────────────────
+var S_magOk=false;
 function startMag(){
   var onR=function(x,y,z){
     S.mx=x;S.my=y;S.mz=z;
     S.magTotal=Math.sqrt(x*x+y*y+z*z);
+    S_magOk=true;
     if(S.magSamples<150){
       S.magBaseline=S.magBaseline===null?S.magTotal:S.magBaseline*0.96+S.magTotal*0.04;
       S.magSamples++;
     }
   };
+  var tryMagSensor=function(){
+    try{
+      var m=new Magnetometer({frequency:20});
+      m.addEventListener('reading',function(){onR(m.x,m.y,m.z);});
+      m.addEventListener('error',function(e){log('mag sensor err:'+e.error);tryOrFallback();});
+      m.start();return true;
+    }catch(e){return false;}
+  };
+  var tryOrFallback=function(){
+    // orientation fallback — provides real compass + tilt as proxy
+    var h=function(e){
+      var a=(e.alpha||0)*Math.PI/180;
+      var b=(e.beta||0)*Math.PI/180;
+      var g=(e.gamma||0)*Math.PI/180;
+      onR(Math.sin(a)*40+Math.cos(b)*10, Math.cos(a)*40+Math.sin(b)*10, Math.sin(g)*20+30);
+    };
+    if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+      DeviceOrientationEvent.requestPermission().then(function(s){if(s==='granted')window.addEventListener('deviceorientation',h,true);}).catch(function(){});
+    } else {
+      window.addEventListener('deviceorientation',h,true);
+    }
+  };
   if(typeof Magnetometer!=='undefined'){
-    try{var m=new Magnetometer({frequency:20});m.addEventListener('reading',function(){onR(m.x,m.y,m.z);});m.start();return;}catch(e){}
-  }
-  var h=function(e){onR(e.gamma||0,e.beta||0,(e.alpha||0)*0.1);};
-  if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
-    DeviceOrientationEvent.requestPermission().then(function(s){if(s==='granted')window.addEventListener('deviceorientation',h,true);}).catch(function(){});
+    if(navigator.permissions){
+      navigator.permissions.query({name:'magnetometer'}).then(function(r){
+        if(!tryMagSensor())tryOrFallback();
+      }).catch(function(){if(!tryMagSensor())tryOrFallback();});
+    } else {
+      if(!tryMagSensor())tryOrFallback();
+    }
   } else {
-    window.addEventListener('deviceorientation',h,true);
+    tryOrFallback();
   }
 }
 
@@ -290,6 +325,7 @@ function boot() {
   try{startCamera();}catch(e){}
   setupCanvas();
   initParticles();
+  measureTray();
   log('loop starting cx='+(cx?'ok':'NULL')+' '+W+'x'+H);
   requestAnimationFrame(loop);
 }
@@ -487,7 +523,7 @@ function drawSound(t,now){
   }
 
   // 64-bar FFT spectrum — bottom strip above chip tray
-  var barCount=64,bw=W/barCount,barMaxH=H*0.22,barY0=H-130;
+  var barCount=64,bw=W/barCount,barMaxH=H*0.22,barY0=H-TRAY_H-42;
   for(var bi=0;bi<barCount;bi++){
     var val;
     if(S.fftFull&&S.fftFull.length>bi){
@@ -513,9 +549,16 @@ function drawSound(t,now){
 function drawEM(t){
   cx.save();
   var anom=S.magBaseline?Math.abs(S.magTotal-S.magBaseline):0;
-  var norm=S.magTotal||50;var fx=S.mx/norm,fy=S.my/norm;
-  var intensity=Math.min(1,S.magTotal/80);var isAnom=anom>60;
+  // when no real mag data, animate synthetic field so it looks alive
+  var synthT=t*0.6;
+  var norm=S.magTotal||50;
+  var fx=S_magOk?S.mx/norm:Math.cos(synthT)*0.6;
+  var fy=S_magOk?S.my/norm:Math.sin(synthT*0.7)*0.6;
+  // minimum intensity so field always looks active
+  var intensity=Math.max(0.35,Math.min(1,S.magTotal/80));
+  var isAnom=anom>60;
   var emR=isAnom?'248,113,113':'167,139,250';
+  if(!S_magOk){emR='100,116,139';} // grey while calibrating
   cx.globalAlpha=0.6+intensity*0.25;
   var cX=W*0.5,cY=H*0.5,N=16;
   for(var i=0;i<N;i++){
@@ -552,7 +595,8 @@ function drawEM(t){
   cx.fillStyle='rgba('+emR+',1)';cx.fillRect(barX-3,barY+barH-fillH,6,fillH);
   cx.shadowBlur=12;cx.shadowColor='rgba('+emR+',1)';cx.fillRect(barX-3,barY+barH-fillH,6,3);cx.shadowBlur=0;
   cx.globalAlpha=1;
-  pill(cx,14,H*0.5-72,'rgba('+emR+',1)',isAnom?'! EM ANOMALY  '+S.magTotal.toFixed(0)+' µT':'MAGNETIC FIELD  '+S.magTotal.toFixed(0)+' µT');
+  var emLabel=!S_magOk?'EM FIELD  calibrating...':isAnom?'! EM ANOMALY  '+S.magTotal.toFixed(0)+' µT':'MAGNETIC FIELD  '+S.magTotal.toFixed(0)+' µT';
+  pill(cx,14,H*0.5-72,'rgba('+emR+',1)',emLabel);
   cx.restore();
 }
 
@@ -589,7 +633,7 @@ function drawMotion(t){
     cx.lineTo(eX-14*Math.cos(ang+0.4),eY-14*Math.sin(ang+0.4));
     cx.closePath();cx.fillStyle='rgba(34,211,238,0.9)';cx.fill();
   }
-  pill(cx,14,H-120,'#22d3ee','ACCEL  '+mag.toFixed(1)+' m/s²');
+  pill(cx,14,H-TRAY_H-48,'#22d3ee','ACCEL  '+mag.toFixed(1)+' m/s²');
   cx.restore();
 }
 
@@ -735,20 +779,20 @@ function drawHUD(t){
 
   // IMU — bottom left
   cx.textAlign='left';cx.fillStyle='rgba(34,211,238,0.5)';cx.font='9px monospace';
-  cx.fillText('X:'+S.ax.toFixed(1)+' Y:'+S.ay.toFixed(1)+' Z:'+S.az.toFixed(1),16,H-150);
+  cx.fillText('X:'+S.ax.toFixed(1)+' Y:'+S.ay.toFixed(1)+' Z:'+S.az.toFixed(1),16,H-TRAY_H-78);
   cx.fillStyle='rgba(96,165,250,0.5)';
-  cx.fillText('α:'+Math.round(S.orAlpha)+'° β:'+Math.round(S.orBeta)+'° γ:'+Math.round(S.orGamma)+'°',16,H-136);
-  if(S.lux!==null){cx.fillStyle='rgba(250,204,21,0.55)';cx.fillText('light:'+S.lux.toFixed(0)+'lx',16,H-122);}
+  cx.fillText('α:'+Math.round(S.orAlpha)+'° β:'+Math.round(S.orBeta)+'° γ:'+Math.round(S.orGamma)+'°',16,H-TRAY_H-64);
+  if(S.lux!==null){cx.fillStyle='rgba(250,204,21,0.55)';cx.fillText('light:'+S.lux.toFixed(0)+'lx',16,H-TRAY_H-50);}
 
   // Battery — bottom right
   if(S.battLevel!==null){
     var pct=Math.round(S.battLevel*100);
     var bc=pct>60?'0,255,65':pct>20?'245,158,11':'248,113,113';
     cx.textAlign='right';cx.fillStyle='rgba('+bc+',1)';cx.font='bold 12px monospace';
-    cx.fillText(pct+'%',W-16,H-152);
+    cx.fillText(pct+'%',W-16,H-TRAY_H-80);
     cx.font='9px monospace';cx.fillStyle='rgba(255,255,255,0.35)';
-    cx.fillText(S.battCharging?'charging':'battery',W-16,H-139);
-    var bx2=W-40,bby=H-170,bw=20,bh=10;
+    cx.fillText(S.battCharging?'charging':'battery',W-16,H-TRAY_H-67);
+    var bx2=W-40,bby=H-TRAY_H-98,bw=20,bh=10;
     cx.strokeStyle='rgba('+bc+',1)';cx.lineWidth=1.5;cx.strokeRect(bx2,bby,bw,bh);
     cx.fillStyle='rgba('+bc+',1)';
     cx.fillRect(bx2+bw,bby+3,2,4);
@@ -758,7 +802,7 @@ function drawHUD(t){
   // Mag field value centered
   var aC=(S.magBaseline&&Math.abs(S.magTotal-S.magBaseline)>60)?'rgba(248,113,113,0.6)':'rgba(167,139,250,0.6)';
   cx.textAlign='center';cx.fillStyle=aC;cx.font='9px monospace';
-  cx.fillText(S.magTotal.toFixed(0)+' µT',W*0.5,H-107);
+  cx.fillText(S.magTotal.toFixed(0)+' µT',W*0.5,H-TRAY_H-35);
   cx.textAlign='left';
   cx.restore();
 }
