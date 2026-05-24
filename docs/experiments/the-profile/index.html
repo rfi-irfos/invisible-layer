@@ -1,236 +1,596 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>your digital profile — invisible layer</title>
-<meta name="theme-color" content="#000000"/>
+<title>Your Digital Profile — invisible layer</title>
+<meta name="theme-color" content="#0f172a" id="theme-color-meta"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{background:#000;color:#c8c8c8;font-family:'JetBrains Mono','Courier New',monospace;font-size:12px;line-height:1.7;min-height:100vh;overflow-x:hidden}
 
-/* top nav */
-.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid rgba(220,38,38,0.15);position:sticky;top:0;background:rgba(0,0,0,0.95);backdrop-filter:blur(10px);z-index:100;}
-.nav-brand{font-size:0.6rem;letter-spacing:0.16em;color:rgba(255,255,255,0.25);text-transform:uppercase}
-.nav-brand span{color:#ef4444}
-.nav-back{font-size:0.55rem;letter-spacing:0.1em;color:rgba(255,255,255,0.2);text-decoration:none;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px 10px;transition:all 0.15s}
-.nav-back:hover{color:#fff;border-color:rgba(255,255,255,0.3)}
+/* ── Theme variables ── */
+[data-theme="light"]{
+  --bg:#f1f5f9;--surface:#ffffff;--surface2:#f8fafc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#0f172a;--text2:#334155;--muted:#64748b;
+  --danger:#dc2626;--danger-bg:#fef2f2;--danger-border:#fca5a5;
+  --success:#15803d;--success-bg:#f0fdf4;--success-border:#86efac;
+  --warn:#b45309;--warn-bg:#fffbeb;--warn-border:#fcd34d;
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.08);
+  --nav-bg:rgba(241,245,249,0.96);
+}
+[data-theme="dark"]{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#162032;
+  --border:#2d3f57;--border2:#3d5068;
+  --text:#f1f5f9;--text2:#cbd5e1;--muted:#7a90a8;
+  --danger:#ef4444;--danger-bg:rgba(239,68,68,0.07);--danger-border:rgba(239,68,68,0.28);
+  --success:#22c55e;--success-bg:rgba(34,197,94,0.07);--success-border:rgba(34,197,94,0.28);
+  --warn:#fbbf24;--warn-bg:rgba(251,191,36,0.07);--warn-border:rgba(251,191,36,0.28);
+  --shadow:none;--shadow-md:none;
+  --nav-bg:rgba(15,23,42,0.96);
+}
+[data-theme="hc"]{
+  --bg:#000;--surface:#000;--surface2:#000;
+  --border:#ffffff;--border2:#ffffff;
+  --text:#ffffff;--text2:#ffffff;--muted:#cccccc;
+  --danger:#ff4040;--danger-bg:transparent;--danger-border:#ff4040;
+  --success:#00ff44;--success-bg:transparent;--success-border:#00ff44;
+  --warn:#ffdd00;--warn-bg:transparent;--warn-border:#ffdd00;
+  --shadow:none;--shadow-md:none;
+  --nav-bg:#000;
+}
 
-/* page shell */
-.page{max-width:680px;margin:0 auto;padding:28px 20px 80px}
+/* ── Base ── */
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-size:15px;line-height:1.65;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;overflow-x:hidden;
+  transition:background 0.2s,color 0.2s;
+}
 
-/* scan intro */
-#scan-intro{margin-bottom:36px;min-height:60px}
-.scan-line{color:rgba(239,68,68,0.6);font-size:0.7rem;letter-spacing:0.06em}
-.scan-line.done{color:rgba(100,100,100,0.5)}
-#cursor{display:inline-block;width:8px;height:13px;background:#ef4444;vertical-align:middle;animation:blink 0.8s step-end infinite;margin-left:2px}
+/* ── Nav ── */
+.nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;position:sticky;top:0;z-index:100;
+  background:var(--nav-bg);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.nav-brand{font-size:13px;color:var(--muted);letter-spacing:0.01em}
+.nav-brand b{color:var(--text);font-weight:600}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{
+  font-size:12px;padding:5px 11px;border-radius:6px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--border);color:var(--text2);
+  font-family:inherit;transition:all 0.12s;line-height:1;
+}
+.nav-btn:hover{border-color:var(--border2);color:var(--text)}
+.nav-btn.active{background:var(--danger);border-color:var(--danger);color:#fff}
+.nav-back{
+  font-size:12px;color:var(--muted);text-decoration:none;
+  padding:5px 11px;border:1px solid var(--border);border-radius:6px;
+  transition:all 0.12s;
+}
+.nav-back:hover{color:var(--text);border-color:var(--border2)}
+
+/* ── Page ── */
+.page{max-width:680px;margin:0 auto;padding:32px 20px 100px}
+
+/* ── Scan intro ── */
+.scan-wrap{margin-bottom:40px;min-height:80px}
+.scan-msg{font-size:13px;color:var(--muted);line-height:2;letter-spacing:0.01em}
+.scan-msg.done{color:var(--border2)}
+.scan-cursor{
+  display:inline-block;width:2px;height:16px;background:var(--danger);
+  vertical-align:middle;margin-left:3px;
+  animation:blink 0.9s step-end infinite;
+}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
-/* section blocks */
-.block{margin-bottom:28px;opacity:0;transform:translateY(6px);transition:opacity 0.4s ease,transform 0.4s ease}
-.block.visible{opacity:1;transform:none}
-.block-head{font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:#ef4444;border-bottom:1px dashed rgba(220,38,38,0.3);padding-bottom:6px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.block-head::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#ef4444;flex-shrink:0;box-shadow:0 0 6px #ef4444}
+/* ── Cards ── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:22px 22px 18px;
+  margin-bottom:16px;box-shadow:var(--shadow);
+  opacity:0;transform:translateY(8px);
+  transition:opacity 0.35s ease,transform 0.35s ease,background 0.2s,border-color 0.2s;
+}
+.card.visible{opacity:1;transform:none}
+.card-head{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);
+}
+.card-icon{
+  width:28px;height:28px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  background:var(--danger-bg);border:1px solid var(--danger-border);
+}
+.card-icon svg{width:14px;height:14px;fill:var(--danger)}
+.card-icon.ok{background:var(--success-bg);border-color:var(--success-border)}
+.card-icon.ok svg{fill:var(--success)}
+.card-icon.warn{background:var(--warn-bg);border-color:var(--warn-border)}
+.card-icon.warn svg{fill:var(--warn)}
+.card-title{font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted)}
 
-/* rows */
-.row{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+/* ── Rows ── */
+.row{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start}
 .row:last-child{border-bottom:none}
-.row-key{color:rgba(255,255,255,0.3);flex:0 0 160px;font-size:0.65rem;letter-spacing:0.03em}
-.row-val{color:#fff;font-size:0.7rem;word-break:break-all}
-.row-val.ok{color:#22c55e}
-.row-val.warn{color:#f59e0b}
-.row-val.danger{color:#ef4444}
-.row-val.muted{color:rgba(255,255,255,0.3)}
+.row-key{font-size:13px;color:var(--muted);flex:0 0 155px;padding-top:1px}
+.row-val{font-size:14px;color:var(--text);word-break:break-word;flex:1}
+.small{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6}
+.danger{color:var(--danger)}
+.success{color:var(--success)}
+.warn{color:var(--warn)}
 
-/* permission badges */
-.perm-granted{color:#22c55e;font-size:0.6rem;letter-spacing:0.08em;border:1px solid rgba(34,197,94,0.3);border-radius:3px;padding:1px 6px;display:inline-block}
-.perm-denied{color:rgba(100,100,100,0.6);font-size:0.6rem;letter-spacing:0.08em;border:1px solid rgba(100,100,100,0.2);border-radius:3px;padding:1px 6px;display:inline-block}
-.perm-prompt{color:#f59e0b;font-size:0.6rem;letter-spacing:0.08em;border:1px solid rgba(245,158,11,0.3);border-radius:3px;padding:1px 6px;display:inline-block}
+/* ── Permission badges ── */
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;font-weight:500;letter-spacing:0.03em;
+  padding:3px 9px;border-radius:5px;
+}
+.badge-granted{background:var(--success-bg);border:1px solid var(--success-border);color:var(--success)}
+.badge-denied{background:var(--surface2);border:1px solid var(--border);color:var(--muted)}
+.badge-prompt{background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn)}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
 
-/* inferred tags */
-.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.tag{font-size:0.58rem;letter-spacing:0.05em;padding:3px 9px;border:1px solid rgba(239,68,68,0.25);border-radius:100px;color:rgba(239,68,68,0.7);background:rgba(239,68,68,0.04)}
-.tag.high{border-color:rgba(239,68,68,0.5);color:rgba(239,68,68,1);background:rgba(239,68,68,0.08)}
+/* ── Tags ── */
+.tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.tag{
+  font-size:12px;padding:4px 11px;border-radius:100px;
+  border:1px solid var(--border2);color:var(--text2);
+  background:var(--surface2);
+}
+.tag.hot{border-color:var(--danger-border);color:var(--danger);background:var(--danger-bg)}
 
-/* battery drain */
-.battery-wrap{margin:8px 0 18px}
-.battery-label{font-size:0.58rem;letter-spacing:0.1em;color:rgba(255,255,255,0.25);text-transform:uppercase;margin-bottom:8px}
-.battery-outer{position:relative;height:24px;border:1px solid rgba(239,68,68,0.4);border-radius:4px;background:rgba(239,68,68,0.04);overflow:hidden}
-.battery-fill{height:100%;background:linear-gradient(90deg,rgba(239,68,68,0.8),rgba(248,113,113,0.6));border-radius:3px;transition:width 1.5s ease;animation:battdrain 8s ease-in-out infinite alternate}
-@keyframes battdrain{0%{opacity:1}50%{opacity:0.7}100%{opacity:1}}
-.battery-tip{position:absolute;right:-6px;top:6px;width:5px;height:12px;background:rgba(239,68,68,0.4);border-radius:0 2px 2px 0}
-.battery-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.6rem;letter-spacing:0.08em;color:rgba(255,255,255,0.7)}
+/* ── App permission guide ── */
+.guide-step{
+  display:flex;gap:12px;padding:10px 0;
+  border-bottom:1px solid var(--border);align-items:flex-start;
+}
+.guide-step:last-child{border-bottom:none}
+.guide-num{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--danger-bg);border:1px solid var(--danger-border);
+  color:var(--danger);font-size:11px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;
+}
+.guide-text{font-size:13px;color:var(--text2);line-height:1.6}
+.guide-text b{color:var(--text)}
+.guide-text code{
+  font-family:inherit;font-size:12px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--text);
+}
 
-/* broker list */
-.broker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:10px}
-.broker-card{border:1px solid rgba(239,68,68,0.15);border-radius:5px;padding:7px 10px;background:rgba(239,68,68,0.03);opacity:0;transform:scale(0.95);transition:opacity 0.3s,transform 0.3s}
+/* ── Battery ── */
+.battery-outer{
+  position:relative;height:32px;
+  border:2px solid var(--danger-border);border-radius:6px;
+  background:var(--danger-bg);overflow:hidden;margin:12px 0 8px;
+}
+.battery-fill{
+  height:100%;background:linear-gradient(90deg,var(--danger),rgba(239,68,68,0.6));
+  border-radius:4px;transition:width 1.8s ease;
+}
+.battery-tip{
+  position:absolute;right:-7px;top:8px;
+  width:6px;height:16px;
+  background:var(--danger-border);border-radius:0 3px 3px 0;
+}
+.battery-label{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;letter-spacing:0.05em;color:var(--text);
+}
+
+/* ── Brokers ── */
+.broker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:14px}
+.broker-card{
+  border:1px solid var(--border);border-radius:10px;
+  padding:10px 12px;background:var(--surface2);
+  opacity:0;transform:scale(0.96);
+  transition:opacity 0.25s,transform 0.25s,background 0.2s;
+}
 .broker-card.show{opacity:1;transform:none}
-.broker-name{font-size:0.62rem;color:rgba(255,255,255,0.7);letter-spacing:0.03em;margin-bottom:2px}
-.broker-type{font-size:0.52rem;color:rgba(239,68,68,0.5);letter-spacing:0.04em}
-.broker-drain{font-size:0.52rem;color:rgba(255,255,255,0.2);margin-top:4px}
-.broker-bar{height:2px;background:rgba(239,68,68,0.12);border-radius:1px;margin-top:3px;overflow:hidden}
-.broker-bar-fill{height:100%;background:rgba(239,68,68,0.5);border-radius:1px;width:0;transition:width 1.2s ease}
+.broker-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.broker-type{font-size:11px;color:var(--muted)}
+.broker-bar-wrap{height:3px;background:var(--border);border-radius:2px;margin-top:7px;overflow:hidden}
+.broker-bar-fill{height:100%;background:var(--danger);border-radius:2px;width:0;transition:width 1.4s ease}
 
-/* verdict */
-.verdict{margin:36px 0 28px;padding:24px;border:1px solid rgba(239,68,68,0.3);border-radius:8px;background:rgba(239,68,68,0.04);text-align:center}
-.verdict-main{font-size:clamp(1rem,4vw,1.35rem);color:#fff;letter-spacing:-0.01em;line-height:1.4;margin-bottom:10px}
-.verdict-sub{font-size:0.65rem;color:rgba(255,255,255,0.3);line-height:1.8}
-.verdict-sub a{color:rgba(239,68,68,0.7);text-decoration:none}
-.verdict-sub a:hover{color:#ef4444}
+/* ── Verdict ── */
+.verdict{
+  background:var(--danger-bg);border:1px solid var(--danger-border);
+  border-radius:14px;padding:28px 24px;text-align:center;margin:8px 0;
+}
+.verdict-title{
+  font-size:clamp(18px,4vw,24px);font-weight:700;
+  color:var(--text);line-height:1.3;margin-bottom:12px;
+}
+.verdict-body{font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:16px}
+.verdict-body b{color:var(--text)}
+.verdict-cta{
+  display:inline-block;margin-top:4px;
+  font-size:13px;color:var(--danger);
+  text-decoration:none;border-bottom:1px solid var(--danger-border);
+  padding-bottom:1px;transition:border-color 0.12s;
+}
+.verdict-cta:hover{border-color:var(--danger)}
 
-/* resources */
-.resources{margin-top:24px}
-.res-item{padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:3px}
+/* ── Resources ── */
+.res-item{
+  display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start;
+  padding:12px 0;border-bottom:1px solid var(--border);
+}
 .res-item:last-child{border-bottom:none}
-.res-name{font-size:0.68rem;color:rgba(255,255,255,0.65)}
-.res-url{font-size:0.58rem;color:rgba(239,68,68,0.5);letter-spacing:0.03em}
+.res-name{font-size:14px;color:var(--text);font-weight:500;margin-bottom:2px}
+.res-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.res-link{
+  font-size:11px;color:var(--danger);text-decoration:none;
+  border:1px solid var(--danger-border);border-radius:5px;
+  padding:4px 10px;white-space:nowrap;flex-shrink:0;
+  transition:background 0.12s;
+}
+.res-link:hover{background:var(--danger-bg)}
 
-/* fingerprint hash */
-.fp-hash{font-size:0.85rem;color:#ef4444;letter-spacing:0.12em;word-break:break-all}
-.fp-sub{font-size:0.55rem;color:rgba(255,255,255,0.2);margin-top:3px;letter-spacing:0.04em}
+/* ── FP hash ── */
+.fp-hash{
+  font-family:'JetBrains Mono','Courier New',monospace;
+  font-size:17px;letter-spacing:0.14em;color:var(--danger);
+  word-break:break-all;font-weight:600;
+}
 
-/* scrollbar */
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:#000}
-::-webkit-scrollbar-thumb{background:rgba(239,68,68,0.3);border-radius:2px}
+/* ── Footer ── */
+.footer{
+  max-width:680px;margin:0 auto;padding:24px 20px 48px;
+  border-top:1px solid var(--border);
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+  font-size:12px;color:var(--muted);
+}
+.footer a{color:var(--muted);text-decoration:none;transition:color 0.12s}
+.footer a:hover{color:var(--text)}
+.footer-links{display:flex;gap:16px;flex-wrap:wrap}
 
 @media(max-width:480px){
   .row-key{flex:0 0 120px}
   .broker-grid{grid-template-columns:repeat(2,1fr)}
+  .nav-btn{padding:4px 8px;font-size:11px}
 }
 </style>
 </head>
 <body>
 
-<div class="nav">
-  <div class="nav-brand"><span>invisible layer</span> / your digital profile</div>
-  <a class="nav-back" href="../../../">&#x2190; back</a>
-</div>
+<nav class="nav">
+  <div class="nav-brand"><b data-i18n="nav.brand">invisible layer</b> <span data-i18n="nav.slash">/</span> <span data-i18n="nav.title">your profile</span></div>
+  <div class="nav-right">
+    <button class="nav-btn" id="lang-btn" onclick="toggleLang()">DE</button>
+    <button class="nav-btn" id="theme-btn" onclick="cycleTheme()" title="Toggle theme">
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/></svg>
+    </button>
+    <a class="nav-back" href="../../../" data-i18n="nav.back">back</a>
+  </div>
+</nav>
 
 <div class="page">
 
-  <div id="scan-intro">
+  <div class="scan-wrap">
     <div id="scan-lines"></div>
-    <span id="cursor"></span>
+    <span class="scan-cursor" id="scan-cursor"></span>
   </div>
 
-  <div class="block" id="b-id">
-    <div class="block-head">subject identification</div>
-    <div class="row"><span class="row-key">subject id</span><span class="row-val fp-hash" id="v-fp">—</span></div>
-    <div class="row"><span class="row-key"></span><span class="row-val fp-sub">canvas rendering fingerprint · unique to this device + browser</span></div>
-    <div class="row"><span class="row-key">platform</span><span class="row-val" id="v-platform">—</span></div>
-    <div class="row"><span class="row-key">user agent</span><span class="row-val muted" id="v-ua">—</span></div>
-    <div class="row"><span class="row-key">locale / timezone</span><span class="row-val" id="v-tz">—</span></div>
-    <div class="row"><span class="row-key">do not track</span><span class="row-val" id="v-dnt">—</span></div>
+  <!-- Identification -->
+  <div class="card" id="c-id">
+    <div class="card-head">
+      <div class="card-icon">
+        <svg viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm5 5.016A5 5 0 0 0 3 13v.5h10V13a5 5 0 0 0-5-4.984z"/></svg>
+      </div>
+      <span class="card-title" data-i18n="s.id">Identification</span>
+    </div>
+    <div class="row"><span class="row-key" data-i18n="l.fp">Fingerprint</span><div class="row-val"><div class="fp-hash" id="v-fp">...</div><div class="small" data-i18n="l.fp.sub">Canvas rendering fingerprint. Unique to this device and browser. No login required.</div></div></div>
+    <div class="row"><span class="row-key" data-i18n="l.platform">Platform</span><span class="row-val" id="v-platform">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.tz">Language / Region</span><span class="row-val" id="v-tz">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.dnt">Do Not Track</span><span class="row-val" id="v-dnt">...</span></div>
   </div>
 
-  <div class="block" id="b-hw">
-    <div class="block-head">hardware profile</div>
-    <div class="row"><span class="row-key">device type</span><span class="row-val" id="v-device">—</span></div>
-    <div class="row"><span class="row-key">screen</span><span class="row-val" id="v-screen">—</span></div>
-    <div class="row"><span class="row-key">cpu cores</span><span class="row-val" id="v-cores">—</span></div>
-    <div class="row"><span class="row-key">device memory</span><span class="row-val" id="v-mem">—</span></div>
-    <div class="row"><span class="row-key">gpu renderer</span><span class="row-val muted" id="v-gpu">—</span></div>
-    <div class="row"><span class="row-key">device tier</span><span class="row-val" id="v-tier">—</span></div>
-    <div class="row"><span class="row-key">connection</span><span class="row-val" id="v-conn">—</span></div>
-    <div class="row"><span class="row-key">battery</span><span class="row-val" id="v-batt">—</span></div>
+  <!-- Device -->
+  <div class="card" id="c-hw">
+    <div class="card-head">
+      <div class="card-icon warn">
+        <svg viewBox="0 0 16 16"><path d="M11 1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM8 14a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+      </div>
+      <span class="card-title" data-i18n="s.hw">Device Profile</span>
+    </div>
+    <div class="row"><span class="row-key" data-i18n="l.device">Device type</span><span class="row-val" id="v-device">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.screen">Screen</span><span class="row-val" id="v-screen">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.cores">CPU cores</span><span class="row-val" id="v-cores">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.mem">RAM</span><span class="row-val" id="v-mem">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.gpu">GPU</span><span class="row-val" id="v-gpu">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.tier">Device tier</span><span class="row-val" id="v-tier">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.conn">Connection</span><span class="row-val" id="v-conn">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.batt">Battery</span><span class="row-val" id="v-batt">...</span></div>
   </div>
 
-  <div class="block" id="b-perms">
-    <div class="block-head">data access granted to this page</div>
-    <div class="row"><span class="row-key">camera</span><span class="row-val" id="v-cam">—</span></div>
-    <div class="row"><span class="row-key">microphone</span><span class="row-val" id="v-mic">—</span></div>
-    <div class="row"><span class="row-key">location</span><span class="row-val" id="v-geo">—</span></div>
-    <div class="row"><span class="row-key">notifications</span><span class="row-val" id="v-notif">—</span></div>
-    <div class="row"><span class="row-key">motion sensors</span><span class="row-val" id="v-motion">—</span></div>
-    <div class="row"><span class="row-key">persistent storage</span><span class="row-val" id="v-storage">—</span></div>
-    <div class="row"><span class="row-key">cookies</span><span class="row-val" id="v-cookies">—</span></div>
-    <div style="margin-top:10px;font-size:0.58rem;color:rgba(239,68,68,0.45);line-height:1.7">
-      Green = they have access. This page is not recording you. The <em>system</em> already did — the moment you installed any app that asked.
+  <!-- Browser permissions -->
+  <div class="card" id="c-perms">
+    <div class="card-head">
+      <div class="card-icon">
+        <svg viewBox="0 0 16 16"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
+      </div>
+      <span class="card-title" data-i18n="s.perms">What this page can access</span>
+    </div>
+    <div class="row"><span class="row-key" data-i18n="l.camera">Camera</span><span class="row-val" id="v-cam">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.mic">Microphone</span><span class="row-val" id="v-mic">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.geo">Location</span><span class="row-val" id="v-geo">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.notif">Notifications</span><span class="row-val" id="v-notif">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.motion">Motion sensors</span><span class="row-val" id="v-motion">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.storage">Storage</span><span class="row-val" id="v-storage">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.clip">Clipboard</span><span class="row-val" id="v-clip">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.cookies">Cookies</span><span class="row-val" id="v-cookies">...</span></div>
+    <div style="margin-top:12px;padding:12px;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:8px;">
+      <div style="font-size:13px;color:var(--text2);line-height:1.7" data-i18n="perms.note">Green means they have full access. This page does not record you. But every app you installed that asked for these permissions can, and likely does.</div>
     </div>
   </div>
 
-  <div class="block" id="b-profile">
-    <div class="block-head">inferred advertiser profile</div>
-    <div class="row"><span class="row-key">device segment</span><span class="row-val" id="v-segment">—</span></div>
-    <div class="row"><span class="row-key">estimated region</span><span class="row-val" id="v-region">—</span></div>
-    <div class="row"><span class="row-key">browsing context</span><span class="row-val" id="v-ctx">—</span></div>
-    <div class="row"><span class="row-key">privacy signal</span><span class="row-val" id="v-privacy">—</span></div>
-    <div style="margin-top:12px">
-      <div style="font-size:0.58rem;color:rgba(255,255,255,0.25);margin-bottom:8px;letter-spacing:0.06em;text-transform:uppercase">audience categories you are currently sold into</div>
+  <!-- Native app permissions guide -->
+  <div class="card" id="c-apps">
+    <div class="card-head">
+      <div class="card-icon">
+        <svg viewBox="0 0 16 16"><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm8.93 4.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM8 5.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
+      </div>
+      <span class="card-title" data-i18n="s.apps">What your apps can access</span>
+    </div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:16px" data-i18n="apps.intro">
+      This page can only read browser permissions. Your installed apps have far broader access. Instagram, TikTok, Google Maps, WhatsApp, and dozens of others may hold camera, microphone, location, contacts, and health data simultaneously, with no way for you to see the full picture from here.
+    </div>
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px" data-i18n="apps.check">How to check right now</div>
+    <div id="guide-ios" style="display:none">
+      <div class="guide-step"><div class="guide-num">1</div><div class="guide-text" data-i18n="ios.1">Open <b>Settings</b> on your iPhone or iPad.</div></div>
+      <div class="guide-step"><div class="guide-num">2</div><div class="guide-text" data-i18n="ios.2">Tap <code>Privacy &amp; Security</code>.</div></div>
+      <div class="guide-step"><div class="guide-num">3</div><div class="guide-text" data-i18n="ios.3">Tap any category, for example <code>Camera</code>. You will see every app that has requested access and whether it was granted.</div></div>
+      <div class="guide-step"><div class="guide-num">4</div><div class="guide-text" data-i18n="ios.4">Check: Camera, Microphone, Location Services, Contacts, Photos, Health, Tracking.</div></div>
+    </div>
+    <div id="guide-android" style="display:none">
+      <div class="guide-step"><div class="guide-num">1</div><div class="guide-text" data-i18n="and.1">Open <b>Settings</b> on your Android device.</div></div>
+      <div class="guide-step"><div class="guide-num">2</div><div class="guide-text" data-i18n="and.2">Go to <code>Privacy</code> then <code>Permission Manager</code>.</div></div>
+      <div class="guide-step"><div class="guide-num">3</div><div class="guide-text" data-i18n="and.3">Tap each permission type. You will see exactly which apps have access.</div></div>
+      <div class="guide-step"><div class="guide-num">4</div><div class="guide-text" data-i18n="and.4">Revoke anything you do not actively use. Camera, Microphone, Location: set to "Only while using" at minimum.</div></div>
+    </div>
+    <div id="guide-other">
+      <div class="guide-step"><div class="guide-num">1</div><div class="guide-text" data-i18n="oth.1">Open your device settings and look for <b>Privacy</b> or <b>Permissions</b>.</div></div>
+      <div class="guide-step"><div class="guide-num">2</div><div class="guide-text" data-i18n="oth.2">Check each app individually or by permission type (Camera, Microphone, Location).</div></div>
+      <div class="guide-step"><div class="guide-num">3</div><div class="guide-text" data-i18n="oth.3">Remove access for apps you no longer use or that have no clear reason to hold it.</div></div>
+    </div>
+  </div>
+
+  <!-- Ad profile -->
+  <div class="card" id="c-adprof">
+    <div class="card-head">
+      <div class="card-icon">
+        <svg viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/></svg>
+      </div>
+      <span class="card-title" data-i18n="s.adprof">Your advertising profile</span>
+    </div>
+    <div class="row"><span class="row-key" data-i18n="l.segment">Device segment</span><span class="row-val" id="v-segment">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.region">Estimated region</span><span class="row-val" id="v-region">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.context">Browsing context</span><span class="row-val" id="v-ctx">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.privacy">Privacy signal</span><span class="row-val" id="v-privacy">...</span></div>
+    <div style="margin-top:14px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px" data-i18n="l.tags">Audience categories you are currently sold into</div>
       <div class="tags" id="v-tags"></div>
     </div>
   </div>
 
-  <div class="block" id="b-drain">
-    <div class="block-head">human cattle battery</div>
-    <div class="battery-label">your data reserve — being drained in real time</div>
-    <div class="battery-wrap">
-      <div class="battery-outer">
-        <div class="battery-fill" id="batt-fill" style="width:73%"></div>
-        <div class="battery-tip"></div>
-        <div class="battery-pct">73% DRAINED</div>
+  <!-- Data drain -->
+  <div class="card" id="c-drain">
+    <div class="card-head">
+      <div class="card-icon">
+        <svg viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8 13A5 5 0 1 1 8 3a5 5 0 0 1 0 10zm0 1A6 6 0 1 0 8 2a6 6 0 0 0 0 12z"/><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>
       </div>
+      <span class="card-title" data-i18n="s.drain">Data battery</span>
     </div>
-    <div style="font-size:0.6rem;color:rgba(255,255,255,0.2);margin-bottom:14px;line-height:1.7">
-      Every sensor reading, every tap, every scroll, every background process.<br>
-      Packaged. Sold. Re-sold. 24 hours a day.
+    <div style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:12px" data-i18n="drain.intro">Every sensor reading, every tap, every scroll and background process is packaged, scored, and sold. 24 hours a day. This is not a metaphor.</div>
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px" data-i18n="drain.label">Your data reserve</div>
+    <div class="battery-outer">
+      <div class="battery-fill" id="batt-fill" style="width:71%"></div>
+      <div class="battery-tip"></div>
+      <div class="battery-label" id="batt-label">71% drained</div>
     </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px" data-i18n="drain.sub">Approximate share of your data currently held by active data broker networks.</div>
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px" data-i18n="drain.active">Currently active</div>
     <div class="broker-grid" id="broker-grid"></div>
   </div>
 
-  <div class="block" id="b-verdict">
+  <!-- Verdict -->
+  <div class="card visible" id="c-verdict" style="border-color:var(--danger-border)">
     <div class="verdict">
-      <div class="verdict-main">This is how Mr. Zuckerberg sees you.</div>
-      <div class="verdict-sub">
-        A device. A profile. A revenue event.<br>
-        Not a person — a data point with a purchase history.<br><br>
-        You do not have to accept this.<br>
-        <a href="mailto:contact@ternlang.com">contact@ternlang.com</a>
+      <div class="verdict-title" data-i18n="verdict.main">This is how Big Tech sees you.</div>
+      <div class="verdict-body">
+        <span data-i18n="verdict.body">Not a person. A product. A data point with a purchase history, a behavioral model, and a profile that updates every few milliseconds.<br><br>You did not sign a contract for this. You agreed to Terms of Service you never read. That is how the system works, and it is by design.</span>
       </div>
+      <a class="verdict-cta" href="mailto:contact@ternlang.com" data-i18n="verdict.cta">contact@ternlang.com</a>
     </div>
   </div>
 
-  <div class="block" id="b-resources">
-    <div class="block-head">take back your data</div>
-    <div class="resources">
-      <div class="res-item">
-        <span class="res-name">optout.aboutads.info — opt out of 100+ ad networks at once</span>
-        <span class="res-url">optout.aboutads.info</span>
+  <!-- Resources -->
+  <div class="card" id="c-res">
+    <div class="card-head">
+      <div class="card-icon ok">
+        <svg viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/></svg>
       </div>
-      <div class="res-item">
-        <span class="res-name">deleteme.com — remove your profile from data broker databases</span>
-        <span class="res-url">deleteme.com</span>
-      </div>
-      <div class="res-item">
-        <span class="res-name">EFF — surveillance self-defense guide</span>
-        <span class="res-url">ssd.eff.org</span>
-      </div>
-      <div class="res-item">
-        <span class="res-name">yourdigitalrights.org — GDPR/CCPA deletion requests (EU+CA)</span>
-        <span class="res-url">yourdigitalrights.org</span>
-      </div>
-      <div class="res-item">
-        <span class="res-name">simpleoptout.com — opt-out guides for 50+ platforms</span>
-        <span class="res-url">simpleoptout.com</span>
-      </div>
-      <div class="res-item">
-        <span class="res-name">Proton — encrypted email, VPN, calendar, storage</span>
-        <span class="res-url">proton.me</span>
-      </div>
+      <span class="card-title" data-i18n="s.res">Take back control</span>
     </div>
-    <div style="margin-top:28px;padding-top:18px;border-top:1px dashed rgba(239,68,68,0.2);font-size:0.6rem;color:rgba(255,255,255,0.15);line-height:1.8;text-align:center">
-      invisible layer is an open research project by <a href="https://ternlang.com" style="color:rgba(239,68,68,0.4);text-decoration:none">ternlang.com</a><br>
-      we collect nothing. we sell nothing. we build the mirror.<br>
-      <a href="mailto:contact@ternlang.com" style="color:rgba(239,68,68,0.5);text-decoration:none">contact@ternlang.com</a>
+    <div class="res-item">
+      <div><div class="res-name">YourDigitalRights.org</div><div class="res-desc" data-i18n="res.ydr">GDPR and CCPA deletion requests. One click to request removal from dozens of data brokers. Free.</div></div>
+      <a class="res-link" href="https://yourdigitalrights.org" target="_blank" rel="noopener">open</a>
+    </div>
+    <div class="res-item">
+      <div><div class="res-name">optout.aboutads.info</div><div class="res-desc" data-i18n="res.aboutads">Opt out of 100+ ad networks simultaneously. Reduces targeted advertising across the web.</div></div>
+      <a class="res-link" href="https://optout.aboutads.info" target="_blank" rel="noopener">open</a>
+    </div>
+    <div class="res-item">
+      <div><div class="res-name">EFF — Surveillance Self-Defense</div><div class="res-desc" data-i18n="res.eff">Practical guides for protecting your digital privacy. Vetted by security researchers.</div></div>
+      <a class="res-link" href="https://ssd.eff.org" target="_blank" rel="noopener">open</a>
+    </div>
+    <div class="res-item">
+      <div><div class="res-name">Proton</div><div class="res-desc" data-i18n="res.proton">Encrypted email, VPN, calendar and cloud storage. No data sold. Based in Switzerland.</div></div>
+      <a class="res-link" href="https://proton.me" target="_blank" rel="noopener">open</a>
+    </div>
+    <div class="res-item">
+      <div><div class="res-name">SimpleOptOut.com</div><div class="res-desc" data-i18n="res.simple">Step-by-step opt-out guides for 50+ platforms including Google, Meta, Amazon, and Apple.</div></div>
+      <a class="res-link" href="https://simpleoptout.com" target="_blank" rel="noopener">open</a>
+    </div>
+    <div class="res-item">
+      <div><div class="res-name">DeleteMe</div><div class="res-desc" data-i18n="res.deleteme">Paid service that continuously removes your data from data broker websites.</div></div>
+      <a class="res-link" href="https://deleteme.com" target="_blank" rel="noopener">open</a>
     </div>
   </div>
 
 </div>
 
+<footer class="footer">
+  <span data-i18n="footer.copy">invisible layer is a free research project by <a href="https://ternlang.com" target="_blank">ternlang.com</a>. We collect no data.</span>
+  <div class="footer-links">
+    <a href="../../legal/privacy/" data-i18n="footer.privacy">Privacy Policy</a>
+    <a href="../../legal/agb/" data-i18n="footer.agb">Terms</a>
+    <a href="mailto:contact@ternlang.com">contact@ternlang.com</a>
+  </div>
+</footer>
+
 <script>
-// ── Fingerprint ──────────────────────────────────────────────────
+// ── i18n ─────────────────────────────────────────────────────────
+var LANG = localStorage.getItem('il-lang') ||
+  (navigator.language.startsWith('de') ? 'de' : 'en');
+
+var T = {
+en:{
+  'nav.brand':'invisible layer','nav.slash':'/','nav.title':'your profile','nav.back':'back',
+  'scan.0':'Loading your profile...','scan.1':'Reading device signals...','scan.2':'Checking access permissions...','scan.3':'Computing device fingerprint...','scan.4':'Cross-referencing data broker databases...','scan.5':'Profile complete.',
+  's.id':'Identification','s.hw':'Device Profile','s.perms':'What this page can access','s.apps':'What your apps can access',
+  's.adprof':'Your advertising profile','s.drain':'Data battery','s.res':'Take back control',
+  'l.fp':'Fingerprint','l.fp.sub':'Canvas rendering fingerprint. Unique to this device and browser. No login required.',
+  'l.platform':'Platform','l.tz':'Language / Region','l.dnt':'Do Not Track',
+  'l.device':'Device type','l.screen':'Screen','l.cores':'CPU cores','l.mem':'RAM','l.gpu':'GPU','l.tier':'Device tier','l.conn':'Connection','l.batt':'Battery',
+  'l.camera':'Camera','l.mic':'Microphone','l.geo':'Location','l.notif':'Notifications','l.motion':'Motion sensors','l.storage':'Storage','l.clip':'Clipboard','l.cookies':'Cookies',
+  'perms.note':'Green means they have full access. This page does not record you. But every app you installed that asked for these permissions can, and likely does.',
+  's.apps':'What your apps can access',
+  'apps.intro':'This page can only read browser permissions. Your installed apps have far broader access. Instagram, TikTok, Google Maps, WhatsApp, and dozens of others may hold camera, microphone, location, contacts, and health data simultaneously, with no way for you to see the full picture from here.',
+  'apps.check':'How to check right now',
+  'ios.1':'Open <b>Settings</b> on your iPhone or iPad.',
+  'ios.2':'Tap <code>Privacy & Security</code>.',
+  'ios.3':'Tap any category, for example <code>Camera</code>. You will see every app that has requested access and whether it was granted.',
+  'ios.4':'Check: Camera, Microphone, Location Services, Contacts, Photos, Health, Tracking.',
+  'and.1':'Open <b>Settings</b> on your Android device.',
+  'and.2':'Go to <code>Privacy</code> then <code>Permission Manager</code>.',
+  'and.3':'Tap each permission type. You will see exactly which apps have access.',
+  'and.4':'Revoke anything you do not actively use. Camera, Microphone, Location: set to "Only while using" at minimum.',
+  'oth.1':'Open your device settings and look for <b>Privacy</b> or <b>Permissions</b>.',
+  'oth.2':'Check each app individually or by permission type (Camera, Microphone, Location).',
+  'oth.3':'Remove access for apps you no longer use or that have no clear reason to hold it.',
+  'l.segment':'Device segment','l.region':'Estimated region','l.context':'Browsing context','l.privacy':'Privacy signal',
+  'l.tags':'Audience categories you are currently sold into',
+  'drain.intro':'Every sensor reading, every tap, every scroll and background process is packaged, scored, and sold. 24 hours a day. This is not a metaphor.',
+  'drain.label':'Your data reserve','drain.sub':'Approximate share of your data currently held by active data broker networks.','drain.active':'Currently active',
+  'verdict.main':'This is how Big Tech sees you.',
+  'verdict.body':'Not a person. A product. A data point with a purchase history, a behavioral model, and a profile that updates every few milliseconds.<br><br>You did not sign a contract for this. You agreed to Terms of Service you never read. That is how the system works, and it is by design.',
+  'verdict.cta':'contact@ternlang.com',
+  'res.ydr':'GDPR and CCPA deletion requests. One click to request removal from dozens of data brokers. Free.',
+  'res.aboutads':'Opt out of 100+ ad networks simultaneously. Reduces targeted advertising across the web.',
+  'res.eff':'Practical guides for protecting your digital privacy. Vetted by security researchers.',
+  'res.proton':'Encrypted email, VPN, calendar and cloud storage. No data sold. Based in Switzerland.',
+  'res.simple':'Step-by-step opt-out guides for 50+ platforms including Google, Meta, Amazon, and Apple.',
+  'res.deleteme':'Paid service that continuously removes your data from data broker websites.',
+  'footer.copy':'invisible layer is a free research project by <a href="https://ternlang.com" target="_blank">ternlang.com</a>. We collect no data.',
+  'footer.privacy':'Privacy Policy','footer.agb':'Terms',
+  'badge.granted':'Granted','badge.denied':'Denied','badge.prompt':'Not asked','badge.avail':'Available','badge.na':'Not available','badge.enabled':'Enabled','badge.disabled':'Disabled',
+  'tier.premium':'Premium','tier.mid':'Mid-range','tier.budget':'Budget',
+  'tag.premium':'Premium consumer','tag.iphone':'iPhone user','tag.android':'Android user','tag.mobile':'Mobile commerce','tag.camera':'Camera access','tag.voice':'Voice data','tag.location':'Location verified','tag.push':'Push marketing','tag.power':'Power user','tag.dnt':'Privacy-conscious (high CPM segment)','tag.cross':'Cross-device profile','tag.retarget':'3rd-party remarketing','tag.night':'Late-night shopper','tag.business':'Business hours browser',
+  'dnt.on':'Enabled. Ironic note: privacy-conscious users are a high-value advertising segment because they are harder to reach.',
+  'dnt.off':'Disabled. You are fully trackable by default.',
+  'dnt.unset':'Not set.',
+  'drain.pct':' drained'
+},
+de:{
+  'nav.brand':'invisible layer','nav.slash':'/','nav.title':'dein Profil','nav.back':'Zuruck',
+  'scan.0':'Profil wird geladen...','scan.1':'Geratesignale werden eingelesen...','scan.2':'Zugriffsrechte werden gepruft...','scan.3':'Gerateabdruck wird berechnet...','scan.4':'Datenbroker-Datenbanken werden abgeglichen...','scan.5':'Profil erstellt.',
+  's.id':'Identifikation','s.hw':'Gerateprofil','s.perms':'Worauf diese Seite zugreift','s.apps':'Worauf deine Apps zugreifen',
+  's.adprof':'Dein Werbeprofil','s.drain':'Datenbatterie','s.res':'Kontrolle zurueckgewinnen',
+  'l.fp':'Gerate-Fingerabdruck','l.fp.sub':'Canvas-Rendering-Fingerabdruck. Einzigartig fur dieses Gerat und diesen Browser. Kein Login erforderlich.',
+  'l.platform':'Plattform','l.tz':'Sprache / Region','l.dnt':'Do Not Track',
+  'l.device':'Gerattyp','l.screen':'Bildschirm','l.cores':'CPU-Kerne','l.mem':'Arbeitsspeicher','l.gpu':'Grafikkarte','l.tier':'Gerateklasse','l.conn':'Verbindung','l.batt':'Akku',
+  'l.camera':'Kamera','l.mic':'Mikrofon','l.geo':'Standort','l.notif':'Benachrichtigungen','l.motion':'Bewegungssensoren','l.storage':'Speicher','l.clip':'Zwischenablage','l.cookies':'Cookies',
+  'perms.note':'Grun bedeutet: Sie haben vollen Zugriff. Diese Seite zeichnet dich nicht auf. Aber jede App, der du diese Rechte erteilt hast, kann es und tut es wahrscheinlich.',
+  'apps.intro':'Diese Seite kann nur Browser-Berechtigungen lesen. Deine installierten Apps haben weitreichenderen Zugriff. Instagram, TikTok, Google Maps, WhatsApp und Dutzende andere halten moglicherweise gleichzeitig Kamera-, Mikrofon-, Standort-, Kontakt- und Gesundheitsdaten, ohne dass du hier einen Gesamtuberblick bekommst.',
+  'apps.check':'So prufe ich das jetzt sofort',
+  'ios.1':'Offne <b>Einstellungen</b> auf deinem iPhone oder iPad.',
+  'ios.2':'Tippe auf <code>Datenschutz & Sicherheit</code>.',
+  'ios.3':'Tippe auf eine Kategorie, z. B. <code>Kamera</code>. Du siehst jede App, die Zugriff angefordert hat, und ob er gestattet wurde.',
+  'ios.4':'Prufpunkte: Kamera, Mikrofon, Ortungsdienste, Kontakte, Fotos, Gesundheit, Tracking.',
+  'and.1':'Offne <b>Einstellungen</b> auf deinem Android-Gerat.',
+  'and.2':'Gehe zu <code>Datenschutz</code> und dann zu <code>Berechtigungsverwaltung</code>.',
+  'and.3':'Tippe auf jede Berechtigungsart. Du siehst genau, welche Apps Zugriff haben.',
+  'and.4':'Widerrufe alles, was du nicht aktiv verwendest. Kamera, Mikrofon, Standort: mindestens auf "Nur bei Nutzung" setzen.',
+  'oth.1':'Offne die Einstellungen und suche nach <b>Datenschutz</b> oder <b>Berechtigungen</b>.',
+  'oth.2':'Prufe jede App einzeln oder nach Berechtigungstyp (Kamera, Mikrofon, Standort).',
+  'oth.3':'Entziehe den Zugriff fur Apps, die du nicht mehr verwendest oder fur die kein klarer Grund besteht.',
+  'l.segment':'Gerateklasse','l.region':'Geschatzte Region','l.context':'Kontext','l.privacy':'Datenschutzsignal',
+  'l.tags':'Werbekategorien, in die du aktuell eingestuft wirst',
+  'drain.intro':'Jede Sensor-Messung, jeder Tipp, jeder Scroll und jeder Hintergrundprozess wird verpackt, bewertet und verkauft. Rund um die Uhr. Das ist keine Metapher.',
+  'drain.label':'Deine Datenreserve','drain.sub':'Ungefahrer Anteil deiner Daten, der von aktiven Datenbrokern gehalten wird.','drain.active':'Derzeit aktiv',
+  'verdict.main':'So sieht dich Big Tech.',
+  'verdict.body':'Nicht als Mensch. Als Produkt. Als Datenpunkt mit Kaufverlauf, Verhaltensmodell und einem Profil, das alle paar Millisekunden aktualisiert wird.<br><br>Du hast dafur keinen Vertrag unterschrieben. Du hast Nutzungsbedingungen zugestimmt, die du nie gelesen hast. So funktioniert das System, und das ist kein Zufall.',
+  'verdict.cta':'contact@ternlang.com',
+  'res.ydr':'DSGVO- und CCPA-Loschantrage. Ein Klick, um die Entfernung bei Dutzenden von Datenbrokern zu beantragen. Kostenlos.',
+  'res.aboutads':'Opt-out von 100+ Werbenetzwerken gleichzeitig. Reduziert zielgerichtete Werbung im gesamten Web.',
+  'res.eff':'Praxisleitfaden zum Schutz deiner digitalen Privatsphare. Gepruft von Sicherheitsforschern.',
+  'res.proton':'Verschlusseltes E-Mail, VPN, Kalender und Cloud-Speicher. Keine Datenweitergabe. Sitz in der Schweiz.',
+  'res.simple':'Schritt-fur-Schritt-Opt-out-Anleitungen fur 50+ Plattformen, darunter Google, Meta, Amazon und Apple.',
+  'res.deleteme':'Kostenpflichtiger Dienst, der deine Daten kontinuierlich von Datenbroker-Websites entfernt.',
+  'footer.copy':'invisible layer ist ein kostenloses Forschungsprojekt von <a href="https://ternlang.com" target="_blank">ternlang.com</a>. Wir sammeln keine Daten.',
+  'footer.privacy':'Datenschutz','footer.agb':'AGB',
+  'badge.granted':'Erteilt','badge.denied':'Verweigert','badge.prompt':'Nicht gefragt','badge.avail':'Verfugbar','badge.na':'Nicht verfugbar','badge.enabled':'Aktiv','badge.disabled':'Deaktiviert',
+  'tier.premium':'Premium','tier.mid':'Mittelklasse','tier.budget':'Einstieg',
+  'tag.premium':'Premium-Verbraucher','tag.iphone':'iPhone-Nutzer','tag.android':'Android-Nutzer','tag.mobile':'Mobile Commerce','tag.camera':'Kamerazugriff','tag.voice':'Sprachdaten','tag.location':'Standort verifiziert','tag.push':'Push-Marketing','tag.power':'Power-User','tag.dnt':'Datenschutzbewusst (hochwertiges Werbesegment)','tag.cross':'Gerateubergreifendes Profil','tag.retarget':'Drittanbieter-Remarketing','tag.night':'Spatnacht-Kaufer','tag.business':'Geschaftszeiten-Nutzer',
+  'dnt.on':'Aktiviert. Hinweis: Datenschutzbewusste Nutzer sind ein besonders wertvolles Werbesegment, weil sie schwerer erreichbar sind.',
+  'dnt.off':'Deaktiviert. Du bist standardmassig vollstandig verfolgbar.',
+  'dnt.unset':'Nicht gesetzt.',
+  'drain.pct':' verbraucht'
+}
+};
+
+function t(k){ return (T[LANG]&&T[LANG][k])||T.en[k]||k; }
+
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    var k=el.getAttribute('data-i18n');
+    var v=t(k);
+    if(v.includes('<'))el.innerHTML=v; else el.textContent=v;
+  });
+  document.documentElement.lang=LANG;
+  document.getElementById('lang-btn').textContent=LANG==='de'?'EN':'DE';
+  document.title=LANG==='de'?'Dein digitales Profil — invisible layer':'Your Digital Profile — invisible layer';
+}
+
+function toggleLang(){
+  LANG=LANG==='de'?'en':'de';
+  localStorage.setItem('il-lang',LANG);
+  applyI18n();
+  rebuildDynamic();
+}
+
+// ── Theme ─────────────────────────────────────────────────────────
+var THEMES=['dark','light','hc'];
+var THEME=localStorage.getItem('il-theme')||'dark';
+document.documentElement.setAttribute('data-theme',THEME);
+
+function cycleTheme(){
+  var i=THEMES.indexOf(THEME);
+  THEME=THEMES[(i+1)%THEMES.length];
+  localStorage.setItem('il-theme',THEME);
+  document.documentElement.setAttribute('data-theme',THEME);
+  var mc={'dark':'#0f172a','light':'#f1f5f9','hc':'#000'};
+  document.getElementById('theme-color-meta').content=mc[THEME];
+}
+
+// ── Fingerprint ───────────────────────────────────────────────────
 function canvasFP(){
   try{
     var c=document.createElement('canvas');c.width=300;c.height=60;
@@ -251,121 +611,84 @@ function getGPU(){
   try{
     var c=document.createElement('canvas');
     var gl=c.getContext('webgl')||c.getContext('experimental-webgl');
-    if(!gl)return 'unavailable';
+    if(!gl)return LANG==='de'?'nicht verfugbar':'not available';
     var ext=gl.getExtension('WEBGL_debug_renderer_info');
-    return ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
+    var r=ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
+    return r||'unknown';
   }catch(e){return 'blocked';}
-}
-
-function deviceTier(mem,cores,dpr){
-  if((mem||0)>=8&&(cores||0)>=8&&(dpr||1)>=2)return{label:'PREMIUM',cls:'ok'};
-  if((mem||0)>=4&&(cores||0)>=4)return{label:'MID-RANGE',cls:'warn'};
-  return{label:'BUDGET',cls:'muted'};
-}
-
-function permBadge(state){
-  if(state==='granted')return'<span class="perm-granted">GRANTED</span>';
-  if(state==='denied')return'<span class="perm-denied">DENIED</span>';
-  if(state==='prompt')return'<span class="perm-prompt">NOT ASKED</span>';
-  return'<span class="perm-denied">UNKNOWN</span>';
 }
 
 function tzToRegion(tz){
   tz=(tz||'').toLowerCase();
-  if(tz.includes('europe'))return'Europe';
-  if(tz.includes('america/new_york')||tz.includes('america/chicago')||tz.includes('america/los_angeles'))return'North America';
-  if(tz.includes('america'))return'Americas';
-  if(tz.includes('asia/tokyo')||tz.includes('asia/seoul'))return'East Asia';
-  if(tz.includes('asia/kolkata')||tz.includes('asia/mumbai'))return'South Asia';
-  if(tz.includes('asia'))return'Asia-Pacific';
-  if(tz.includes('australia'))return'Australia / Oceania';
-  if(tz.includes('africa'))return'Africa';
+  if(tz.includes('europe'))return LANG==='de'?'Europa':'Europe';
+  if(tz.includes('america/new_york')||tz.includes('america/chicago')||tz.includes('america/los_angeles')||tz.includes('america/denver'))return LANG==='de'?'Nordamerika':'North America';
+  if(tz.includes('america'))return LANG==='de'?'Amerika':'Americas';
+  if(tz.includes('asia/tokyo')||tz.includes('asia/seoul'))return LANG==='de'?'Ostasien':'East Asia';
+  if(tz.includes('asia/kolkata')||tz.includes('asia/mumbai'))return LANG==='de'?'Sudasien':'South Asia';
+  if(tz.includes('asia'))return LANG==='de'?'Asien-Pazifik':'Asia-Pacific';
+  if(tz.includes('australia'))return 'Australia / Oceania';
   return tz;
 }
 
-// ── Typewriter scan intro ────────────────────────────────────────
-var SCAN_MSGS=[
-  'INITIALIZING SUBJECT SCAN...',
-  'PROBING DEVICE HARDWARE...',
-  'QUERYING PERMISSION STATES...',
-  'COMPUTING CANVAS FINGERPRINT...',
-  'CROSS-REFERENCING ADVERTISER DATABASES...',
-  'PROFILE GENERATION COMPLETE.',
-];
-var scanIdx=0,charIdx=0,scanDone=false;
-var scanEl=document.getElementById('scan-lines');
-var cursorEl=document.getElementById('cursor');
-var currentLine=null;
-
-function typeTick(){
-  if(scanIdx>=SCAN_MSGS.length){
-    scanDone=true;
-    cursorEl.style.display='none';
-    revealBlocks();
-    return;
-  }
-  var msg=SCAN_MSGS[scanIdx];
-  if(charIdx===0){
-    currentLine=document.createElement('div');
-    currentLine.className='scan-line';
-    scanEl.appendChild(currentLine);
-  }
-  currentLine.textContent=msg.slice(0,charIdx+1);
-  charIdx++;
-  if(charIdx>=msg.length){
-    currentLine.classList.add('done');
-    scanIdx++;charIdx=0;
-    setTimeout(typeTick,scanIdx<SCAN_MSGS.length?120:400);
-  } else {
-    setTimeout(typeTick,charIdx===1?40:18+Math.random()*14);
-  }
+function badge(state,yes,no,notasked){
+  if(state==='granted')return'<span class="badge badge-granted"><span class="badge-dot"></span>'+(yes||t('badge.granted'))+'</span>';
+  if(state==='denied')return'<span class="badge badge-denied">'+(no||t('badge.denied'))+'</span>';
+  return'<span class="badge badge-prompt">'+(notasked||t('badge.prompt'))+'</span>';
 }
 
-// ── Reveal blocks sequentially ───────────────────────────────────
-var BLOCKS=['b-id','b-hw','b-perms','b-profile','b-drain','b-verdict','b-resources'];
-function revealBlocks(){
-  BLOCKS.forEach(function(id,i){
-    setTimeout(function(){
-      var el=document.getElementById(id);
-      if(el)el.classList.add('visible');
-      if(id==='b-drain')setTimeout(animateBrokers,400);
-    },i*180);
-  });
+function deviceTier(mem,cores,dpr){
+  if((mem||0)>=8&&(cores||0)>=8&&(dpr||1)>=2)return{label:t('tier.premium'),cls:'success'};
+  if((mem||0)>=4&&(cores||0)>=4)return{label:t('tier.mid'),cls:'warn'};
+  return{label:t('tier.budget'),cls:'muted'};
 }
 
-// ── Broker cards ─────────────────────────────────────────────────
+// ── Permissions ───────────────────────────────────────────────────
+async function checkPerms(){
+  var r={camera:'unknown',microphone:'unknown',geolocation:'unknown',notifications:'unknown','persistent-storage':'unknown',clipboard:'unknown'};
+  if(!navigator.permissions)return r;
+  var names=['camera','microphone','geolocation','notifications'];
+  try{names.push('persistent-storage');}catch(e){}
+  for(var n of names){
+    try{var res=await navigator.permissions.query({name:n});r[n]=res.state;}catch(e){}
+  }
+  try{var cb=await navigator.permissions.query({name:'clipboard-read'});r.clipboard=cb.state;}catch(e){}
+  return r;
+}
+
+// ── Brokers ───────────────────────────────────────────────────────
 var BROKERS=[
-  {name:'Meta / Facebook',type:'Social Behavior',drain:94},
-  {name:'Google',type:'Search Intent',drain:97},
-  {name:'Amazon',type:'Purchase History',drain:88},
-  {name:'Apple',type:'Device Ecosystem',drain:82},
-  {name:'TikTok / ByteDance',type:'Engagement Profile',drain:85},
-  {name:'Acxiom',type:'Demographic Data',drain:91},
-  {name:'Oracle Data Cloud',type:'Enterprise Profile',drain:87},
-  {name:'LiveRamp',type:'Identity Graph',drain:83},
-  {name:'The Trade Desk',type:'Programmatic Ads',drain:79},
-  {name:'Salesforce DMP',type:'Marketing Data',drain:76},
-  {name:'Adobe Audience Mgr',type:'Behavior Analytics',drain:74},
-  {name:'Criteo',type:'Retargeting',drain:81},
-  {name:'Experian',type:'Credit + Behavior',drain:88},
-  {name:'Equifax',type:'Financial Profile',drain:85},
-  {name:'Epsilon',type:'Consumer Intel',drain:77},
-  {name:'Nielsen',type:'Market Research',drain:69},
-  {name:'Neustar',type:'Identity / Telco',drain:71},
-  {name:'Lotame',type:'Audience Data',drain:67},
-  {name:'Xandr / AppNexus',type:'Programmatic',drain:72},
-  {name:'Zeta Global',type:'AI Marketing',drain:68},
+  {name:'Meta / Facebook',type_en:'Social behavior',type_de:'Soziales Verhalten',drain:94},
+  {name:'Google',type_en:'Search intent',type_de:'Suchintention',drain:97},
+  {name:'Amazon',type_en:'Purchase history',type_de:'Kaufverlauf',drain:88},
+  {name:'TikTok / ByteDance',type_en:'Engagement profile',type_de:'Engagement-Profil',drain:85},
+  {name:'Apple',type_en:'Device ecosystem',type_de:'Gerate-Okosystem',drain:82},
+  {name:'Acxiom',type_en:'Demographics',type_de:'Demografie',drain:91},
+  {name:'Oracle Data Cloud',type_en:'Enterprise data',type_de:'Unternehmensdaten',drain:87},
+  {name:'LiveRamp',type_en:'Identity graph',type_de:'Identitats-Graph',drain:83},
+  {name:'Experian',type_en:'Credit + behavior',type_de:'Kredit + Verhalten',drain:88},
+  {name:'The Trade Desk',type_en:'Programmatic ads',type_de:'Programmatische Werbung',drain:79},
+  {name:'Salesforce DMP',type_en:'Marketing data',type_de:'Marketing-Daten',drain:76},
+  {name:'Adobe Audience',type_en:'Behavior analytics',type_de:'Verhaltensanalyse',drain:74},
+  {name:'Criteo',type_en:'Retargeting',type_de:'Retargeting',drain:81},
+  {name:'Epsilon',type_en:'Consumer intelligence',type_de:'Verbraucher-Daten',drain:77},
+  {name:'Equifax',type_en:'Financial profile',type_de:'Finanzprofil',drain:85},
+  {name:'Nielsen',type_en:'Market research',type_de:'Marktforschung',drain:69},
+  {name:'Neustar',type_en:'Identity / telco',type_de:'Identitat / Telekommunikation',drain:71},
+  {name:'Xandr / AppNexus',type_en:'Programmatic',type_de:'Programmatisch',drain:72},
+  {name:'Lotame',type_en:'Audience data',type_de:'Zielgruppendaten',drain:67},
+  {name:'Zeta Global',type_en:'AI marketing',type_de:'KI-Marketing',drain:68},
 ];
 
-function buildBrokerGrid(){
+function buildBrokers(){
   var grid=document.getElementById('broker-grid');
+  grid.innerHTML='';
   BROKERS.forEach(function(b){
     var card=document.createElement('div');
     card.className='broker-card';
+    var btype=LANG==='de'?b.type_de:b.type_en;
     card.innerHTML='<div class="broker-name">'+b.name+'</div>'
-      +'<div class="broker-type">'+b.type+'</div>'
-      +'<div class="broker-drain">'+b.drain+'% profile match</div>'
-      +'<div class="broker-bar"><div class="broker-bar-fill" style="width:0%" data-drain="'+b.drain+'"></div></div>';
+      +'<div class="broker-type">'+btype+'</div>'
+      +'<div class="broker-bar-wrap"><div class="broker-bar-fill" data-drain="'+b.drain+'"></div></div>';
     grid.appendChild(card);
   });
 }
@@ -376,176 +699,201 @@ function animateBrokers(){
     setTimeout(function(){
       card.classList.add('show');
       var fill=card.querySelector('.broker-bar-fill');
-      if(fill)setTimeout(function(){fill.style.width=fill.dataset.drain+'%';},100);
-    },i*60);
+      if(fill)setTimeout(function(){fill.style.width=fill.dataset.drain+'%';},80);
+    },i*55);
   });
 }
 
-// ── Battery drain animation ──────────────────────────────────────
-function animateBattery(level){
-  var fill=document.getElementById('batt-fill');
-  var pctEl=fill&&fill.parentElement.querySelector('.battery-pct');
-  var pct=level!==null?Math.round((1-level)*100):73;
-  if(fill)fill.style.width=pct+'%';
-  if(pctEl)pctEl.textContent=pct+'% DRAINED';
-}
+// ── Profile data ──────────────────────────────────────────────────
+var _profileBuilt=false;
+var _perms={};
+var _battLevel=null;
+var _isMobile=false;
+var _isIOS=false;
+var _isAndroid=false;
+var _dnt='';
 
-// ── Permission check ─────────────────────────────────────────────
-async function checkPerms(){
-  var results={camera:'unknown',microphone:'unknown',geolocation:'unknown',notifications:'unknown'};
-  if(navigator.permissions){
-    for(var name of['camera','microphone','geolocation','notifications']){
-      try{var r=await navigator.permissions.query({name});results[name]=r.state;}catch(e){}
-    }
-  }
-  return results;
-}
-
-// ── Main profile build ───────────────────────────────────────────
 async function buildProfile(){
   var fp=canvasFP();
   var gpu=getGPU();
   var ua=navigator.userAgent;
-  var platform=navigator.platform||'unknown';
+  var platform=navigator.platform||'';
   var cores=navigator.hardwareConcurrency||null;
   var mem=navigator.deviceMemory||null;
   var dpr=window.devicePixelRatio||1;
   var touch=navigator.maxTouchPoints||0;
-  var dnt=navigator.doNotTrack;
+  _dnt=navigator.doNotTrack||'';
   var tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
   var lang=navigator.language;
-  var isMobile=/iPhone|iPad|iPod|Android/i.test(ua)||touch>0;
-  var isIOS=/iPhone|iPad|iPod/i.test(ua);
-  var isAndroid=/Android/i.test(ua);
-  var isMac=/Mac/i.test(platform)&&!isMobile;
+  _isMobile=/iPhone|iPad|iPod|Android/i.test(ua)||touch>1;
+  _isIOS=/iPhone|iPad|iPod/i.test(ua);
+  _isAndroid=/Android/i.test(ua);
+  var isMac=/Mac/i.test(platform)&&!_isMobile;
   var isWin=/Win/i.test(platform);
-  var screenW=screen.width,screenH=screen.height;
   var conn=navigator.connection||{};
   var tier=deviceTier(mem,cores,dpr);
   var region=tzToRegion(tz);
 
-  // battery
-  var battLevel=null,battCharging=null;
-  try{var batt=await navigator.getBattery();battLevel=batt.level;battCharging=batt.charging;}catch(e){}
+  try{var batt=await navigator.getBattery();_battLevel=batt.level;var charging=batt.charging;
+    var pct=Math.round(_battLevel*100);
+    var cls=pct>60?'success':pct>20?'warn':'danger';
+    var drain=Math.round((1-_battLevel)*100);
+    document.getElementById('batt-fill').style.width=drain+'%';
+    document.getElementById('batt-label').textContent=drain+'%'+t('drain.pct');
+    document.getElementById('v-batt').innerHTML='<span class="'+cls+'">'+(LANG==='de'?pct+'% Akku':''+pct+'% battery')+'</span>'+(charging?(LANG==='de'?' · ladt':' · charging'):(LANG==='de'?' · entladt sich':' · discharging'));
+  }catch(e){document.getElementById('v-batt').textContent=LANG==='de'?'nicht verfugbar':'not available';}
 
-  var perms=await checkPerms();
+  _perms=await checkPerms();
 
-  // ── Fill DOM ──────────────────────────────────────────────────
+  // ID section
   document.getElementById('v-fp').textContent=fp;
-  document.getElementById('v-platform').textContent=
-    (isIOS?'iOS':isAndroid?'Android':isMac?'macOS':isWin?'Windows':platform)+
-    (dpr>=2?' · retina display':'');
-  document.getElementById('v-ua').textContent=ua.slice(0,90)+(ua.length>90?'…':'');
+  var platStr=_isIOS?'iOS':_isAndroid?'Android':isMac?'macOS':isWin?'Windows':(platform||'unknown');
+  if(dpr>=2)platStr+=(LANG==='de'?' · Retina-Display':' · retina display');
+  document.getElementById('v-platform').textContent=platStr;
   document.getElementById('v-tz').textContent=lang+' · '+tz;
-
   var dntEl=document.getElementById('v-dnt');
-  if(dnt==='1'){dntEl.innerHTML='ENABLED <span style="font-size:0.55rem;color:rgba(239,68,68,0.6)">(paradox: privacy-conscious users are a premium segment)</span>';}
-  else if(dnt==='0'){dntEl.innerHTML='<span class="row-val muted">DISABLED — you are fully trackable</span>';}
-  else{dntEl.innerHTML='<span class="row-val muted">NOT SET</span>';}
+  if(_dnt==='1')dntEl.innerHTML='<span class="success">'+t('dnt.on')+'</span>';
+  else if(_dnt==='0')dntEl.textContent=t('dnt.off');
+  else dntEl.innerHTML='<span class="muted">'+t('dnt.unset')+'</span>';
 
-  document.getElementById('v-device').innerHTML=
-    '<span class="row-val '+(isMobile?'warn':'ok')+'">'+
-    (isMobile?(isIOS?'iPhone / iPad':'Android Mobile'):(isMac?'Mac desktop':'Desktop'))+
-    '</span> · '+touch+' touch point'+(touch!==1?'s':'');
-  document.getElementById('v-screen').textContent=
-    screenW+'×'+screenH+' @ '+dpr+'x pixel ratio';
-  document.getElementById('v-cores').innerHTML=
-    '<span class="row-val '+(cores>=8?'ok':cores>=4?'warn':'muted')+'">'+
-    (cores||'unknown')+' logical cores</span>';
-  document.getElementById('v-mem').innerHTML=
-    '<span class="row-val '+(mem>=8?'ok':mem>=4?'warn':'muted')+'">'+
-    (mem?mem+' GB (reported)':'not disclosed');
+  // HW section
+  document.getElementById('v-device').textContent=
+    (_isMobile?(_isIOS?'iPhone / iPad':LANG==='de'?'Android-Smartphone':'Android mobile'):(isMac?'Mac':isWin?'Windows PC':'Desktop'))+
+    ' · '+touch+(LANG==='de'?' Touch-Punkte':' touch points');
+  document.getElementById('v-screen').textContent=screen.width+'x'+screen.height+' @ '+dpr+'x';
+  document.getElementById('v-cores').innerHTML='<span class="'+(cores>=8?'success':cores>=4?'warn':'muted')+'">'+(cores||(LANG==='de'?'unbekannt':'unknown'))+(LANG==='de'?' logische Kerne':' logical cores')+'</span>';
+  document.getElementById('v-mem').innerHTML='<span class="'+(mem>=8?'success':mem>=4?'warn':'muted')+'">'+(mem?mem+'GB':(LANG==='de'?'nicht gemeldet':'not disclosed'))+'</span>';
   document.getElementById('v-gpu').textContent=gpu;
-  document.getElementById('v-tier').innerHTML=
-    '<span class="row-val '+tier.cls+'">'+tier.label+'</span>'+
-    (tier.label==='PREMIUM'?' · high-value advertising demographic':'');
+  document.getElementById('v-tier').innerHTML='<span class="'+tier.cls+'">'+tier.label+'</span>'+(tier.cls==='success'?(LANG==='de'?' · hochwertiges Werbesegment':' · high-value advertising segment'):'');
   document.getElementById('v-conn').textContent=
-    (conn.effectiveType||'unknown').toUpperCase()+
+    ((conn.effectiveType||'unknown').toUpperCase())+
     (conn.downlink?' · '+conn.downlink+' Mbps':'')+
     (conn.rtt?' · rtt '+conn.rtt+'ms':'');
 
-  if(battLevel!==null){
-    var pct=Math.round(battLevel*100);
-    var bc=pct>60?'ok':pct>20?'warn':'danger';
-    document.getElementById('v-batt').innerHTML=
-      '<span class="row-val '+bc+'">'+pct+'%</span>'+
-      (battCharging?' · charging':'· discharging');
-    animateBattery(battLevel);
-  } else {
-    document.getElementById('v-batt').textContent='not disclosed';
-  }
+  // Permissions
+  document.getElementById('v-cam').innerHTML=badge(_perms.camera);
+  document.getElementById('v-mic').innerHTML=badge(_perms.microphone);
+  document.getElementById('v-geo').innerHTML=badge(_perms.geolocation);
+  document.getElementById('v-notif').innerHTML=badge(_perms.notifications);
+  document.getElementById('v-motion').innerHTML=typeof DeviceMotionEvent!=='undefined'?
+    '<span class="badge badge-granted"><span class="badge-dot"></span>'+t('badge.avail')+'</span>':
+    '<span class="badge badge-denied">'+t('badge.na')+'</span>';
+  document.getElementById('v-storage').innerHTML=badge(_perms['persistent-storage']);
+  document.getElementById('v-clip').innerHTML=badge(_perms.clipboard);
+  document.getElementById('v-cookies').innerHTML=navigator.cookieEnabled?
+    '<span class="badge badge-granted"><span class="badge-dot"></span>'+t('badge.enabled')+'</span>':
+    '<span class="badge badge-denied">'+t('badge.disabled')+'</span>';
 
-  // permissions
-  document.getElementById('v-cam').innerHTML=permBadge(perms.camera);
-  document.getElementById('v-mic').innerHTML=permBadge(perms.microphone);
-  document.getElementById('v-geo').innerHTML=permBadge(perms.geolocation);
-  document.getElementById('v-notif').innerHTML=permBadge(perms.notifications);
-  document.getElementById('v-motion').innerHTML=
-    (typeof DeviceMotionEvent!=='undefined')?
-    '<span class="perm-granted">AVAILABLE</span>':
-    '<span class="perm-denied">NOT AVAILABLE</span>';
-  document.getElementById('v-storage').innerHTML=
-    (navigator.storage)?
-    '<span class="perm-granted">AVAILABLE</span>':
-    '<span class="perm-denied">NOT AVAILABLE</span>';
-  document.getElementById('v-cookies').innerHTML=
-    navigator.cookieEnabled?
-    '<span class="perm-granted">ENABLED</span>':
-    '<span class="perm-denied">DISABLED</span>';
+  // App guide
+  document.getElementById('guide-ios').style.display=_isIOS?'block':'none';
+  document.getElementById('guide-android').style.display=_isAndroid?'block':'none';
+  document.getElementById('guide-other').style.display=(!_isIOS&&!_isAndroid)?'block':'none';
 
-  // inferred profile
-  var segments=[];
-  if(tier.label==='PREMIUM')segments.push('Premium Consumer');
-  else if(tier.label==='MID-RANGE')segments.push('Mid-Market Consumer');
-  else segments.push('Value Consumer');
-  if(isIOS)segments.push('Apple Ecosystem');
-  if(isAndroid)segments.push('Google Ecosystem');
-  document.getElementById('v-segment').textContent=segments.join(' · ');
+  // Ad profile
+  var tier2=deviceTier(mem,cores,dpr);
+  var segParts=[tier2.label];
+  if(_isIOS)segParts.push('Apple');if(_isAndroid)segParts.push('Google');
+  document.getElementById('v-segment').textContent=segParts.join(' · ');
   document.getElementById('v-region').textContent=region+' ('+tz+')';
-  document.getElementById('v-ctx').textContent=
-    isMobile?'Mobile · on-the-go browsing session':'Desktop · seated session';
-
+  document.getElementById('v-ctx').textContent=_isMobile?(LANG==='de'?'Mobil · unterwegs':'Mobile · on-the-go'):(LANG==='de'?'Desktop · sitzende Sitzung':'Desktop · seated session');
   var privEl=document.getElementById('v-privacy');
-  if(dnt==='1'){
-    privEl.innerHTML='<span class="danger">Do Not Track: ON · paradox: you\'re in a high-CPM audience category</span>';
-  } else {
-    privEl.textContent='No privacy controls active · default tracking permitted';
-  }
+  if(_dnt==='1')privEl.innerHTML='<span class="warn">'+t('dnt.on')+'</span>';
+  else privEl.textContent=t('dnt.off');
 
-  // audience tags
-  var tags=[];
-  if(tier.label==='PREMIUM')tags.push({t:'High Income Bracket',h:true});
-  if(isIOS)tags.push({t:'iPhone User',h:true});
-  if(isAndroid)tags.push({t:'Android User',h:false});
-  if(isMobile)tags.push({t:'Mobile Commerce',h:true});
-  if(perms.camera==='granted')tags.push({t:'Camera Access',h:true});
-  if(perms.microphone==='granted')tags.push({t:'Voice Data',h:true});
-  if(perms.geolocation==='granted')tags.push({t:'Location Verified',h:true});
-  if(perms.notifications==='granted')tags.push({t:'Push Marketing',h:false});
-  if(cores>=8)tags.push({t:'Power User',h:false});
-  if(dnt==='1')tags.push({t:'Privacy-Conscious (High CPM)',h:true});
-  tags.push({t:region+' Consumer',h:false});
-  if(lang.startsWith('de'))tags.push({t:'German-Speaking',h:false});
-  if(lang.startsWith('en'))tags.push({t:'English-Speaking',h:false});
-  var h=new Date().getHours();
-  if(h>=22||h<6)tags.push({t:'Late-Night Shopper',h:false});
-  else if(h>=8&&h<=18)tags.push({t:'Business Hours',h:false});
-  tags.push({t:'Cross-Device Profile',h:true});
-  tags.push({t:'3rd-Party Remarketing',h:true});
+  // Tags
+  buildTags(tier2,_perms,_isIOS,_isAndroid,_isMobile,_dnt);
+  _profileBuilt=true;
+}
 
+function buildTags(tier,perms,isIOS,isAndroid,isMobile,dnt){
   var tagsEl=document.getElementById('v-tags');
+  tagsEl.innerHTML='';
+  var tags=[];
+  if(tier.cls==='success')tags.push({k:'tag.premium',hot:true});
+  if(isIOS)tags.push({k:'tag.iphone',hot:true});
+  if(isAndroid)tags.push({k:'tag.android',hot:false});
+  if(isMobile)tags.push({k:'tag.mobile',hot:true});
+  if(perms.camera==='granted')tags.push({k:'tag.camera',hot:true});
+  if(perms.microphone==='granted')tags.push({k:'tag.voice',hot:true});
+  if(perms.geolocation==='granted')tags.push({k:'tag.location',hot:true});
+  if(perms.notifications==='granted')tags.push({k:'tag.push',hot:false});
+  if((navigator.hardwareConcurrency||0)>=8)tags.push({k:'tag.power',hot:false});
+  if(dnt==='1')tags.push({k:'tag.dnt',hot:true});
+  tags.push({k:'tag.cross',hot:true});
+  tags.push({k:'tag.retarget',hot:true});
+  var h=new Date().getHours();
+  if(h>=22||h<6)tags.push({k:'tag.night',hot:false});
+  else if(h>=8&&h<=18)tags.push({k:'tag.business',hot:false});
   tags.forEach(function(tag){
     var s=document.createElement('span');
-    s.className='tag'+(tag.h?' high':'');
-    s.textContent=tag.t;
+    s.className='tag'+(tag.hot?' hot':'');
+    s.textContent=t(tag.k);
     tagsEl.appendChild(s);
   });
 }
 
+function rebuildDynamic(){
+  // Re-apply i18n to dynamic content
+  if(!_profileBuilt)return;
+  var dnt=_dnt;
+  if(dnt==='1')document.getElementById('v-dnt').innerHTML='<span class="success">'+t('dnt.on')+'</span>';
+  else if(dnt==='0')document.getElementById('v-dnt').textContent=t('dnt.off');
+  else document.getElementById('v-dnt').innerHTML='<span class="muted">'+t('dnt.unset')+'</span>';
+  // Rebuild brokers with new lang
+  buildBrokers();
+  setTimeout(animateBrokers,300);
+  // Rebuild tags
+  var cores=navigator.hardwareConcurrency||null;
+  var mem=navigator.deviceMemory||null;
+  var dpr=window.devicePixelRatio||1;
+  var tier=deviceTier(mem,cores,dpr);
+  buildTags(tier,_perms,_isIOS,_isAndroid,_isMobile,_dnt);
+}
+
+// ── Typewriter scan ───────────────────────────────────────────────
+var SCAN_KEYS=['scan.0','scan.1','scan.2','scan.3','scan.4','scan.5'];
+var scanIdx=0,charIdx=0;
+var scanLinesEl=document.getElementById('scan-lines');
+var scanCursorEl=document.getElementById('scan-cursor');
+var curLine=null;
+
+function typeTick(){
+  if(scanIdx>=SCAN_KEYS.length){
+    scanCursorEl.style.display='none';
+    revealCards();
+    return;
+  }
+  var msg=t(SCAN_KEYS[scanIdx]);
+  if(charIdx===0){curLine=document.createElement('div');curLine.className='scan-msg';scanLinesEl.appendChild(curLine);}
+  curLine.textContent=msg.slice(0,charIdx+1);
+  charIdx++;
+  if(charIdx>=msg.length){
+    curLine.classList.add('done');
+    scanIdx++;charIdx=0;
+    setTimeout(typeTick,scanIdx<SCAN_KEYS.length?100:350);
+  } else {
+    setTimeout(typeTick,16+Math.random()*12);
+  }
+}
+
+// ── Card reveal ───────────────────────────────────────────────────
+var CARDS=['c-id','c-hw','c-perms','c-apps','c-adprof','c-drain','c-verdict','c-res'];
+function revealCards(){
+  CARDS.forEach(function(id,i){
+    setTimeout(function(){
+      var el=document.getElementById(id);
+      if(el)el.classList.add('visible');
+      if(id==='c-drain')setTimeout(animateBrokers,500);
+    },i*160);
+  });
+}
+
 // ── Boot ──────────────────────────────────────────────────────────
-buildBrokerGrid();
-buildProfile(); // runs async in background while typewriter plays
-typeTick();     // start scan animation
+document.documentElement.setAttribute('data-theme',THEME);
+applyI18n();
+buildBrokers();
+buildProfile();
+typeTick();
 </script>
 </body>
 </html>
