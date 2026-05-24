@@ -18,12 +18,11 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:
 
 #scanlines{
   position:fixed;inset:0;z-index:2;pointer-events:none;
-  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.10) 3px,rgba(0,0,0,0.10) 4px);
-  mix-blend-mode:overlay;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 4px);
 }
 #vignette{
   position:fixed;inset:0;z-index:2;pointer-events:none;
-  background:radial-gradient(ellipse at 50% 50%,transparent 50%,rgba(0,0,0,0.65) 100%);
+  background:radial-gradient(ellipse at 50% 50%,transparent 40%,rgba(0,0,0,0.6) 100%);
 }
 
 .ar-header{
@@ -155,7 +154,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:
 'use strict';
 
 // ── Layer toggles ──────────────────────────────────────────────
-const L = {sound:true, em:true, motion:true, gyro:true, rf:true, altitude:true, hud:true, spectrum:true};
+const L = {sound:true,em:true,motion:true,gyro:true,rf:true,altitude:true,hud:true,spectrum:true};
 function tog(chip) { const k=chip.dataset.l; L[k]=!L[k]; chip.classList.toggle('on',L[k]); }
 
 // ── Sensor state ──────────────────────────────────────────────
@@ -176,31 +175,30 @@ const S = {
   lux: null,
 };
 
-// ── Canvas setup ───────────────────────────────────────────────
+// ── Canvas ─────────────────────────────────────────────────────
 const cv = document.getElementById('ar-canvas');
-const cx = cv.getContext('2d');
+const cx = cv ? cv.getContext('2d') : null;
 const sb = document.getElementById('spec-bar');
-const sc = sb.getContext('2d');
-let W=0, H=0, DPR=1;
+const sc = sb ? sb.getContext('2d') : null;
+let W=1, H=1, DPR=1;
 
 function resize() {
   DPR = window.devicePixelRatio || 1;
-  W = window.innerWidth;
-  H = window.innerHeight;
-  cv.width  = Math.round(W * DPR);
-  cv.height = Math.round(H * DPR);
-  cx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  sb.width  = Math.round(W * DPR);
-  sb.height = Math.round(36 * DPR);
-  sc.setTransform(DPR, 0, 0, DPR, 0, 0);
+  W = window.innerWidth  || 1;
+  H = window.innerHeight || 1;
+  if (cv) { cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); }
+  if (cx) cx.setTransform(DPR,0,0,DPR,0,0);
+  if (sb) { sb.width=Math.round(W*DPR); sb.height=Math.round(36*DPR); }
+  if (sc) sc.setTransform(DPR,0,0,DPR,0,0);
   initParticles();
 }
 resize();
 window.addEventListener('resize', resize);
 
-// ── Audio ──────────────────────────────────────────────────────
+// ── Sensors ────────────────────────────────────────────────────
 let aCtx, analyser, aData, aTD;
 function startAudio() {
+  if (!navigator.mediaDevices) return;
   navigator.mediaDevices.getUserMedia({
     audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}
   }).then(stream => {
@@ -214,7 +212,6 @@ function startAudio() {
   }).catch(()=>{});
 }
 
-// ── Magnetometer ───────────────────────────────────────────────
 function startMag() {
   const onR = (x,y,z) => {
     S.mx=x; S.my=y; S.mz=z;
@@ -225,63 +222,33 @@ function startMag() {
     }
   };
   if (typeof Magnetometer !== 'undefined') {
-    try {
-      const m = new Magnetometer({frequency:20});
-      m.addEventListener('reading',()=>onR(m.x,m.y,m.z));
-      m.start(); return;
-    } catch(e){}
+    try { const m=new Magnetometer({frequency:20}); m.addEventListener('reading',()=>onR(m.x,m.y,m.z)); m.start(); return; } catch(e){}
   }
   const h = e => onR(e.gamma||0, e.beta||0, (e.alpha||0)*0.1);
-  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission==='function') {
-    DeviceOrientationEvent.requestPermission()
-      .then(s=>{if(s==='granted')window.addEventListener('deviceorientation',h,true);})
-      .catch(()=>{});
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission().then(s=>{if(s==='granted')window.addEventListener('deviceorientation',h,true);}).catch(()=>{});
   } else {
-    window.addEventListener('deviceorientation',h,true);
-    window.addEventListener('deviceorientationabsolute',h,true);
+    window.addEventListener('deviceorientation', h, true);
   }
 }
 
-// ── Accelerometer ──────────────────────────────────────────────
 function startMotion() {
-  const h = e => {
-    const a = e.accelerationIncludingGravity;
-    if (!a) return;
-    S.ax=a.x||0; S.ay=a.y||0; S.az=a.z||0;
-  };
-  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission==='function') {
-    DeviceMotionEvent.requestPermission()
-      .then(s=>{if(s==='granted')window.addEventListener('devicemotion',h);})
-      .catch(()=>{});
-  } else { window.addEventListener('devicemotion',h); }
+  const h = e => { const a=e.accelerationIncludingGravity; if(!a)return; S.ax=a.x||0; S.ay=a.y||0; S.az=a.z||0; };
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(s=>{if(s==='granted')window.addEventListener('devicemotion',h);}).catch(()=>{});
+  } else { window.addEventListener('devicemotion', h); }
 }
 
-// ── Gyroscope / Orientation ─────────────────────────────────────
 function startGyro() {
   if (typeof Gyroscope !== 'undefined') {
-    try {
-      const g = new Gyroscope({frequency:30});
-      g.addEventListener('reading', () => {
-        S.gyrX=g.x||0; S.gyrY=g.y||0; S.gyrZ=g.z||0;
-      });
-      g.start();
-    } catch(e){}
+    try { const g=new Gyroscope({frequency:30}); g.addEventListener('reading',()=>{S.gyrX=g.x||0;S.gyrY=g.y||0;S.gyrZ=g.z||0;}); g.start(); } catch(e){}
   }
-  const h = e => {
-    S.orAlpha = e.alpha || 0;
-    S.orBeta  = e.beta  || 0;
-    S.orGamma = e.gamma || 0;
-  };
+  const h = e => { S.orAlpha=e.alpha||0; S.orBeta=e.beta||0; S.orGamma=e.gamma||0; };
   window.addEventListener('deviceorientation', h);
-  window.addEventListener('deviceorientationabsolute', h);
 }
 
-// ── Barometer ──────────────────────────────────────────────────
 function startBaro() {
-  const onP = p => {
-    S.pressure = p;
-    if (S.pressureBaseline === null) S.pressureBaseline = p;
-  };
+  const onP = p => { S.pressure=p; if(S.pressureBaseline===null)S.pressureBaseline=p; };
   if (typeof Barometer !== 'undefined') {
     try { const b=new Barometer({frequency:2}); b.addEventListener('reading',()=>onP(b.pressure)); b.start(); return; } catch(e){}
   }
@@ -290,14 +257,12 @@ function startBaro() {
   }
 }
 
-// ── Ambient Light ──────────────────────────────────────────────
 function startLight() {
   if (typeof AmbientLightSensor !== 'undefined') {
     try { const l=new AmbientLightSensor({frequency:2}); l.addEventListener('reading',()=>{S.lux=l.illuminance;}); l.start(); } catch(e){}
   }
 }
 
-// ── Network ─────────────────────────────────────────────────────
 function startNetwork() {
   const upd = () => {
     const c = navigator.connection||navigator.mozConnection||navigator.webkitConnection;
@@ -306,7 +271,6 @@ function startNetwork() {
   upd(); setInterval(upd, 3000);
 }
 
-// ── Battery ─────────────────────────────────────────────────────
 function startBattery() {
   if (!navigator.getBattery) return;
   navigator.getBattery().then(b=>{
@@ -315,7 +279,6 @@ function startBattery() {
   }).catch(()=>{});
 }
 
-// ── Geolocation ─────────────────────────────────────────────────
 function startGeo() {
   if (!navigator.geolocation) return;
   navigator.geolocation.watchPosition(
@@ -324,28 +287,24 @@ function startGeo() {
   );
 }
 
-// ── Camera ──────────────────────────────────────────────────────
 function startCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-  const attach = async (stream) => {
+  const attach = stream => {
     const v = document.getElementById('cam-video');
     v.srcObject = stream;
     const track = stream.getVideoTracks()[0];
-    if (track) {
-      const settings = track.getSettings ? track.getSettings() : {};
-      // Front camera: un-mirror so world looks correct for AR
+    if (track && track.getSettings) {
+      const settings = track.getSettings();
       v.style.transform = settings.facingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
     }
-    await v.play().catch(()=>{});
+    v.play().catch(()=>{});
   };
-  navigator.mediaDevices.getUserMedia({
-    video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
-  }).then(attach).catch(()=>
-    navigator.mediaDevices.getUserMedia({video:true}).then(attach).catch(()=>{})
-  );
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}})
+    .then(attach)
+    .catch(()=>navigator.mediaDevices.getUserMedia({video:true}).then(attach).catch(()=>{}));
 }
 
-// ── Boot — safe sensor starts, loop always fires ─────────────────
+// ── Boot ─────────────────────────────────────────────────────────
 function boot() {
   document.getElementById('start').classList.add('gone');
   try { startAudio(); }   catch(e){}
@@ -358,516 +317,468 @@ function boot() {
   try { startBattery(); } catch(e){}
   try { startGeo(); }     catch(e){}
   try { startCamera(); }  catch(e){}
-  requestAnimationFrame(loop);
+  if (cx) requestAnimationFrame(loop);
 }
 
 // ══════════════════════════════════════════════════════════════════
-// RENDER SYSTEM
+// RENDER
 // ══════════════════════════════════════════════════════════════════
 const t0 = performance.now();
 let frame = 0;
 const shockwaves = [];
 
 function loop() {
+  if (!cx) return;
   requestAnimationFrame(loop);
   const now = performance.now();
-  const t = (now - t0) / 1000;
+  const t   = (now - t0) / 1000;
   frame++;
 
-  // Update audio
+  // audio update
   if (analyser && aData) {
-    analyser.getFloatFrequencyData(aData);
-    if (aTD) analyser.getFloatTimeDomainData(aTD);
-    const bins = aData.length;
-    const bSize = Math.floor(bins / 8);
-    let rms=0, peak=-Infinity;
-    for (let i=0;i<bins;i++) { const v=aData[i]; if(v>peak)peak=v; rms+=v*v; }
-    S.audioPeak = Math.max(0, Math.min(1, (peak+90)/90));
-    S.audioRMS  = Math.max(0, Math.min(1, (Math.sqrt(rms/bins)+90)/90));
-    for (let b=0;b<8;b++) {
-      let sum=0;
-      for (let i=b*bSize;i<(b+1)*bSize;i++) sum+=aData[i];
-      S.fftBands[b] = Math.max(0, Math.min(1, (sum/bSize+90)/70));
-    }
-    S.audioLevel = S.fftBands.reduce((a,v)=>a+v,0)/8;
-    if (S.audioPeak > 0.6 && frame % 5 === 0) {
-      shockwaves.push({x:W*0.5,y:H*0.5,r:8,alpha:0.75,born:now});
-    }
+    try {
+      analyser.getFloatFrequencyData(aData);
+      if (aTD) analyser.getFloatTimeDomainData(aTD);
+      const bins = aData.length;
+      const bsz  = Math.floor(bins / 8);
+      let rms=0, peak=-Infinity;
+      for (let i=0;i<bins;i++){const v=aData[i];if(v>peak)peak=v;rms+=v*v;}
+      S.audioPeak = Math.max(0,Math.min(1,(peak+90)/90));
+      S.audioRMS  = Math.max(0,Math.min(1,(Math.sqrt(rms/bins)+90)/90));
+      for (let b=0;b<8;b++){let s=0;for(let i=b*bsz;i<(b+1)*bsz;i++)s+=aData[i];S.fftBands[b]=Math.max(0,Math.min(1,(s/bsz+90)/70));}
+      S.audioLevel = S.fftBands.reduce((a,v)=>a+v,0)/8;
+      if (S.audioPeak>0.6 && frame%5===0) shockwaves.push({x:W*0.5,y:H*0.5,r:8,born:now});
+    } catch(e){}
   }
 
   cx.clearRect(0, 0, W, H);
 
-  // Subtle dark sidebar gradients so labels are legible over camera
-  const lG = cx.createLinearGradient(0,0,W*0.18,0);
-  lG.addColorStop(0,'rgba(0,0,0,0.55)'); lG.addColorStop(1,'rgba(0,0,0,0)');
-  cx.fillStyle=lG; cx.fillRect(0,0,W*0.18,H);
-  const rG = cx.createLinearGradient(W*0.78,0,W,0);
-  rG.addColorStop(0,'rgba(0,0,0,0)'); rG.addColorStop(1,'rgba(0,0,0,0.55)');
-  cx.fillStyle=rG; cx.fillRect(W*0.78,0,W*0.22,H);
+  // dark side panels so text is legible over camera
+  try {
+    const lG=cx.createLinearGradient(0,0,W*0.17,0);
+    lG.addColorStop(0,'rgba(0,0,0,0.6)'); lG.addColorStop(1,'rgba(0,0,0,0)');
+    cx.fillStyle=lG; cx.fillRect(0,0,W*0.17,H);
+    const rG=cx.createLinearGradient(W*0.8,0,W,0);
+    rG.addColorStop(0,'rgba(0,0,0,0)'); rG.addColorStop(1,'rgba(0,0,0,0.6)');
+    cx.fillStyle=rG; cx.fillRect(W*0.8,0,W*0.2,H);
+  } catch(e){}
 
-  if (L.sound)    try { drawSound(t, now); }    catch(e){}
-  if (L.em)       try { drawEM(t); }            catch(e){}
-  if (L.motion)   try { drawMotion(t); }        catch(e){}
-  if (L.gyro)     try { drawGyro(t); }          catch(e){}
-  if (L.rf)       try { drawRF(t); }            catch(e){}
-  if (L.altitude) try { drawAltitude(t); }      catch(e){}
-  if (L.hud)      try { drawHUD(t); }           catch(e){}
-  if (L.spectrum) try { drawSpectrumBar(t); }   catch(e){}
+  if (L.sound)    { try { drawSound(t,now);    } catch(e){} }
+  if (L.em)       { try { drawEM(t);            } catch(e){} }
+  if (L.motion)   { try { drawMotion(t);        } catch(e){} }
+  if (L.gyro)     { try { drawGyro(t);          } catch(e){} }
+  if (L.rf)       { try { drawRF(t);            } catch(e){} }
+  if (L.altitude) { try { drawAltitude(t);      } catch(e){} }
+  if (L.hud)      { try { drawHUD(t);           } catch(e){} }
+  if (L.spectrum) { try { drawSpectrumBar(t);   } catch(e){} }
+
+  // live indicator — always drawn, proves loop is running
+  try { drawLive(t); } catch(e){}
 }
 
-// ── SOUND: oscilloscope + shockwaves + frequency band waves ───
+// ── LIVE indicator (always-on heartbeat in top-right) ─────────
+function drawLive(t) {
+  const pulse = 0.4 + Math.abs(Math.sin(t*2))*0.6;
+  cx.save();
+  cx.globalAlpha = pulse;
+  cx.beginPath();
+  cx.arc(W-22, 22, 4, 0, Math.PI*2);
+  cx.fillStyle = '#00ff41';
+  cx.shadowBlur = 10; cx.shadowColor = '#00ff41';
+  cx.fill();
+  cx.shadowBlur = 0;
+  cx.restore();
+}
+
+// ── SOUND ─────────────────────────────────────────────────────
 function drawSound(t, now) {
   cx.save();
-
-  // Expanding shockwaves from loud transients
-  for (let i=shockwaves.length-1;i>=0;i--) {
-    const sw=shockwaves[i];
-    const age=(now-sw.born)/1000;
-    sw.r = 8 + age*300;
-    sw.alpha = Math.max(0, 0.75-age*0.7);
-    if (sw.alpha<=0){shockwaves.splice(i,1);continue;}
-    [1.0,0.6,0.3].forEach((frac,ri)=>{
-      const a=sw.alpha*(1-ri*0.3);
+  try {
+    // shockwaves
+    for (let i=shockwaves.length-1;i>=0;i--) {
+      const sw=shockwaves[i];
+      const age=(now-sw.born)/1000;
+      sw.r = 8+age*300;
+      const alpha=Math.max(0,0.7-age*0.65);
+      if(alpha<=0){shockwaves.splice(i,1);continue;}
       cx.beginPath();
-      cx.arc(sw.x, sw.y, sw.r*frac, 0, Math.PI*2);
-      cx.strokeStyle='rgba(0,255,65,'+a.toFixed(2)+')';
-      cx.lineWidth = ri===0?2.5:1.2;
-      if(ri===0){cx.shadowBlur=22;cx.shadowColor='#00ff41';}
+      cx.arc(sw.x,sw.y,sw.r,0,Math.PI*2);
+      cx.strokeStyle='rgba(0,255,65,'+alpha.toFixed(2)+')';
+      cx.lineWidth=2.5; cx.shadowBlur=20; cx.shadowColor='#00ff41';
       cx.stroke(); cx.shadowBlur=0;
-    });
-  }
-
-  // Real-time oscilloscope waveform
-  if (aTD) {
-    const baseY=H*0.5, maxAmp=H*0.22;
-    const glow=10+S.audioLevel*35;
-    cx.globalAlpha=0.18;
-    cx.beginPath();
-    for (let i=0;i<W;i++) {
-      const y=baseY+aTD[Math.max(0,Math.floor(i/W*aTD.length)-16)]*maxAmp;
-      i===0?cx.moveTo(i,y):cx.lineTo(i,y);
     }
-    cx.strokeStyle='#00ff41'; cx.lineWidth=1; cx.stroke();
-    cx.globalAlpha=1;
-    cx.beginPath();
-    for (let i=0;i<W;i++) {
-      const y=baseY+aTD[Math.floor(i/W*aTD.length)]*maxAmp;
-      i===0?cx.moveTo(i,y):cx.lineTo(i,y);
-    }
-    cx.strokeStyle='rgba(0,255,65,'+(0.55+S.audioLevel*0.45)+')';
-    cx.lineWidth=2.5;
-    cx.shadowBlur=glow; cx.shadowColor='#00ff41';
-    cx.stroke(); cx.shadowBlur=0;
-  }
 
-  // 6 frequency band sine waves — always visible, amp driven by FFT
-  const yPos=[0.12,0.20,0.36,0.64,0.80,0.88];
-  const alphaHex=['55','77','bb','bb','77','55'];
-  for (let b=0;b<6;b++) {
-    const amp=S.fftBands[b]*H*0.07+14;
-    const freq=(b+1)*0.85+0.9;
-    const bY=H*yPos[b];
-    cx.beginPath();
-    for (let i=0;i<=W;i+=2) {
-      const phase=t*freq*(0.8+b*0.1);
-      const y=bY+Math.sin(i*0.14+phase)*amp+Math.sin(i*0.05+phase*0.45)*amp*0.38;
-      i===0?cx.moveTo(i,y):cx.lineTo(i,y);
+    // oscilloscope
+    if (aTD) {
+      const baseY=H*0.5, maxAmp=H*0.21;
+      cx.globalAlpha=0.2;
+      cx.beginPath();
+      for(let i=0;i<W;i++){const y=baseY+aTD[Math.max(0,Math.floor(i/W*aTD.length)-12)]*maxAmp;i===0?cx.moveTo(i,y):cx.lineTo(i,y);}
+      cx.strokeStyle='#00ff41'; cx.lineWidth=1; cx.stroke();
+      cx.globalAlpha=1;
+      cx.beginPath();
+      for(let i=0;i<W;i++){const y=baseY+aTD[Math.floor(i/W*aTD.length)]*maxAmp;i===0?cx.moveTo(i,y):cx.lineTo(i,y);}
+      cx.strokeStyle='rgba(0,255,65,'+(0.6+S.audioLevel*0.4)+')';
+      cx.lineWidth=2.5; cx.shadowBlur=12+S.audioLevel*28; cx.shadowColor='#00ff41';
+      cx.stroke(); cx.shadowBlur=0;
     }
-    cx.strokeStyle='#00ff41'+alphaHex[b];
-    cx.lineWidth=b===2||b===3?2.8:2;
-    cx.shadowBlur=10+S.fftBands[b]*18; cx.shadowColor='#00ff41';
-    cx.stroke(); cx.shadowBlur=0;
-  }
 
-  pill(cx,14,H*0.4,'#00ff41','SOUND  '+Math.round(S.audioRMS*120)+' dB');
-  cx.restore();
+    // 6 frequency band waves — sensor-reactive sine waves spanning full width
+    const yPos=[0.12,0.20,0.37,0.63,0.80,0.88];
+    const alphas=[0.35,0.45,0.75,0.75,0.45,0.35];
+    for (let b=0;b<6;b++) {
+      const amp = S.fftBands[b]*H*0.07 + 15;
+      const freq = (b+1)*0.85 + 0.9;
+      const bY   = H*yPos[b];
+      cx.beginPath();
+      for (let i=0;i<=W;i+=2) {
+        const phase = t*freq*(0.8+b*0.1);
+        const y = bY + Math.sin(i*0.14+phase)*amp + Math.sin(i*0.05+phase*0.45)*amp*0.38;
+        i===0 ? cx.moveTo(i,y) : cx.lineTo(i,y);
+      }
+      cx.strokeStyle = 'rgba(0,255,65,'+alphas[b]+')';
+      cx.lineWidth   = b===2||b===3 ? 2.8 : 2;
+      cx.shadowBlur  = 10+S.fftBands[b]*20; cx.shadowColor='#00ff41';
+      cx.stroke(); cx.shadowBlur=0;
+    }
+
+    pill(cx,14,H*0.4,'#00ff41','SOUND  '+Math.round(S.audioRMS*120)+' dB');
+  } finally { cx.restore(); }
 }
 
-// ── EM FIELD: dipole field lines + hex grid ─────────────────
+// ── EM FIELD ──────────────────────────────────────────────────
 function drawEM(t) {
-  const anom = S.magBaseline ? Math.abs(S.magTotal-S.magBaseline) : 0;
-  const norm  = S.magTotal||50;
-  const fx=S.mx/norm, fy=S.my/norm;
-  const intensity=Math.min(1,S.magTotal/80);
-  const isAnom=anom>60;
-  const emCol=isAnom?'#f87171':'#a78bfa';
-
   cx.save();
-  cx.globalAlpha=0.55+intensity*0.25;
+  try {
+    const anom = S.magBaseline ? Math.abs(S.magTotal-S.magBaseline) : 0;
+    const norm  = S.magTotal||50;
+    const fx=S.mx/norm, fy=S.my/norm;
+    const intensity=Math.min(1,S.magTotal/80);
+    const isAnom=anom>60;
+    const emR=isAnom?'248,113,113':'167,139,250';
+    cx.globalAlpha = 0.55+intensity*0.25;
+    const cX=W*0.5, cY=H*0.5, N=14;
 
-  const cX=W*0.5, cY=H*0.5;
-  const N=14;
-
-  for (let i=0;i<N;i++) {
-    const angle0=(i/N)*Math.PI*2+t*0.07;
-    const r0=28+intensity*12;
-    let px=cX+Math.cos(angle0)*r0;
-    let py=cY+Math.sin(angle0)*r0*0.65;
-    cx.beginPath(); cx.moveTo(px,py);
-    for (let s=0;s<20;s++) {
-      const bx=fx+Math.cos(angle0)*0.28;
-      const by=fy+Math.sin(angle0)*0.28;
-      const step=16+intensity*10;
-      px+=bx*step*0.5+Math.sin(t*0.35+i)*1.8;
-      py+=by*step*0.38+Math.cos(t*0.35+i)*1.3;
-      cx.lineTo(px,py);
+    for (let i=0;i<N;i++) {
+      const a0=(i/N)*Math.PI*2+t*0.07;
+      const r0=28+intensity*12;
+      let px=cX+Math.cos(a0)*r0, py=cY+Math.sin(a0)*r0*0.65;
+      cx.beginPath(); cx.moveTo(px,py);
+      for(let s=0;s<20;s++){
+        const bx=fx+Math.cos(a0)*0.28, by=fy+Math.sin(a0)*0.28;
+        const sp=16+intensity*10;
+        px+=bx*sp*0.5+Math.sin(t*0.35+i)*1.8;
+        py+=by*sp*0.38+Math.cos(t*0.35+i)*1.3;
+        cx.lineTo(px,py);
+      }
+      const g=cx.createLinearGradient(cX+Math.cos(a0)*r0,cY+Math.sin(a0)*r0*0.65,px,py);
+      g.addColorStop(0,'rgba('+emR+',0)');
+      g.addColorStop(0.3,'rgba('+emR+',0.8)');
+      g.addColorStop(1,'rgba('+emR+',0)');
+      cx.strokeStyle=g; cx.lineWidth=isAnom?2:1.2;
+      cx.shadowBlur=isAnom?16:8; cx.shadowColor='rgba('+emR+',1)';
+      cx.stroke(); cx.shadowBlur=0;
     }
-    const g=cx.createLinearGradient(cX+Math.cos(angle0)*r0,cY+Math.sin(angle0)*r0*0.65,px,py);
-    g.addColorStop(0,emCol+'00');
-    g.addColorStop(0.25,emCol+'cc');
-    g.addColorStop(1,emCol+'00');
-    cx.strokeStyle=g;
-    cx.lineWidth=isAnom?2:1.2;
-    cx.shadowBlur=isAnom?16:8; cx.shadowColor=emCol;
-    cx.stroke(); cx.shadowBlur=0;
-  }
 
-  // Hex grid — distorts with field (ci = column index, avoids shadowing emCol)
-  const hexR=13,rows=4,cols=5;
-  const offX=cX-(cols-1)*hexR*1.73*0.5;
-  const offY=cY-(rows-1)*hexR*1.5*0.5;
-  for (let row=0;row<rows;row++) {
-    for (let ci=0;ci<cols;ci++) {
-      const hx=offX+ci*hexR*1.73+(row%2)*hexR*0.87+fx*7*Math.sin(t*0.28);
-      const hy=offY+row*hexR*1.5+fy*5*Math.cos(t*0.28);
-      const pulse=0.3+intensity*0.45+Math.sin(t*1.4+row+ci)*0.12;
-      cx.save();
-      cx.globalAlpha=pulse*0.6;
-      hexagon(cx,hx,hy,hexR*(0.35+intensity*0.25));
-      cx.strokeStyle=isAnom?'#f87171':'#a78bfa';
-      cx.lineWidth=0.8;
-      cx.stroke();
-      cx.restore();
+    // hex grid
+    const hexR=13,rows=4,cols=5;
+    const offX=cX-(cols-1)*hexR*1.73*0.5;
+    const offY=cY-(rows-1)*hexR*1.5*0.5;
+    for(let row=0;row<rows;row++){
+      for(let ci=0;ci<cols;ci++){
+        const hx=offX+ci*hexR*1.73+(row%2)*hexR*0.87+fx*7*Math.sin(t*0.28);
+        const hy=offY+row*hexR*1.5+fy*5*Math.cos(t*0.28);
+        const pulse=0.3+intensity*0.45+Math.sin(t*1.4+row+ci)*0.12;
+        cx.save();
+        cx.globalAlpha=pulse*0.6;
+        hexagon(cx,hx,hy,hexR*(0.35+intensity*0.25));
+        cx.strokeStyle=isAnom?'rgba(248,113,113,1)':'rgba(167,139,250,1)';
+        cx.lineWidth=0.8; cx.stroke();
+        cx.restore();
+      }
     }
-  }
 
-  // Vertical EM strength bar
-  const barX=W-18, barH=H*0.4, barY=H*0.3;
-  const pct=Math.min(1,S.magTotal/120);
-  cx.globalAlpha=0.7;
-  cx.strokeStyle=emCol+'55'; cx.lineWidth=1;
-  cx.strokeRect(barX-4,barY,8,barH);
-  const fillH=barH*pct;
-  cx.fillStyle=emCol;
-  cx.fillRect(barX-3,barY+barH-fillH,6,fillH);
-  cx.shadowBlur=10; cx.shadowColor=emCol;
-  cx.fillRect(barX-3,barY+barH-fillH,6,3);
-  cx.shadowBlur=0;
+    // strength bar
+    const barX=W-18,barH=H*0.4,barY=H*0.3,pct=Math.min(1,S.magTotal/120);
+    cx.globalAlpha=0.7;
+    cx.strokeStyle='rgba('+emR+',0.4)'; cx.lineWidth=1;
+    cx.strokeRect(barX-4,barY,8,barH);
+    const fillH=barH*pct;
+    cx.fillStyle='rgba('+emR+',1)';
+    cx.fillRect(barX-3,barY+barH-fillH,6,fillH);
+    cx.shadowBlur=10; cx.shadowColor='rgba('+emR+',1)';
+    cx.fillRect(barX-3,barY+barH-fillH,6,3); cx.shadowBlur=0;
+    cx.globalAlpha=1;
 
-  cx.globalAlpha=1;
-  const emLbl=isAnom?'! EM ANOMALY  '+S.magTotal.toFixed(0)+' µT':'MAGNETIC FIELD  '+S.magTotal.toFixed(0)+' µT';
-  pill(cx,14,H*0.5-70,emCol,emLbl);
-  cx.restore();
+    pill(cx,14,H*0.5-70,'rgba('+emR+',1)',
+      isAnom ? '! EM ANOMALY  '+S.magTotal.toFixed(0)+' µT' : 'MAGNETIC FIELD  '+S.magTotal.toFixed(0)+' µT');
+  } finally { cx.restore(); }
 }
 
-// ── MOTION: accelerometer particle flow field ──────────────────
+// ── MOTION ────────────────────────────────────────────────────
 const particles=[];
-function initParticles() {
+function initParticles(){
   particles.length=0;
   const cols=18,rows=12;
-  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
     const bx=(c/(cols-1))*W*0.9+W*0.05;
     const by=(r/(rows-1))*H*0.8+H*0.1;
-    particles.push({bx, by, x:bx, y:by, vx:0, vy:0, life:Math.random()});
+    particles.push({bx,by,x:bx,y:by,vx:0,vy:0,life:Math.random()});
   }
 }
 
 function drawMotion(t) {
-  const mag=Math.sqrt(S.ax*S.ax+S.ay*S.ay+S.az*S.az);
-  const nax=S.ax/(mag||1), nay=S.ay/(mag||1);
-  const force=Math.min(1,mag/15);
-
-  cx.save(); cx.globalAlpha=0.65;
-  particles.forEach(p=>{
-    p.life+=0.012+force*0.02;
-    if(p.life>1){p.life=0;p.x=p.bx;p.y=p.by;}
-    p.vx=nax*force*5+Math.sin(t*0.45+p.by*0.04)*0.5;
-    p.vy=nay*force*5+Math.cos(t*0.45+p.bx*0.04)*0.5;
-    p.x+=p.vx; p.y+=p.vy;
-    const alpha=p.life*(0.4+force*0.45)*Math.sin(Math.PI*p.life);
-    cx.beginPath();
-    cx.arc(p.x,p.y,1.6,0,Math.PI*2);
-    cx.fillStyle='rgba(34,211,238,'+alpha.toFixed(2)+')';
-    cx.fill();
-    if(force>0.06){
+  cx.save();
+  try {
+    const mag=Math.sqrt(S.ax*S.ax+S.ay*S.ay+S.az*S.az)||0.01;
+    const nax=S.ax/mag, nay=S.ay/mag;
+    const force=Math.min(1,mag/15);
+    cx.globalAlpha=0.65;
+    particles.forEach(p=>{
+      p.life+=0.012+force*0.02;
+      if(p.life>1){p.life=0;p.x=p.bx;p.y=p.by;}
+      p.vx=nax*force*5+Math.sin(t*0.45+p.by*0.04)*0.5;
+      p.vy=nay*force*5+Math.cos(t*0.45+p.bx*0.04)*0.5;
+      p.x+=p.vx; p.y+=p.vy;
+      const alpha=p.life*(0.4+force*0.45)*Math.sin(Math.PI*p.life);
       cx.beginPath();
-      cx.moveTo(p.x,p.y);
-      cx.lineTo(p.x-p.vx*5,p.y-p.vy*5);
-      cx.strokeStyle='rgba(34,211,238,'+(alpha*0.3).toFixed(2)+')';
-      cx.lineWidth=0.8; cx.stroke();
+      cx.arc(p.x,p.y,1.6,0,Math.PI*2);
+      cx.fillStyle='rgba(34,211,238,'+alpha.toFixed(2)+')';
+      cx.fill();
+      if(force>0.06){
+        cx.beginPath(); cx.moveTo(p.x,p.y); cx.lineTo(p.x-p.vx*5,p.y-p.vy*5);
+        cx.strokeStyle='rgba(34,211,238,'+(alpha*0.3).toFixed(2)+')';
+        cx.lineWidth=0.8; cx.stroke();
+      }
+    });
+    if(force>0.04){
+      const aLen=force*70,aX=W*0.5,aY=H*0.5;
+      const eX=aX+nax*aLen,eY=aY+nay*aLen;
+      cx.globalAlpha=1;
+      cx.beginPath(); cx.moveTo(aX,aY); cx.lineTo(eX,eY);
+      cx.strokeStyle='rgba(34,211,238,'+(0.6+force*0.4)+')';
+      cx.lineWidth=2.5; cx.shadowBlur=14; cx.shadowColor='#22d3ee';
+      cx.stroke(); cx.shadowBlur=0;
+      const ang=Math.atan2(eY-aY,eX-aX);
+      cx.beginPath();
+      cx.moveTo(eX,eY);
+      cx.lineTo(eX-12*Math.cos(ang-0.4),eY-12*Math.sin(ang-0.4));
+      cx.lineTo(eX-12*Math.cos(ang+0.4),eY-12*Math.sin(ang+0.4));
+      cx.closePath(); cx.fillStyle='rgba(34,211,238,0.9)'; cx.fill();
     }
-  });
-  if(force>0.04){
-    const aLen=force*70,aX=W*0.5,aY=H*0.5;
-    const eX=aX+nax*aLen,eY=aY+nay*aLen;
-    cx.globalAlpha=1;
-    cx.beginPath();cx.moveTo(aX,aY);cx.lineTo(eX,eY);
-    cx.strokeStyle='rgba(34,211,238,'+(0.6+force*0.4)+')';
-    cx.lineWidth=2.5;
-    cx.shadowBlur=14; cx.shadowColor='#22d3ee';
-    cx.stroke(); cx.shadowBlur=0;
-    const ang=Math.atan2(eY-aY,eX-aX);
-    cx.beginPath();
-    cx.moveTo(eX,eY);
-    cx.lineTo(eX-12*Math.cos(ang-0.4),eY-12*Math.sin(ang-0.4));
-    cx.lineTo(eX-12*Math.cos(ang+0.4),eY-12*Math.sin(ang+0.4));
-    cx.closePath();
-    cx.fillStyle='rgba(34,211,238,'+(0.85+force*0.15)+')';
-    cx.fill();
-  }
-  pill(cx,14,H-118,'#22d3ee','ACCEL  '+mag.toFixed(1)+' m/s²');
-  cx.restore();
+    pill(cx,14,H-118,'#22d3ee','ACCEL  '+mag.toFixed(1)+' m/s²');
+  } finally { cx.restore(); }
 }
 
-// ── GYRO: artificial horizon — NO cx.clip() ────────────────────
+// ── GYRO (no cx.clip) ─────────────────────────────────────────
 function drawGyro(t) {
-  const roll    = -(S.orGamma||0)*Math.PI/180;
-  const pitchPx = Math.sin((S.orBeta||0)*Math.PI/180)*H*0.22;
-  const cX=W*0.5, cY=H*0.5;
-
-  // Tilted horizon plane — translate+rotate, no clip
   cx.save();
-  cx.translate(cX, cY+pitchPx);
-  cx.rotate(roll);
+  try {
+    const roll    = -(S.orGamma||0)*Math.PI/180;
+    const pitchPx = Math.sin((S.orBeta||0)*Math.PI/180)*H*0.22;
+    const cX=W*0.5, cY=H*0.5;
 
-  // Sky tint
-  cx.fillStyle='rgba(20,70,180,0.07)';
-  cx.fillRect(-W*2,-H*2,W*4,H*2);
-  // Ground tint
-  cx.fillStyle='rgba(110,55,0,0.07)';
-  cx.fillRect(-W*2,0,W*4,H*2);
-
-  // Horizon line — main
-  cx.beginPath();
-  cx.moveTo(-W,0); cx.lineTo(W,0);
-  cx.strokeStyle='rgba(96,165,250,0.75)';
-  cx.lineWidth=2;
-  cx.shadowBlur=14; cx.shadowColor='#60a5fa';
-  cx.stroke(); cx.shadowBlur=0;
-
-  // Pitch ladder
-  for (let step=-4;step<=4;step++) {
-    if(step===0) continue;
-    const ly=step*24;
-    const lw=Math.abs(step)%2===0?50:28;
-    cx.beginPath();
-    cx.moveTo(-lw,ly); cx.lineTo(lw,ly);
-    cx.strokeStyle='rgba(96,165,250,'+(Math.abs(step)%2===0?0.45:0.22)+')';
-    cx.lineWidth=1; cx.stroke();
-    if(Math.abs(step)%2===0){
-      cx.fillStyle='rgba(96,165,250,0.45)';
-      cx.font='8px monospace';
-      cx.textAlign='right';
-      cx.fillText((step*5)+'°',-lw-4,ly+3);
-      cx.textAlign='left';
+    // horizon plane — translate+rotate, NO clip
+    cx.save();
+    cx.translate(cX, cY+pitchPx);
+    cx.rotate(roll);
+    cx.fillStyle='rgba(20,70,200,0.07)'; cx.fillRect(-W*2,-H*2,W*4,H*2);
+    cx.fillStyle='rgba(110,55,0,0.07)';  cx.fillRect(-W*2,0,W*4,H*2);
+    cx.beginPath(); cx.moveTo(-W,0); cx.lineTo(W,0);
+    cx.strokeStyle='rgba(96,165,250,0.8)'; cx.lineWidth=2;
+    cx.shadowBlur=16; cx.shadowColor='#60a5fa';
+    cx.stroke(); cx.shadowBlur=0;
+    for(let s=-4;s<=4;s++){
+      if(!s)continue;
+      const ly=s*24,lw=Math.abs(s)%2===0?50:28;
+      cx.beginPath(); cx.moveTo(-lw,ly); cx.lineTo(lw,ly);
+      cx.strokeStyle='rgba(96,165,250,'+(Math.abs(s)%2===0?0.45:0.22)+')';
+      cx.lineWidth=1; cx.stroke();
+      if(Math.abs(s)%2===0){
+        cx.fillStyle='rgba(96,165,250,0.45)'; cx.font='8px monospace';
+        cx.textAlign='right'; cx.fillText(s*5+'°',-lw-4,ly+3);
+      }
     }
-  }
-  cx.restore(); // undoes translate+rotate only
+    cx.restore(); // undo translate+rotate only
 
-  // Fixed aircraft reticle — never rotates
-  cx.save();
-  cx.globalAlpha=0.9;
-  cx.strokeStyle='rgba(255,255,255,0.85)';
-  cx.lineWidth=2.5;
-  cx.shadowBlur=8; cx.shadowColor='#60a5fa';
-  cx.beginPath();
-  cx.moveTo(cX-68,cY); cx.lineTo(cX-18,cY);
-  cx.moveTo(cX+18,cY); cx.lineTo(cX+68,cY);
-  cx.moveTo(cX,cY+8);  cx.lineTo(cX,cY+20);
-  cx.stroke(); cx.shadowBlur=0;
-  cx.beginPath();
-  cx.arc(cX,cY,4,0,Math.PI*2);
-  cx.fillStyle='rgba(255,255,255,0.9)';
-  cx.fill();
+    // fixed reticle
+    cx.globalAlpha=0.9;
+    cx.strokeStyle='rgba(255,255,255,0.9)'; cx.lineWidth=2.5;
+    cx.shadowBlur=8; cx.shadowColor='#60a5fa';
+    cx.beginPath();
+    cx.moveTo(cX-68,cY); cx.lineTo(cX-18,cY);
+    cx.moveTo(cX+18,cY); cx.lineTo(cX+68,cY);
+    cx.moveTo(cX,cY+8);  cx.lineTo(cX,cY+20);
+    cx.stroke(); cx.shadowBlur=0;
+    cx.beginPath(); cx.arc(cX,cY,4,0,Math.PI*2);
+    cx.fillStyle='rgba(255,255,255,0.9)'; cx.fill();
 
-  // Roll arc indicator
-  const arcR=Math.min(W,H)*0.38+18;
-  cx.globalAlpha=0.4;
-  cx.beginPath();
-  cx.arc(cX,cY,arcR,Math.PI*1.1,Math.PI*1.9);
-  cx.strokeStyle='rgba(96,165,250,0.3)'; cx.lineWidth=2; cx.stroke();
-  const needleA=Math.PI*1.5+roll;
-  cx.globalAlpha=0.9;
-  cx.beginPath();
-  cx.moveTo(cX+Math.cos(needleA)*(arcR-12),cY+Math.sin(needleA)*(arcR-12));
-  cx.lineTo(cX+Math.cos(needleA)*(arcR+12),cY+Math.sin(needleA)*(arcR+12));
-  cx.strokeStyle='#60a5fa'; cx.lineWidth=3;
-  cx.shadowBlur=14; cx.shadowColor='#60a5fa';
-  cx.stroke(); cx.shadowBlur=0;
-
-  cx.globalAlpha=1;
-  const gyrTot=Math.sqrt(S.gyrX*S.gyrX+S.gyrY*S.gyrY+S.gyrZ*S.gyrZ);
-  pill(cx,14,cY-arcR-8,'#60a5fa',
-    'GYRO  β'+Math.round(S.orBeta||0)+'° γ'+Math.round(S.orGamma||0)+'° '+gyrTot.toFixed(1)+' r/s');
-  cx.restore();
+    // roll arc
+    const arcR=Math.min(W,H)*0.4+14;
+    cx.globalAlpha=0.35;
+    cx.beginPath(); cx.arc(cX,cY,arcR,Math.PI*1.1,Math.PI*1.9);
+    cx.strokeStyle='rgba(96,165,250,0.4)'; cx.lineWidth=2; cx.stroke();
+    const nA=Math.PI*1.5+roll;
+    cx.globalAlpha=0.95;
+    cx.beginPath();
+    cx.moveTo(cX+Math.cos(nA)*(arcR-12),cY+Math.sin(nA)*(arcR-12));
+    cx.lineTo(cX+Math.cos(nA)*(arcR+12),cY+Math.sin(nA)*(arcR+12));
+    cx.strokeStyle='#60a5fa'; cx.lineWidth=3;
+    cx.shadowBlur=14; cx.shadowColor='#60a5fa';
+    cx.stroke(); cx.shadowBlur=0;
+    cx.globalAlpha=1;
+    const gT=Math.sqrt(S.gyrX*S.gyrX+S.gyrY*S.gyrY+S.gyrZ*S.gyrZ);
+    pill(cx,14,cY-arcR-8,'#60a5fa','GYRO  β'+Math.round(S.orBeta||0)+'° γ'+Math.round(S.orGamma||0)+'° '+gT.toFixed(1)+' r/s');
+  } finally { cx.restore(); }
 }
 
-// ── RF SIGNALS: Gaussian envelope waves per band ──────────────
+// ── RF SIGNALS ────────────────────────────────────────────────
 const rfBands=[
-  {label:'GPS 1.57GHz',  y:0.13, spd:0.7,  col:'#34d399'},
-  {label:'WiFi 2.4GHz',  y:0.22, spd:1.1,  col:'#f59e0b'},
-  {label:'WiFi 5GHz',    y:0.30, spd:1.8,  col:'#fb923c'},
-  {label:'CELL 700MHz',  y:0.40, spd:0.45, col:'#f87171'},
-  {label:'BLE 2.4GHz',   y:0.50, spd:1.4,  col:'#c084fc'},
-  {label:'5G 3.5GHz',    y:0.58, spd:2.2,  col:'#22d3ee'},
+  {label:'GPS 1.57GHz',y:0.13,spd:0.7, col:'52,211,153'},
+  {label:'WiFi 2.4GHz',y:0.22,spd:1.1, col:'245,158,11'},
+  {label:'WiFi 5GHz',  y:0.30,spd:1.8, col:'251,146,60'},
+  {label:'CELL 700MHz',y:0.40,spd:0.45,col:'248,113,113'},
+  {label:'BLE 2.4GHz', y:0.50,spd:1.4, col:'192,132,252'},
+  {label:'5G 3.5GHz',  y:0.58,spd:2.2, col:'34,211,238'},
 ];
 function drawRF(t) {
   cx.save();
-  const rttAgit=S.netRtt?Math.min(2.5,S.netRtt/40):1;
-  rfBands.forEach(band=>{
-    const y=H*band.y;
-    const isWifi=band.label.startsWith('WiFi');
-    const spd=isWifi?band.spd*rttAgit:band.spd;
-    const pulse=0.5+Math.sin(t*spd*Math.PI*2)*0.3;
-    const wAmp=isWifi?10+rttAgit*4:12;
-    const wLen=W*0.48;
-    const off=((t*spd*0.45)%1)*(W+wLen);
-    for (let p=0;p<4;p++) {
-      const ox=off-p*wLen*0.34;
-      if(ox<-wLen||ox>W+wLen)continue;
-      cx.beginPath();
-      for (let x=Math.max(0,ox-wLen);x<=Math.min(W,ox+wLen);x+=2) {
-        const d=(x-ox)/wLen;
-        const env=Math.exp(-d*d*3);
-        const wy=y+Math.sin(d*Math.PI*9+t*spd*6)*wAmp*env;
-        x===Math.max(0,ox-wLen)?cx.moveTo(x,wy):cx.lineTo(x,wy);
+  try {
+    const rttA=S.netRtt ? Math.min(2.5,S.netRtt/40) : 1;
+    rfBands.forEach(band=>{
+      const y=H*band.y;
+      const spd=band.label.startsWith('WiFi')?band.spd*rttA:band.spd;
+      const pulse=0.5+Math.sin(t*spd*Math.PI*2)*0.3;
+      const wAmp=12+rttA*3;
+      const wLen=W*0.48;
+      const off=((t*spd*0.45)%1)*(W+wLen);
+      for(let p=0;p<4;p++){
+        const ox=off-p*wLen*0.34;
+        if(ox<-wLen||ox>W+wLen)continue;
+        cx.beginPath();
+        for(let x=Math.max(0,ox-wLen);x<=Math.min(W,ox+wLen);x+=2){
+          const d=(x-ox)/wLen;
+          const env=Math.exp(-d*d*3);
+          const wy=y+Math.sin(d*Math.PI*9+t*spd*6)*wAmp*env;
+          x===Math.max(0,ox-wLen)?cx.moveTo(x,wy):cx.lineTo(x,wy);
+        }
+        const a=(0.22+pulse*0.5*(1-p*0.22)).toFixed(2);
+        cx.strokeStyle='rgba('+band.col+','+a+')';
+        cx.lineWidth=p===0?2.5:1.3;
+        if(p===0){cx.shadowBlur=16;cx.shadowColor='rgba('+band.col+',1)';}
+        cx.stroke(); cx.shadowBlur=0;
       }
-      const aVal=Math.round((0.22+pulse*0.5*(1-p*0.22))*255).toString(16).padStart(2,'0');
-      cx.strokeStyle=band.col+aVal;
-      cx.lineWidth=p===0?2.5:1.3;
-      if(p===0){cx.shadowBlur=16;cx.shadowColor=band.col;}
-      cx.stroke(); cx.shadowBlur=0;
-    }
-    pill(cx,W-148,y+4,band.col,band.label);
-  });
-  pill(cx,14,H*0.18,'#f59e0b','RF SIGNALS  always here');
-  cx.restore();
+      pill(cx,W-148,y+4,'rgba('+band.col+',1)',band.label);
+    });
+    pill(cx,14,H*0.18,'rgba(245,158,11,1)','RF SIGNALS  always here');
+  } finally { cx.restore(); }
 }
 
-// ── ALTITUDE: barometric pressure ─────────────────────────────
+// ── ALTITUDE ─────────────────────────────────────────────────
 function drawAltitude(t) {
-  if (S.pressure===null) {
-    cx.save();
-    pill(cx,14,H*0.65,'#8b5cf6','PRESSURE  no barometer');
-    cx.restore();
-    return;
-  }
   cx.save();
-  cx.globalAlpha=0.75;
-  const p=S.pressure;
-  const floor=S.pressureBaseline
-    ? Math.round(-(p-S.pressureBaseline)*8.5/3.3)+1
-    : '?';
-
-  const bX=W-26, bH=H*0.45, bY=H*0.27;
-  const pct=Math.max(0,Math.min(1,(p-950)/120));
-  cx.strokeStyle='rgba(139,92,246,0.35)'; cx.lineWidth=1;
-  cx.strokeRect(bX-5,bY,10,bH);
-  const fillH=bH*pct;
-  const grd=cx.createLinearGradient(0,bY+bH,0,bY+bH-fillH);
-  grd.addColorStop(0,'#8b5cf6'); grd.addColorStop(1,'#c4b5fd');
-  cx.fillStyle=grd;
-  cx.fillRect(bX-4,bY+bH-fillH,8,fillH);
-  cx.shadowBlur=10; cx.shadowColor='#8b5cf6';
-  cx.fillRect(bX-4,bY+bH-fillH,8,3);
-  cx.shadowBlur=0;
-
-  cx.fillStyle='rgba(196,181,253,0.5)'; cx.font='8px monospace'; cx.textAlign='center';
-  cx.fillText('1070',bX,bY-2);
-  cx.fillText('950',bX,bY+bH+11);
-  cx.textAlign='left';
-
-  cx.globalAlpha=1;
-  pill(cx,14,H*0.67,'#8b5cf6','ALTITUDE  '+p.toFixed(1)+' hPa  floor '+floor);
-  cx.restore();
+  try {
+    if (S.pressure===null) { pill(cx,14,H*0.65,'rgba(139,92,246,1)','PRESSURE  no barometer'); return; }
+    cx.globalAlpha=0.75;
+    const p=S.pressure;
+    const floor=S.pressureBaseline ? Math.round(-(p-S.pressureBaseline)*8.5/3.3)+1 : '?';
+    const bX=W-26,bH=H*0.45,bY=H*0.27,pct=Math.max(0,Math.min(1,(p-950)/120));
+    cx.strokeStyle='rgba(139,92,246,0.35)'; cx.lineWidth=1;
+    cx.strokeRect(bX-5,bY,10,bH);
+    const fillH=bH*pct;
+    const grd=cx.createLinearGradient(0,bY+bH,0,bY+bH-fillH);
+    grd.addColorStop(0,'rgba(139,92,246,1)'); grd.addColorStop(1,'rgba(196,181,253,1)');
+    cx.fillStyle=grd; cx.fillRect(bX-4,bY+bH-fillH,8,fillH);
+    cx.shadowBlur=10; cx.shadowColor='rgba(139,92,246,1)';
+    cx.fillRect(bX-4,bY+bH-fillH,8,3); cx.shadowBlur=0;
+    cx.fillStyle='rgba(196,181,253,0.5)'; cx.font='8px monospace'; cx.textAlign='center';
+    cx.fillText('1070',bX,bY-2); cx.fillText('950',bX,bY+bH+11);
+    cx.textAlign='left'; cx.globalAlpha=1;
+    pill(cx,14,H*0.67,'rgba(139,92,246,1)','ALTITUDE  '+p.toFixed(1)+' hPa  floor '+floor);
+  } finally { cx.restore(); }
 }
 
-// ── HUD TELEMETRY: corner overlays ────────────────────────────
+// ── HUD ───────────────────────────────────────────────────────
 function drawHUD(t) {
   cx.save();
-  cx.shadowBlur=3; cx.shadowColor='rgba(0,0,0,0.95)';
-  const pulse=0.7+Math.sin(t*1.5)*0.3;
+  try {
+    cx.shadowBlur=3; cx.shadowColor='rgba(0,0,0,0.95)';
+    const pulse=0.7+Math.sin(t*1.5)*0.3;
 
-  // Top-left: GPS
-  cx.fillStyle='rgba(34,211,238,'+(pulse*0.9)+')';
-  cx.font='9px monospace'; cx.textAlign='left';
-  cx.fillText('GPS',16,64);
-  if (S.lat!==null) {
-    cx.fillStyle='rgba(255,255,255,0.55)';
-    cx.fillText(S.lat.toFixed(5)+'N',16,78);
-    cx.fillText(S.lon.toFixed(5)+'E',16,91);
-    cx.fillText('±'+Math.round(S.locAcc)+'m',16,104);
-  } else {
-    cx.fillStyle='rgba(255,255,255,0.2)';
-    cx.fillText('acquiring...',16,78);
-  }
+    // GPS
+    cx.fillStyle='rgba(34,211,238,'+(pulse*0.9)+')';
+    cx.font='9px monospace'; cx.textAlign='left';
+    cx.fillText('GPS',16,64);
+    cx.fillStyle=S.lat!==null?'rgba(255,255,255,0.6)':'rgba(255,255,255,0.2)';
+    if(S.lat!==null){
+      cx.fillText(S.lat.toFixed(5)+'N',16,78);
+      cx.fillText(S.lon.toFixed(5)+'E',16,91);
+      cx.fillText('±'+Math.round(S.locAcc)+'m',16,104);
+    } else { cx.fillText('acquiring...',16,78); }
 
-  // Top-right: network + screen
-  const netCol={wifi:'#a78bfa','4g':'#22d3ee','5g':'#00ff41','3g':'#f59e0b','2g':'#f87171'}[S.netType.toLowerCase()]||'#64748b';
-  cx.textAlign='right';
-  cx.fillStyle=netCol; cx.font='bold 11px monospace';
-  cx.fillText(S.netType.toUpperCase(),W-16,64);
-  cx.font='9px monospace'; cx.fillStyle='rgba(255,255,255,0.45)';
-  if(S.netRtt!=null)cx.fillText('rtt '+S.netRtt+'ms',W-16,78);
-  if(S.netDown!=null)cx.fillText(S.netDown+' Mbps',W-16,91);
-  cx.fillText(S.screenRes+'@'+DPR+'x',W-16,105);
-  cx.fillText(S.hw+' cores',W-16,118);
-
-  // Bottom-left: accel + gyro + light
-  const gv=Math.sqrt(S.ax*S.ax+S.ay*S.ay+S.az*S.az);
-  cx.textAlign='left'; cx.fillStyle='rgba(34,211,238,0.5)'; cx.font='9px monospace';
-  cx.fillText('X:'+S.ax.toFixed(1)+' Y:'+S.ay.toFixed(1)+' Z:'+S.az.toFixed(1),16,H-148);
-  cx.fillStyle='rgba(96,165,250,0.5)';
-  cx.fillText('α:'+Math.round(S.orAlpha||0)+'° β:'+Math.round(S.orBeta||0)+'° γ:'+Math.round(S.orGamma||0)+'°',16,H-134);
-  if(S.lux!==null){
-    cx.fillStyle='rgba(250,204,21,0.55)';
-    cx.fillText('light: '+S.lux.toFixed(0)+' lux',16,H-120);
-  }
-
-  // Bottom-right: battery
-  if(S.battLevel!==null){
-    const pct=Math.round(S.battLevel*100);
-    const bc=pct>60?'#00ff41':pct>20?'#f59e0b':'#f87171';
+    // network
+    const netCols={'wifi':'167,139,250','4g':'34,211,238','5g':'0,255,65','3g':'245,158,11','2g':'248,113,113'};
+    const nr = netCols[S.netType.toLowerCase()] || '100,116,139';
     cx.textAlign='right';
-    cx.fillStyle=bc; cx.font='bold 12px monospace';
-    cx.fillText(pct+'%',W-16,H-150);
-    cx.font='9px monospace'; cx.fillStyle='rgba(255,255,255,0.35)';
-    cx.fillText(S.battCharging?'charging':'battery',W-16,H-137);
-    const bx=W-40,by=H-168,bw=20,bh=10;
-    cx.strokeStyle=bc; cx.lineWidth=1.5;
-    cx.strokeRect(bx,by,bw,bh);
-    cx.fillStyle=bc; cx.fillRect(bx+bw,by+3,2,4);
-    cx.fillRect(bx+1,by+1,(bw-2)*S.battLevel,bh-2);
-  }
+    cx.fillStyle='rgba('+nr+',1)'; cx.font='bold 11px monospace';
+    cx.fillText(S.netType.toUpperCase(),W-16,64);
+    cx.font='9px monospace'; cx.fillStyle='rgba(255,255,255,0.45)';
+    if(S.netRtt!=null) cx.fillText('rtt '+S.netRtt+'ms',W-16,78);
+    if(S.netDown!=null) cx.fillText(S.netDown+' Mbps',W-16,91);
+    cx.fillText(S.screenRes+'@'+DPR+'x',W-16,105);
+    cx.fillText(S.hw+' cores',W-16,118);
 
-  // Center bottom: EM readout
-  const anomCol=(S.magBaseline&&Math.abs(S.magTotal-S.magBaseline)>60)?'#f87171':'rgba(167,139,250,0.6)';
-  cx.textAlign='center'; cx.fillStyle=anomCol;
-  cx.font='9px monospace';
-  cx.fillText(S.magTotal.toFixed(0)+' µT',W*0.5,H-105);
+    // accel + gyro
+    cx.textAlign='left';
+    cx.fillStyle='rgba(34,211,238,0.5)'; cx.font='9px monospace';
+    cx.fillText('X:'+S.ax.toFixed(1)+' Y:'+S.ay.toFixed(1)+' Z:'+S.az.toFixed(1),16,H-148);
+    cx.fillStyle='rgba(96,165,250,0.5)';
+    cx.fillText('α:'+Math.round(S.orAlpha)+'° β:'+Math.round(S.orBeta)+'° γ:'+Math.round(S.orGamma)+'°',16,H-134);
+    if(S.lux!==null){ cx.fillStyle='rgba(250,204,21,0.55)'; cx.fillText('light: '+S.lux.toFixed(0)+' lux',16,H-120); }
 
-  cx.textAlign='left';
-  cx.restore();
+    // battery
+    if(S.battLevel!==null){
+      const pct=Math.round(S.battLevel*100);
+      const bc=pct>60?'0,255,65':pct>20?'245,158,11':'248,113,113';
+      cx.textAlign='right';
+      cx.fillStyle='rgba('+bc+',1)'; cx.font='bold 12px monospace';
+      cx.fillText(pct+'%',W-16,H-150);
+      cx.font='9px monospace'; cx.fillStyle='rgba(255,255,255,0.35)';
+      cx.fillText(S.battCharging?'charging':'battery',W-16,H-137);
+      const bx=W-40,by=H-168,bw=20,bh=10;
+      cx.strokeStyle='rgba('+bc+',1)'; cx.lineWidth=1.5;
+      cx.strokeRect(bx,by,bw,bh);
+      cx.fillStyle='rgba('+bc+',1)'; cx.fillRect(bx+bw,by+3,2,4);
+      cx.fillRect(bx+1,by+1,(bw-2)*S.battLevel,bh-2);
+    }
+
+    // EM center
+    const anomC=(S.magBaseline&&Math.abs(S.magTotal-S.magBaseline)>60)?'rgba(248,113,113,0.6)':'rgba(167,139,250,0.6)';
+    cx.textAlign='center'; cx.fillStyle=anomC; cx.font='9px monospace';
+    cx.fillText(S.magTotal.toFixed(0)+' µT',W*0.5,H-105);
+    cx.textAlign='left';
+  } finally { cx.restore(); }
 }
 
-// ── SPECTRUM BAR: ELF to EHF ─────────────────────────────────
+// ── SPECTRUM BAR ──────────────────────────────────────────────
 const specBands=[
-  {label:'ELF/SLF', col:'#7c3aed', lo:0,    hi:0.04, note:'submarine'},
-  {label:'VLF/LF',  col:'#6366f1', lo:0.04, hi:0.09, note:'nav beacons'},
-  {label:'MF',      col:'#3b82f6', lo:0.09, hi:0.14, note:'AM radio'},
-  {label:'HF',      col:'#06b6d4', lo:0.14, hi:0.21, note:'shortwave'},
-  {label:'VHF',     col:'#10b981', lo:0.21, hi:0.34, note:'FM / TV'},
-  {label:'UHF',     col:'#f59e0b', lo:0.34, hi:0.72, note:'WiFi·GPS·Cell·BLE'},
-  {label:'SHF/EHF', col:'#ef4444', lo:0.72, hi:1.00, note:'satellite·5G'},
+  {label:'ELF/SLF',col:'124,58,237', lo:0,    hi:0.04, note:'submarine'},
+  {label:'VLF/LF', col:'99,102,241', lo:0.04, hi:0.09, note:'nav beacons'},
+  {label:'MF',     col:'59,130,246', lo:0.09, hi:0.14, note:'AM radio'},
+  {label:'HF',     col:'6,182,212',  lo:0.14, hi:0.21, note:'shortwave'},
+  {label:'VHF',    col:'16,185,129', lo:0.21, hi:0.34, note:'FM / TV'},
+  {label:'UHF',    col:'245,158,11', lo:0.34, hi:0.72, note:'WiFi·GPS·Cell·BLE'},
+  {label:'SHF/EHF',col:'239,68,68',  lo:0.72, hi:1.00, note:'satellite·5G'},
 ];
 function drawSpectrumBar(t) {
+  if (!sc) return;
   const BW=W, BH=36;
   sc.clearRect(0,0,BW,BH);
   const bg=sc.createLinearGradient(0,0,BW,0);
   specBands.forEach(b=>{
-    bg.addColorStop(b.lo,b.col+'18');
-    bg.addColorStop((b.lo+b.hi)/2,b.col+'44');
-    bg.addColorStop(b.hi,b.col+'18');
+    bg.addColorStop(b.lo,'rgba('+b.col+',0.1)');
+    bg.addColorStop((b.lo+b.hi)/2,'rgba('+b.col+',0.28)');
+    bg.addColorStop(b.hi,'rgba('+b.col+',0.1)');
   });
   sc.fillStyle=bg; sc.fillRect(0,0,BW,BH);
   const uhf=specBands[5];
@@ -876,14 +787,14 @@ function drawSpectrumBar(t) {
   const hf=specBands[3];
   sc.fillStyle='rgba(6,182,212,'+(S.audioLevel*0.6)+')'; sc.fillRect(BW*hf.lo,0,BW*(hf.hi-hf.lo),BH);
   specBands.forEach(b=>{
-    sc.strokeStyle=b.col+'55'; sc.lineWidth=1;
+    sc.strokeStyle='rgba('+b.col+',0.4)'; sc.lineWidth=1;
     sc.beginPath(); sc.moveTo(BW*b.lo,0); sc.lineTo(BW*b.lo,BH); sc.stroke();
   });
   sc.font='7px monospace'; sc.textAlign='center';
   specBands.forEach(b=>{
     const mx=BW*(b.lo+(b.hi-b.lo)*0.5);
-    sc.fillStyle=b.col+'cc'; sc.fillText(b.label,mx,11);
-    sc.fillStyle='rgba(255,255,255,0.28)'; sc.fillText(b.note,mx,24);
+    sc.fillStyle='rgba('+b.col+',0.8)'; sc.fillText(b.label,mx,11);
+    sc.fillStyle='rgba(255,255,255,0.3)'; sc.fillText(b.note,mx,24);
   });
   sc.textAlign='right'; sc.fillStyle='rgba(255,255,255,0.12)';
   sc.font='7px monospace';
@@ -893,24 +804,28 @@ function drawSpectrumBar(t) {
 
 // ── Utilities ─────────────────────────────────────────────────
 function pill(ctx,x,y,color,text) {
+  const saved=ctx.globalAlpha;
   ctx.save();
-  ctx.font='bold 10px monospace';
-  const tw=ctx.measureText(text).width;
-  const ph=17,pr=4,py=y-13;
-  ctx.fillStyle='rgba(0,0,0,0.82)';
-  ctx.beginPath();
-  if(ctx.roundRect){ctx.roundRect(x-2,py,tw+16,ph,pr);}
-  else{ctx.rect(x-2,py,tw+16,ph);}
-  ctx.fill();
-  ctx.fillStyle=color;
-  ctx.shadowBlur=6; ctx.shadowColor=color;
-  ctx.fillText(text,x+5,y);
-  ctx.shadowBlur=0;
-  ctx.restore();
+  try {
+    ctx.font='bold 10px monospace';
+    const tw=ctx.measureText(text).width;
+    const ph=17,pr=4,py=y-13;
+    ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(0,0,0,0.82)';
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(x-2,py,tw+16,ph,pr);
+    else ctx.rect(x-2,py,tw+16,ph);
+    ctx.fill();
+    ctx.fillStyle=color;
+    ctx.shadowBlur=6; ctx.shadowColor=color;
+    ctx.fillText(text,x+5,y);
+    ctx.shadowBlur=0;
+  } finally { ctx.restore(); }
 }
-function hexagon(ctx,x,y,r) {
+
+function hexagon(ctx,x,y,r){
   ctx.beginPath();
-  for (let i=0;i<6;i++) {
+  for(let i=0;i<6;i++){
     const a=i/6*Math.PI*2-Math.PI/6;
     i===0?ctx.moveTo(x+r*Math.cos(a),y+r*Math.sin(a)):ctx.lineTo(x+r*Math.cos(a),y+r*Math.sin(a));
   }
