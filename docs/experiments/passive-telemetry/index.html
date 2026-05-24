@@ -367,9 +367,9 @@ function startTele() {
         bumpCounters(1, 8);
       });
       als.start();
-    } catch(e) { set('light', 'sensor not available', 'dot-light'); }
+    } catch(e) { set('light', 'light sensor not found on this device', 'dot-light'); }
   } else {
-    set('light', 'not exposed by browser', 'dot-light');
+    set('light', 'not exposed by this browser', 'dot-light');
   }
 
   // Location
@@ -381,7 +381,7 @@ function startTele() {
 
 function revealLocation() {
   if (!navigator.geolocation) {
-    set('loc', 'geolocation unavailable', 'dot-loc');
+    set('loc', 'GPS not available on this device', 'dot-loc');
     return;
   }
   set('loc', 'requesting...', 'dot-loc');
@@ -393,7 +393,7 @@ function revealLocation() {
     setColor('acc', `±${acc} m`, 'dot-acc', acc < 20 ? 'danger' : acc < 100 ? 'warn' : '');
     bumpCounters(2, 40);
   }, () => {
-    set('loc', 'permission denied', 'dot-loc');
+    set('loc', 'location access blocked — tap Allow when the browser asks', 'dot-loc');
   }, { enableHighAccuracy: true });
 }
 

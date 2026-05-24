@@ -172,13 +172,13 @@ function startBaro() {
     try {
       sensor = new Barometer({ frequency: 5 });
       sensor.addEventListener('reading', onReading);
-      sensor.addEventListener('error', e => showError(e.error.message));
+      sensor.addEventListener('error', () => showError('pressure sensor stopped — try reloading the page'));
       sensor.start();
       running = true;
       showRunning();
       rafId = requestAnimationFrame(renderLoop);
       return;
-    } catch(e) { showError(e.message); return; }
+    } catch(e) { showError('barometer access blocked — check that your browser allows sensor access'); return; }
   }
 
   // DeviceOrientationEvent doesn't give pressure
@@ -195,7 +195,7 @@ function startBaro() {
     } catch(e) {}
   }
 
-  showError('Barometer API not available in this browser. Try Chrome on Android.');
+  showError('this device doesn\'t have a barometer — try Chrome on Android');
 }
 
 function showRunning() {

@@ -73,8 +73,8 @@
     </div>
 
     <div id="unavail-notice" style="display:none" class="unavail-notice">
-      <strong>Web Bluetooth unavailable in this browser.</strong>
-      Live scanning requires Android + Chrome. Showing a
+      <strong>Live Bluetooth scanning needs Chrome on Android.</strong>
+      Your browser doesn't support it — showing a
       <strong>simulated demo</strong> with realistic device patterns instead.
     </div>
 
@@ -140,7 +140,7 @@ async function startScan() {
     }
   } catch(e) {
     stopAll();
-    if (e.name !== 'NotFoundError') setEmpty('error: ' + e.message);
+    if (e.name !== 'NotFoundError') setEmpty('bluetooth scan failed — make sure bluetooth is enabled and try again');
   }
 }
 
