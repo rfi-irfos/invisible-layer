@@ -4,10 +4,12 @@
 
 The right question is: *now that you see it, what do you do?*
 
-[![try it live →](https://img.shields.io/badge/try_it_live_%E2%86%92-open_on_your_phone-22d3ee?style=for-the-badge&labelColor=000000&color=22d3ee)](https://rfi-irfos.github.io/invisible-layer/)
-[![experiments](https://img.shields.io/badge/experiments-25-22d3ee?style=flat-square&labelColor=000000)](https://rfi-irfos.github.io/invisible-layer/)
-[![no install](https://img.shields.io/badge/no_install-browser_only-475569?style=flat-square&labelColor=000000)]()
-[![license](https://img.shields.io/badge/license-MIT-475569?style=flat-square&labelColor=000000)]()
+[![try it live →](https://img.shields.io/badge/open_on_your_phone_%E2%86%92-rfi--irfos.github.io%2Finvisible--layer-22d3ee?style=for-the-badge&labelColor=0f172a&color=22d3ee)](https://rfi-irfos.github.io/invisible-layer/)
+
+![experiments](https://img.shields.io/badge/experiments-25-22d3ee?style=flat&labelColor=0f172a)
+![install](https://img.shields.io/badge/install-none-334155?style=flat&labelColor=0f172a)
+![data collected](https://img.shields.io/badge/data_collected-zero-334155?style=flat&labelColor=0f172a)
+![license](https://img.shields.io/badge/license-MIT-334155?style=flat&labelColor=0f172a)
 
 ---
 
