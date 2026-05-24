@@ -7,9 +7,13 @@ The right question is: *now that you see it, what do you do?*
 [![try it live →](https://img.shields.io/badge/open_on_your_phone_%E2%86%92-rfi--irfos.github.io%2Finvisible--layer-22d3ee?style=for-the-badge&labelColor=0f172a&color=22d3ee)](https://rfi-irfos.github.io/invisible-layer/)
 
 ![experiments](https://img.shields.io/badge/experiments-25-22d3ee?style=flat&labelColor=0f172a)
-![install](https://img.shields.io/badge/install-none-334155?style=flat&labelColor=0f172a)
-![data collected](https://img.shields.io/badge/data_collected-zero-334155?style=flat&labelColor=0f172a)
-![license](https://img.shields.io/badge/license-MIT-334155?style=flat&labelColor=0f172a)
+![sensors](https://img.shields.io/badge/sensors-25%2B-a78bfa?style=flat&labelColor=0f172a)
+![fingerprints](https://img.shields.io/badge/fingerprints_exposed-yours-ef4444?style=flat&labelColor=0f172a)
+![languages](https://img.shields.io/badge/languages-EN_%C2%B7_DE-f59e0b?style=flat&labelColor=0f172a)
+![install](https://img.shields.io/badge/install-none-4ade80?style=flat&labelColor=0f172a)
+![data collected](https://img.shields.io/badge/data_collected-zero-4ade80?style=flat&labelColor=0f172a)
+![runs on](https://img.shields.io/badge/runs_on-your_phone-f97316?style=flat&labelColor=0f172a)
+![license](https://img.shields.io/badge/license-MIT-60a5fa?style=flat&labelColor=0f172a)
 
 ---
 
