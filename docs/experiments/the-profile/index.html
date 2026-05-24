@@ -232,6 +232,53 @@ body{
 }
 .res-link:hover{background:var(--danger-bg)}
 
+/* ── Live feed ── */
+.feed-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.feed-item:last-child{border-bottom:none}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:pulse-red 1.6s ease-in-out infinite}
+@keyframes pulse-red{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(239,68,68,0.5)}60%{opacity:0.7;box-shadow:0 0 0 5px rgba(239,68,68,0)}}
+.live-badge{font-size:9px;font-weight:700;letter-spacing:0.1em;padding:2px 6px;border-radius:3px;background:var(--danger-bg);border:1px solid var(--danger-border);color:var(--danger);flex-shrink:0}
+.feed-name{font-size:13px;color:var(--text);font-weight:500;flex:1;min-width:0}
+.feed-sub{font-size:11px;color:var(--muted);white-space:nowrap}
+.feed-vol{font-size:11px;color:var(--danger);font-family:monospace;flex-shrink:0;text-align:right}
+
+/* ── Behavioral scores ── */
+.score-row{padding:10px 0;border-bottom:1px solid var(--border)}
+.score-row:last-child{border-bottom:none}
+.score-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.score-key{font-size:13px;color:var(--muted)}
+.score-pct{font-size:13px;font-weight:700;font-family:monospace}
+.score-bar-wrap{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:3px;width:0;transition:width 1.6s ease}
+.score-bar-fill.d{background:var(--danger)}
+.score-bar-fill.w{background:var(--warn)}
+.score-bar-fill.s{background:var(--success)}
+.score-sub{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5}
+
+/* ── Interest cloud ── */
+.interest-cloud{display:flex;flex-wrap:wrap;gap:7px;margin:4px 0}
+.ib{font-size:12px;padding:5px 12px;border-radius:100px;border:1px solid;font-weight:500}
+.ib.hot{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger)}
+.ib.warm{background:var(--warn-bg);border-color:var(--warn-border);color:var(--warn)}
+.ib.cool{background:var(--surface2);border-color:var(--border2);color:var(--text2)}
+
+/* ── Linktree ── */
+.lt-cat{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);padding:16px 0 9px;border-top:1px solid var(--border)}
+.lt-grid{display:flex;flex-direction:column;gap:6px}
+.lt-card{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);text-decoration:none;transition:all 0.12s;cursor:pointer}
+.lt-card:hover{border-color:var(--border2);background:var(--surface)}
+.lt-card.red{border-color:var(--danger-border);background:var(--danger-bg)}
+.lt-card.red:hover{background:rgba(239,68,68,0.13)}
+.lt-card.green{border-color:var(--success-border);background:var(--success-bg)}
+.lt-card.green:hover{background:rgba(34,197,94,0.13)}
+.lt-logo{width:32px;height:32px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:800;color:var(--text);letter-spacing:-0.02em}
+.lt-name{font-size:14px;font-weight:600;color:var(--text)}
+.lt-action{font-size:12px;margin-top:1px}
+.lt-action.r{color:var(--danger)}
+.lt-action.g{color:var(--success)}
+.lt-action.m{color:var(--muted)}
+.lt-arr{width:14px;height:14px;fill:var(--muted);flex-shrink:0;margin-left:auto;opacity:0.5}
+
 /* ── FP hash ── */
 .fp-hash{
   font-family:'JetBrains Mono','Courier New',monospace;
@@ -311,6 +358,43 @@ body{
     <div style="margin-top:12px;padding:12px;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:8px;">
       <div style="font-size:13px;color:var(--text2);line-height:1.7" data-i18n="deep.note">None of this required a login, a form, or any interaction. Every value above is available to any website you visit, passively, in milliseconds.</div>
     </div>
+  </div>
+
+  <!-- Data Ingestion Streams -->
+  <div class="card" id="c-feeds">
+    <div class="card-head">
+      <div class="card-icon">
+        <svg viewBox="0 0 16 16"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 11.105V5.383zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/></svg>
+      </div>
+      <span class="card-title" data-i18n="s.feeds">Data ingestion streams</span>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.65" data-i18n="feeds.intro">These networks are ingesting data about your current session in real time.</div>
+    <div id="feed-list"></div>
+    <div style="margin-top:14px;padding:11px 14px;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.65" data-i18n="feeds.note">You cannot opt out of any of these from this page. They are embedded in the web itself.</div>
+  </div>
+
+  <!-- Predictive Behavior Model -->
+  <div class="card" id="c-behavioral">
+    <div class="card-head">
+      <div class="card-icon">
+        <svg viewBox="0 0 16 16"><path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/><path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm8-9a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>
+      </div>
+      <span class="card-title" data-i18n="s.behavioral">Predictive behavior model</span>
+    </div>
+    <div id="behavioral-scores"></div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);line-height:1.65" data-i18n="behavioral.note">These scores are inferred from your device signals alone — no account needed. Ad networks build the same model from your full browsing history.</div>
+  </div>
+
+  <!-- Interest Profile -->
+  <div class="card" id="c-interests">
+    <div class="card-head">
+      <div class="card-icon warn">
+        <svg viewBox="0 0 16 16"><path d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm.5 2h11a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-5a.5.5 0 0 1 .5-.5zM0 11.5a.5.5 0 0 1 .5-.5H4a2 2 0 0 0 1.732-1h4.536A2 2 0 0 0 12 11h3.5a.5.5 0 0 1 0 1H12a3 3 0 0 1-2.732-1.764A3 3 0 0 1 7.268 12H4a3 3 0 0 1-2.732-1.764A.5.5 0 0 1 0 11.5z"/></svg>
+      </div>
+      <span class="card-title" data-i18n="s.interests">Interest &amp; behavior profile</span>
+    </div>
+    <div class="interest-cloud" id="interest-cloud"></div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);line-height:1.65" data-i18n="interests.note">Inferred from device signals. Real ad networks use your browsing history, search queries, and purchase data for thousands of granular categories.</div>
   </div>
 
   <!-- Device -->
@@ -432,7 +516,7 @@ body{
     </div>
   </div>
 
-  <!-- Resources -->
+  <!-- Resources / Linktree -->
   <div class="card" id="c-res">
     <div class="card-head">
       <div class="card-icon ok">
@@ -440,29 +524,84 @@ body{
       </div>
       <span class="card-title" data-i18n="s.res">Take back control</span>
     </div>
-    <div class="res-item">
-      <div><div class="res-name">YourDigitalRights.org</div><div class="res-desc" data-i18n="res.ydr">GDPR and CCPA deletion requests. One click to request removal from dozens of data brokers. Free.</div></div>
-      <a class="res-link" href="https://yourdigitalrights.org" target="_blank" rel="noopener">open</a>
+
+    <div class="lt-cat" style="border-top:none;padding-top:0" data-i18n="lt.cat.delete">Delete your data directly</div>
+    <div class="lt-grid">
+      <a class="lt-card red" href="https://myaccount.google.com/delete-services-or-account" target="_blank" rel="noopener">
+        <div class="lt-logo" style="background:#4285f4;color:#fff">G</div>
+        <div><div class="lt-name">Google</div><div class="lt-action r" data-i18n="lt.google">Delete account &amp; all data</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
+      <a class="lt-card red" href="https://www.facebook.com/help/delete_account" target="_blank" rel="noopener">
+        <div class="lt-logo" style="background:#1877f2;color:#fff">f</div>
+        <div><div class="lt-name">Meta / Facebook</div><div class="lt-action r" data-i18n="lt.meta">Request permanent account deletion</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
+      <a class="lt-card red" href="https://www.instagram.com/accounts/remove/request/permanent/" target="_blank" rel="noopener">
+        <div class="lt-logo" style="background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff">IG</div>
+        <div><div class="lt-name">Instagram</div><div class="lt-action r" data-i18n="lt.instagram">Delete account &amp; all posts</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
+      <a class="lt-card red" href="https://support.tiktok.com/en/account-and-privacy/deleting-an-account" target="_blank" rel="noopener">
+        <div class="lt-logo" style="background:#010101;color:#fff">TT</div>
+        <div><div class="lt-name">TikTok</div><div class="lt-action r" data-i18n="lt.tiktok">Delete account &amp; data export</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
+      <a class="lt-card red" href="https://help.twitter.com/en/managing-your-account/how-to-deactivate-twitter-account" target="_blank" rel="noopener">
+        <div class="lt-logo" style="background:#000;color:#fff">X</div>
+        <div><div class="lt-name">X / Twitter</div><div class="lt-action r" data-i18n="lt.twitter">Deactivate &amp; request deletion</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
+      <a class="lt-card red" href="https://privacy.apple.com/" target="_blank" rel="noopener">
+        <div class="lt-logo" style="background:#555;color:#fff">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M11.182.008C11.148-.03 9.923.023 8.857 1.18c-1.066 1.156-.902 2.482-.878 2.516.024.034 1.52.087 2.475-1.258.955-1.345.762-2.391.728-2.43zm3.314 11.733c-.048-.096-2.325-1.234-2.113-3.422.212-2.189 1.675-2.789 1.698-2.854.023-.065-.597-.79-1.254-1.157a3.692 3.692 0 0 0-1.563-.434c-.108-.003-.483-.095-1.254.116-.508.139-1.653.589-1.968.607-.316.018-1.256-.522-2.267-.665-.647-.125-1.333.131-1.824.328-.49.196-1.422.754-2.074 2.237-.652 1.482-.311 3.83-.067 4.56.244.729.625 1.924 1.273 2.796.576.984 1.34 1.667 1.659 1.899.319.232 1.219.386 1.843.067.502-.308 1.408-.485 1.766-.472.357.013 1.061.154 1.782.539.571.197 1.111.115 1.652-.105.541-.221 1.324-1.059 2.238-2.758.347-.925.324-1.271.332-1.288z"/></svg>
+        </div>
+        <div><div class="lt-name">Apple</div><div class="lt-action r" data-i18n="lt.apple">Privacy portal &amp; data deletion</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
     </div>
-    <div class="res-item">
-      <div><div class="res-name">optout.aboutads.info</div><div class="res-desc" data-i18n="res.aboutads">Opt out of 100+ ad networks simultaneously. Reduces targeted advertising across the web.</div></div>
-      <a class="res-link" href="https://optout.aboutads.info" target="_blank" rel="noopener">open</a>
+
+    <div class="lt-cat" data-i18n="lt.cat.optout">Opt out of ad tracking</div>
+    <div class="lt-grid">
+      <a class="lt-card" href="https://yourdigitalrights.org" target="_blank" rel="noopener">
+        <div class="lt-logo">YDR</div>
+        <div><div class="lt-name">YourDigitalRights.org</div><div class="lt-action m" data-i18n="lt.ydr">GDPR &amp; CCPA deletion — dozens of brokers at once. Free.</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
+      <a class="lt-card" href="https://optout.aboutads.info" target="_blank" rel="noopener">
+        <div class="lt-logo">AA</div>
+        <div><div class="lt-name">AboutAds Opt-Out</div><div class="lt-action m" data-i18n="lt.aboutads">Opt out of 100+ ad networks simultaneously.</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
+      <a class="lt-card" href="https://optout.networkadvertising.org" target="_blank" rel="noopener">
+        <div class="lt-logo">NAI</div>
+        <div><div class="lt-name">NAI Opt-Out</div><div class="lt-action m" data-i18n="lt.nai">Opt out of 200+ member companies' targeted ads.</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
+      <a class="lt-card" href="https://simpleoptout.com" target="_blank" rel="noopener">
+        <div class="lt-logo">SO</div>
+        <div><div class="lt-name">SimpleOptOut.com</div><div class="lt-action m" data-i18n="lt.simple">Step-by-step opt-out for Google, Meta, Amazon, Apple &amp; 50+ more.</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
     </div>
-    <div class="res-item">
-      <div><div class="res-name">EFF — Surveillance Self-Defense</div><div class="res-desc" data-i18n="res.eff">Practical guides for protecting your digital privacy. Vetted by security researchers.</div></div>
-      <a class="res-link" href="https://ssd.eff.org" target="_blank" rel="noopener">open</a>
-    </div>
-    <div class="res-item">
-      <div><div class="res-name">Proton</div><div class="res-desc" data-i18n="res.proton">Encrypted email, VPN, calendar and cloud storage. No data sold. Based in Switzerland.</div></div>
-      <a class="res-link" href="https://proton.me" target="_blank" rel="noopener">open</a>
-    </div>
-    <div class="res-item">
-      <div><div class="res-name">SimpleOptOut.com</div><div class="res-desc" data-i18n="res.simple">Step-by-step opt-out guides for 50+ platforms including Google, Meta, Amazon, and Apple.</div></div>
-      <a class="res-link" href="https://simpleoptout.com" target="_blank" rel="noopener">open</a>
-    </div>
-    <div class="res-item">
-      <div><div class="res-name">DeleteMe</div><div class="res-desc" data-i18n="res.deleteme">Paid service that continuously removes your data from data broker websites.</div></div>
-      <a class="res-link" href="https://deleteme.com" target="_blank" rel="noopener">open</a>
+
+    <div class="lt-cat" data-i18n="lt.cat.tools">Private alternatives &amp; tools</div>
+    <div class="lt-grid">
+      <a class="lt-card green" href="https://ssd.eff.org" target="_blank" rel="noopener">
+        <div class="lt-logo" style="background:var(--success-bg);border:1px solid var(--success-border);color:var(--success)">EFF</div>
+        <div><div class="lt-name">EFF Surveillance Self-Defense</div><div class="lt-action g" data-i18n="lt.eff">Free practical guides. Vetted by security researchers.</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
+      <a class="lt-card green" href="https://proton.me" target="_blank" rel="noopener">
+        <div class="lt-logo" style="background:var(--success-bg);border:1px solid var(--success-border);color:var(--success)">PT</div>
+        <div><div class="lt-name">Proton</div><div class="lt-action g" data-i18n="lt.proton">Encrypted email, VPN &amp; Drive. No data sold. Switzerland.</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
+      <a class="lt-card" href="https://joindeleteme.com" target="_blank" rel="noopener">
+        <div class="lt-logo">DM</div>
+        <div><div class="lt-name">DeleteMe</div><div class="lt-action m" data-i18n="lt.deleteme">Paid service. Continuously removes your data from broker sites.</div></div>
+        <svg class="lt-arr" viewBox="0 0 16 16"><path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </a>
     </div>
   </div>
 
@@ -528,6 +667,42 @@ en:{
   'dnt.on':'Enabled. Ironic note: privacy-conscious users are a high-value advertising segment because they are harder to reach.',
   'dnt.off':'Disabled. You are fully trackable by default.',
   'dnt.unset':'Not set.',
+  's.feeds':'Data ingestion streams',
+  'feeds.intro':'These networks are ingesting data about your current session in real time.',
+  'feeds.note':'You cannot opt out of any of these from this page. They are embedded in the web itself.',
+  'feeds.continuous':'Continuous',
+  'feeds.active':'Active',
+  'feeds.blocked':'Blocked',
+  'feeds.cookies.active':'Enabled and readable by every script on this page.',
+  'feeds.cookies.blocked':'Blocked by your browser — one of the few defenses that works.',
+  'feeds.behavioral.sub':'Every scroll, click, and dwell time packaged into a behavioral graph.',
+  's.behavioral':'Predictive behavior model',
+  'behavioral.note':'These scores are inferred from your device signals alone — no account needed. Ad networks build the same model from your full browsing history.',
+  'bm.social':'Social interaction affinity',
+  'bm.purchase':'Purchase probability',
+  'bm.adrecep':'Advertising receptivity',
+  'bm.impulse':'Impulse behavior score',
+  'bm.timeslot':'Session time pattern',
+  'bm.political':'Political profiling',
+  'bm.political.val':'ACTIVE',
+  's.interests':'Interest & behavior profile',
+  'interests.note':'Inferred from device signals. Real ad networks use your browsing history, search queries, and purchase data for thousands of granular categories.',
+  'lt.cat.delete':'Delete your data directly',
+  'lt.cat.optout':'Opt out of ad tracking',
+  'lt.cat.tools':'Private alternatives & tools',
+  'lt.google':'Delete account & all data',
+  'lt.meta':'Request permanent account deletion',
+  'lt.instagram':'Delete account & all posts',
+  'lt.tiktok':'Delete account & data export',
+  'lt.twitter':'Deactivate & request deletion',
+  'lt.apple':'Privacy portal & data deletion',
+  'lt.ydr':'GDPR & CCPA deletion — dozens of brokers at once. Free.',
+  'lt.aboutads':'Opt out of 100+ ad networks simultaneously.',
+  'lt.nai':'Opt out of 200+ member companies\' targeted ads.',
+  'lt.simple':'Step-by-step opt-out for Google, Meta, Amazon, Apple & 50+ more.',
+  'lt.eff':'Free practical guides. Vetted by security researchers.',
+  'lt.proton':'Encrypted email, VPN & Drive. No data sold. Switzerland.',
+  'lt.deleteme':'Paid service. Continuously removes your data from broker sites.',
   's.deep':'Deep browser fingerprint',
   'l.audio-fp':'Audio fingerprint',
   'l.audio-fp.sub':'AudioContext oscillator rendering. Independent second fingerprint dimension.',
@@ -589,6 +764,42 @@ de:{
   'dnt.on':'Aktiviert. Hinweis: Datenschutzbewusste Nutzer sind ein besonders wertvolles Werbesegment, weil sie schwerer erreichbar sind.',
   'dnt.off':'Deaktiviert. Du bist standardmassig vollstandig verfolgbar.',
   'dnt.unset':'Nicht gesetzt.',
+  's.feeds':'Datenzufuhr-Streams',
+  'feeds.intro':'Diese Netzwerke erfassen Daten uber deine aktuelle Sitzung in Echtzeit.',
+  'feeds.note':'Du kannst dich auf dieser Seite von keinem dieser Netzwerke abmelden. Sie sind in die Infrastruktur des Webs eingebettet.',
+  'feeds.continuous':'Kontinuierlich',
+  'feeds.active':'Aktiv',
+  'feeds.blocked':'Blockiert',
+  'feeds.cookies.active':'Aktiviert und von jedem Skript auf dieser Seite lesbar.',
+  'feeds.cookies.blocked':'Von deinem Browser blockiert — eine der wenigen Abwehrmabnahmen, die funktioniert.',
+  'feeds.behavioral.sub':'Jedes Scrollen, jeder Klick und jede Verweildauer wird zu einem Verhaltensgraph verpackt.',
+  's.behavioral':'Vorausschauendes Verhaltensmodell',
+  'behavioral.note':'Diese Werte werden allein aus deinen Geratesignalen abgeleitet — kein Konto benotigt. Werbenetzwerke bauen dasselbe Modell aus deinem vollstandigen Browserverlauf.',
+  'bm.social':'Soziale Interaktionsaffinitat',
+  'bm.purchase':'Kaufwahrscheinlichkeit',
+  'bm.adrecep':'Werbeempfanglichkeit',
+  'bm.impulse':'Impulsverhalten-Score',
+  'bm.timeslot':'Sitzungszeitprofil',
+  'bm.political':'Politisches Profiling',
+  'bm.political.val':'AKTIV',
+  's.interests':'Interessen- & Verhaltensprofil',
+  'interests.note':'Aus Geratesignalen abgeleitet. Echte Werbenetzwerke nutzen deinen Browserverlauf, Suchanfragen und Kaufdaten fur Tausende granularer Kategorien.',
+  'lt.cat.delete':'Daten direkt loschen',
+  'lt.cat.optout':'Werbeverfolgung deaktivieren',
+  'lt.cat.tools':'Private Alternativen & Tools',
+  'lt.google':'Konto & alle Daten loschen',
+  'lt.meta':'Dauerhafte Kontoloschanfrage stellen',
+  'lt.instagram':'Konto & alle Beitrage loschen',
+  'lt.tiktok':'Konto loschen & Daten exportieren',
+  'lt.twitter':'Deaktivieren & Loschung beantragen',
+  'lt.apple':'Datenschutzportal & Datenloschanfrage',
+  'lt.ydr':'DSGVO & CCPA-Loschung — Dutzende Broker auf einmal. Kostenlos.',
+  'lt.aboutads':'Opt-out von 100+ Werbenetzwerken gleichzeitig.',
+  'lt.nai':'Opt-out von Zielwerbung bei 200+ Mitgliedsunternehmen.',
+  'lt.simple':'Schritt-fur-Schritt-Opt-out fur Google, Meta, Amazon, Apple & 50+ mehr.',
+  'lt.eff':'Kostenlose Praxisleitfaden. Gepruft von Sicherheitsforschern.',
+  'lt.proton':'Verschlussel. E-Mail, VPN & Drive. Keine Datenweitergabe. Schweiz.',
+  'lt.deleteme':'Kostenpflichtiger Dienst. Entfernt deine Daten kontinuierlich von Broker-Seiten.',
   's.deep':'Tiefer Browser-Fingerabdruck',
   'l.audio-fp':'Audio-Fingerabdruck',
   'l.audio-fp.sub':'AudioContext-Oszillator-Rendering. Unabhangige zweite Fingerabdruck-Dimension.',
@@ -860,6 +1071,141 @@ var BROKERS=[
   {name:'Zeta Global',type_en:'AI marketing',type_de:'KI-Marketing',drain:68},
 ];
 
+function buildFeedsCard(isIOS, isAndroid, isMobile, conn){
+  var feeds=[
+    {name:'Meta Pixel Network', sub:'facebook.com · instagram.com · 30% of all websites', vol:'450M pts/day'},
+    {name:'Google Analytics / GA4', sub:'87% of all websites. Every page view logged.', vol:'800M pts/day'},
+    {name:'Browser Fingerprinting', sub:'Canvas · Audio · WebGL · Fonts · 0ms passive', vol:t('feeds.continuous')},
+    {name:'Cookie Tracking', sub:navigator.cookieEnabled?t('feeds.cookies.active'):t('feeds.cookies.blocked'), vol:navigator.cookieEnabled?t('feeds.active'):t('feeds.blocked')},
+    {name:'Behavioral Profiling', sub:t('feeds.behavioral.sub'), vol:t('feeds.continuous')},
+  ];
+  if(isIOS)feeds.push({name:'Apple Analytics SDK', sub:'Embedded in most iOS apps. IDFA + SKAdNetwork.', vol:t('feeds.active')});
+  if(isAndroid)feeds.push({name:'Google Play Services', sub:'Advertising ID + device telemetry on every Android.', vol:t('feeds.active')});
+  if(isMobile)feeds.push({name:'Mobile Ad SDK (MoPub/IronSource)', sub:'Location · motion · contacts — via installed apps', vol:t('feeds.active')});
+  if(conn && conn.effectiveType && (conn.effectiveType==='4g'||conn.effectiveType==='5g'))
+    feeds.push({name:'Carrier Telemetry', sub:'Your mobile carrier sells location data to data brokers.', vol:t('feeds.active')});
+
+  var de=LANG==='de';
+  var html='';
+  feeds.forEach(function(f){
+    html+='<div class="feed-item">'
+      +'<div class="live-dot"></div>'
+      +'<div style="flex:1;min-width:0"><div class="feed-name">'+f.name+'</div><div class="feed-sub">'+f.sub+'</div></div>'
+      +'<div class="feed-vol">'+f.vol+'</div>'
+      +'<span class="live-badge">LIVE</span>'
+      +'</div>';
+  });
+  document.getElementById('feed-list').innerHTML=html;
+}
+
+function buildBehavioralCard(tier, isMobile, isIOS, dnt, conn){
+  var h=new Date().getHours();
+  // Social Interaction Affinity
+  var social=55+(isMobile?18:0)+(isIOS?10:0)+(h>=18&&h<24?8:0);social=Math.min(social,96);
+  // Purchase Probability
+  var purchase=40+(tier.cls==='success'?32:tier.cls==='warn'?16:0)+(isIOS?10:0)+(!isMobile?5:0);purchase=Math.min(purchase,95);
+  // Advertising Receptivity — ironically HIGH if DNT enabled
+  var adrecep=dnt==='1'?88:(62+(isMobile?8:0));adrecep=Math.min(adrecep,96);
+  // Impulse score
+  var impulse=30+(isMobile?25:0)+(tier.cls==='success'?15:0)+(h>=22||h<5?15:0);impulse=Math.min(impulse,95);
+
+  var timeslot;
+  if(h>=0&&h<6)timeslot=LANG==='de'?'Spates Nacht-Browsen':'Late-night browsing';
+  else if(h<9)timeslot=LANG==='de'?'Fruher Morgen':'Early morning';
+  else if(h<17)timeslot=LANG==='de'?'Geschaftsstunden':'Business hours';
+  else if(h<21)timeslot=LANG==='de'?'Hauptsendezeit':'Prime time';
+  else timeslot=LANG==='de'?'Abend-Sitzung':'Evening session';
+
+  function scoreHtml(key, pct, cls, sub){
+    return '<div class="score-row">'
+      +'<div class="score-header"><span class="score-key">'+t(key)+'</span>'
+      +'<span class="score-pct '+cls+'">'+pct+'%</span></div>'
+      +'<div class="score-bar-wrap"><div class="score-bar-fill '+cls+'" style="width:'+pct+'%"></div></div>'
+      +(sub?'<div class="score-sub">'+sub+'</div>':'')
+      +'</div>';
+  }
+
+  var dntNote=dnt==='1'?(LANG==='de'?'DNT aktiv — paradoxerweise ein Premium-Werbesegment. Schwerer erreichbare Nutzer erzielen hohere CPMs.':'DNT enabled — paradoxically a premium ad segment. Harder-to-reach users command higher CPMs.'):null;
+  var html=
+    scoreHtml('bm.social', social, social>75?'d':'w', null)
+   +scoreHtml('bm.purchase', purchase, purchase>70?'d':'w', null)
+   +scoreHtml('bm.adrecep', adrecep, adrecep>80?'d':'w', dntNote)
+   +scoreHtml('bm.impulse', impulse, impulse>70?'d':'w', null)
+   +'<div class="score-row" style="border-bottom:none">'
+   +'<div class="score-header"><span class="score-key">'+t('bm.timeslot')+'</span>'
+   +'<span style="font-size:13px;color:var(--warn);font-weight:600">'+timeslot+'</span></div>'
+   +'<div class="score-row" style="border-bottom:none;padding:0">'
+   +'<div class="score-header"><span class="score-key">'+t('bm.political')+'</span>'
+   +'<span style="font-size:12px;padding:2px 8px;border-radius:4px;background:var(--danger-bg);border:1px solid var(--danger-border);color:var(--danger);font-weight:600">'+t('bm.political.val')+'</span></div></div>'
+   +'</div>';
+  document.getElementById('behavioral-scores').innerHTML=html;
+  // Trigger bar animations
+  setTimeout(function(){
+    document.querySelectorAll('.score-bar-fill').forEach(function(el){
+      var w=el.style.width;el.style.width='0';
+      setTimeout(function(){el.style.width=w;},50);
+    });
+  },400);
+}
+
+function buildInterestsCard(tier, isIOS, isAndroid, isMobile, tz, lang){
+  var h=new Date().getHours();
+  var interests=[];
+  // Always present
+  interests.push({label:'Technology',heat:'hot'});
+  interests.push({label:'Digital Privacy',heat:'hot'});
+  // Device-based
+  if(tier.cls==='success'){interests.push({label:'Premium Consumer',heat:'hot'});interests.push({label:'Finance',heat:'warm'});}
+  if(isIOS)interests.push({label:'Apple Ecosystem',heat:'warm'});
+  if(isAndroid)interests.push({label:'Android / Google',heat:'warm'});
+  if(isMobile){interests.push({label:'Mobile Commerce',heat:'warm'});interests.push({label:'Social Media',heat:'warm'});}
+  // GPU signals gaming
+  var gpu=(navigator.userAgent+' '+(getGPU()||'')).toLowerCase();
+  if(/nvidia|rtx|gtx|radeon|rx\s*\d{3,4}/.test(gpu))interests.push({label:'PC Gaming',heat:'hot'});
+  else if(tier.cls==='success'&&!isMobile)interests.push({label:'Gaming',heat:'warm'});
+  // Time-based
+  if(h>=0&&h<6)interests.push({label:'Night Owl',heat:'hot'});
+  if(h>=6&&h<9)interests.push({label:'Early Bird',heat:'warm'});
+  if(h>=22||h<5)interests.push({label:'Late-Night Shopping',heat:'warm'});
+  // Language/region
+  if(lang&&lang.startsWith('de'))interests.push({label:'DACH Region',heat:'cool'});
+  if(lang&&lang.startsWith('en'))interests.push({label:'English-Speaking Markets',heat:'cool'});
+  // Always
+  interests.push({label:'News & Media',heat:'cool'});
+  interests.push({label:'Travel',heat:'cool'});
+  interests.push({label:'Health & Wellness',heat:'cool'});
+  if(!isMobile)interests.push({label:'Work / Productivity',heat:'cool'});
+  interests.push({label:'Cross-Device Profile',heat:'hot'});
+
+  var de=LANG==='de';
+  var labelMap={
+    'Technology':de?'Technologie':'Technology',
+    'Digital Privacy':de?'Digitale Privatsphare':'Digital Privacy',
+    'Premium Consumer':de?'Premium-Verbraucher':'Premium Consumer',
+    'Finance':de?'Finanzen':'Finance',
+    'Apple Ecosystem':de?'Apple-Okosystem':'Apple Ecosystem',
+    'Android / Google':de?'Android / Google':'Android / Google',
+    'Mobile Commerce':de?'Mobile Commerce':'Mobile Commerce',
+    'Social Media':de?'Social Media':'Social Media',
+    'PC Gaming':de?'PC-Gaming':'PC Gaming',
+    'Gaming':de?'Gaming':'Gaming',
+    'Night Owl':de?'Nachteulen-Segment':'Night Owl',
+    'Early Bird':de?'Fruhaufsteher-Segment':'Early Bird',
+    'Late-Night Shopping':de?'Spatnacht-Shopping':'Late-Night Shopping',
+    'DACH Region':de?'DACH-Region':'DACH Region',
+    'English-Speaking Markets':de?'Englischsprachige Markte':'English-Speaking Markets',
+    'News & Media':de?'Nachrichten & Medien':'News & Media',
+    'Travel':de?'Reisen':'Travel',
+    'Health & Wellness':de?'Gesundheit':'Health & Wellness',
+    'Work / Productivity':de?'Arbeit / Produktivitat':'Work / Productivity',
+    'Cross-Device Profile':de?'Gerateubergreifendes Profil':'Cross-Device Profile',
+  };
+  var html=interests.map(function(i){
+    return '<span class="ib '+i.heat+'">'+(labelMap[i.label]||i.label)+'</span>';
+  }).join('');
+  document.getElementById('interest-cloud').innerHTML=html;
+}
+
 function buildBrokers(){
   var grid=document.getElementById('broker-grid');
   grid.innerHTML='';
@@ -985,6 +1331,11 @@ async function buildProfile(){
 
   // Tags
   buildTags(tier2,_perms,_isIOS,_isAndroid,_isMobile,_dnt);
+
+  // New cards
+  buildFeedsCard(_isIOS,_isAndroid,_isMobile,conn);
+  buildBehavioralCard(tier2,_isMobile,_isIOS,_dnt,conn);
+  buildInterestsCard(tier2,_isIOS,_isAndroid,_isMobile,tz,lang);
   _profileBuilt=true;
 
   // ── Deep fingerprint (async, fills in after initial render) ──
@@ -1144,7 +1495,7 @@ function typeTick(){
 }
 
 // ── Card reveal ───────────────────────────────────────────────────
-var CARDS=['c-id','c-hw','c-perms','c-apps','c-adprof','c-drain','c-verdict','c-res'];
+var CARDS=['c-id','c-deep','c-feeds','c-behavioral','c-interests','c-hw','c-perms','c-apps','c-adprof','c-drain','c-verdict','c-res'];
 function revealCards(){
   CARDS.forEach(function(id,i){
     setTimeout(function(){
