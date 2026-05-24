@@ -317,12 +317,12 @@ body { display:flex; flex-direction:column; align-items:center; }
 <!-- ── MOBILE DRAWER ── -->
 <div class="mobile-drawer" id="mobile-drawer">
   <div class="drawer-categories">
-    <button class="drawer-filter-btn active" onclick="filter('all',this);closeMenu()">all experiments</button>
-    <button class="drawer-filter-btn" onclick="filter('rf',this);closeMenu()">rf &amp; radio</button>
-    <button class="drawer-filter-btn" onclick="filter('acoustic',this);closeMenu()">acoustic</button>
-    <button class="drawer-filter-btn" onclick="filter('motion',this);closeMenu()">motion &amp; structural</button>
-    <button class="drawer-filter-btn" onclick="filter('light',this);closeMenu()">light &amp; optical</button>
-    <button class="drawer-filter-btn" onclick="filter('meta',this);closeMenu()">the meta layer</button>
+    <button class="drawer-filter-btn active" onclick="filter('all',this);closeMenu()" data-i18n="nav.filter.all">all experiments</button>
+    <button class="drawer-filter-btn" onclick="filter('rf',this);closeMenu()" data-i18n="nav.filter.rf">rf &amp; radio</button>
+    <button class="drawer-filter-btn" onclick="filter('acoustic',this);closeMenu()" data-i18n="nav.filter.acoustic">acoustic</button>
+    <button class="drawer-filter-btn" onclick="filter('motion',this);closeMenu()" data-i18n="nav.filter.motion">motion</button>
+    <button class="drawer-filter-btn" onclick="filter('light',this);closeMenu()" data-i18n="nav.filter.light">light</button>
+    <button class="drawer-filter-btn" onclick="filter('meta',this);closeMenu()" data-i18n="nav.filter.meta">meta layer</button>
   </div>
   <div class="drawer-divider"></div>
   <a class="drawer-link" href="https://github.com/rfi-irfos/invisible-layer" target="_blank" rel="noopener">
@@ -395,7 +395,7 @@ body { display:flex; flex-direction:column; align-items:center; }
 <div class="experiments" id="experiments">
 
   <!-- RF -->
-  <div class="section-label" data-cat="rf">rf &amp; radio</div>
+  <div class="section-label" data-cat="rf" data-i18n="section.rf">rf &amp; radio</div>
   <div class="grid">
     <a class="card" data-cat="rf" href="docs/experiments/ble/">
       <div class="card-icon">◉</div>
@@ -432,7 +432,7 @@ body { display:flex; flex-direction:column; align-items:center; }
   </div>
 
   <!-- ACOUSTIC -->
-  <div class="section-label" data-cat="acoustic">acoustic</div>
+  <div class="section-label" data-cat="acoustic" data-i18n="section.acoustic">acoustic</div>
   <div class="grid">
     <a class="card" data-cat="acoustic" href="docs/experiments/acoustic/">
       <div class="card-icon">◈</div>
@@ -477,7 +477,7 @@ body { display:flex; flex-direction:column; align-items:center; }
   </div>
 
   <!-- MOTION -->
-  <div class="section-label" data-cat="motion">motion &amp; structural</div>
+  <div class="section-label" data-cat="motion" data-i18n="section.motion">motion &amp; structural</div>
   <div class="grid">
     <a class="card" data-cat="motion" href="docs/experiments/motion/">
       <div class="card-icon">⟁</div>
@@ -522,7 +522,7 @@ body { display:flex; flex-direction:column; align-items:center; }
   </div>
 
   <!-- LIGHT -->
-  <div class="section-label" data-cat="light">light &amp; optical</div>
+  <div class="section-label" data-cat="light" data-i18n="section.light">light &amp; optical</div>
   <div class="grid">
     <a class="card" data-cat="light" href="docs/experiments/light-flicker/">
       <div class="card-icon">⚡</div>
@@ -567,7 +567,7 @@ body { display:flex; flex-direction:column; align-items:center; }
   </div>
 
   <!-- META -->
-  <div class="section-label" data-cat="meta">the meta layer — what you reveal</div>
+  <div class="section-label" data-cat="meta" data-i18n="section.meta">the meta layer — what you reveal</div>
   <div class="grid">
     <a class="card" data-cat="meta" href="docs/experiments/passive-telemetry/">
       <div class="card-icon">◉</div>
