@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>font enumeration — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>/* experiment-specific styles */
+.font-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  min-height: 60px;
+  padding: 4px 0;
+}
+.font-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border);
+  color: var(--dim);
+  background: var(--surface);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.font-chip.installed {
+  border-color: var(--green);
+  color: var(--green);
+  background: rgba(0,255,65,0.04);
+}
+.font-chip.visible { opacity: 1; }
+
+.inference-panel {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.inference-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.inference-key {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  width: 80px;
+  flex-shrink: 0;
+}
+.inference-val {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--cyan);
+  font-weight: 600;
+}
+.inference-val.pending { color: var(--dim); font-weight: 400; }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>font-enumeration</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">&#x2715;</a>
+  </header>
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.font-enumeration.label">experiment 36 &middot; canvas api &middot; no permissions</div>
+      <div class="exp-title" data-i18n="exp.font-enumeration.title">your fonts reveal<br>your identity.</div>
+      <div class="exp-desc" data-i18n="exp.font-enumeration.desc">
+        By rendering text in 60 different fonts and measuring pixel widths, this page detects
+        which fonts are installed on your system &mdash; without any permission, in under one second.
+        Your font set is a fingerprint of your OS, region, and software stack.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.font-enumeration.shock">
+      <strong>60 font measurements. No permission asked.</strong>
+      Your installed fonts identify your operating system, region, corporate software stack,
+      and language. This technique has been used for cross-site tracking since 2010 and remains
+      effective even in private browsing mode.
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell">
+        <span class="stat-val" id="stat-found">&#x2014;</span>
+        <span class="stat-lbl" data-i18n="exp.font-enumeration.stat.found">detected</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-val" id="stat-absent">&#x2014;</span>
+        <span class="stat-lbl" data-i18n="exp.font-enumeration.stat.absent">not found</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-val" id="stat-profile" style="font-size:0.72rem">&#x2014;</span>
+        <span class="stat-lbl" data-i18n="exp.font-enumeration.stat.profile">inferred os</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button class="exp-btn" id="btn-scan" onclick="startScan()" data-i18n="exp.font-enumeration.btn-scan">&#x25C9; scan fonts</button>
+      <span id="scan-progress" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--dim)"></span>
+    </div>
+
+    <div class="font-grid" id="font-grid">
+      <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--dim);padding:8px 0" data-i18n="exp.font-enumeration.grid-empty">press scan to detect installed fonts</div>
+    </div>
+
+    <div class="inference-panel" id="inference-panel" style="display:none">
+      <div class="inference-row">
+        <span class="inference-key" data-i18n="exp.font-enumeration.inf.os">os</span>
+        <span class="inference-val pending" id="inf-os" data-i18n="exp.font-enumeration.scanning">scanning...</span>
+      </div>
+      <div class="inference-row">
+        <span class="inference-key" data-i18n="exp.font-enumeration.inf.region">region</span>
+        <span class="inference-val pending" id="inf-region" data-i18n="exp.font-enumeration.scanning">scanning...</span>
+      </div>
+      <div class="inference-row">
+        <span class="inference-key" data-i18n="exp.font-enumeration.inf.software">software</span>
+        <span class="inference-val pending" id="inf-sw" data-i18n="exp.font-enumeration.scanning">scanning...</span>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.font-enumeration.summary">&#x25B6; how font detection works</summary>
+        <p>The technique is simple: create a hidden canvas, render the same string in two fonts simultaneously &mdash; the font being tested, with a monospace fallback. Measure the resulting text width.</p>
+        <p>If the tested font is not installed, the browser falls back to the generic monospace font and the width matches the baseline. If the tested font <em>is</em> installed, it uses that font's metrics &mdash; different character widths, different result.</p>
+        <p>The test string <code>mmmmmmmmmmlli</code> is chosen deliberately: it maximises the width difference between proportional and monospace fonts, making detection more reliable.</p>
+        <p>Font sets reveal a great deal:</p>
+        <ul>
+          <li><strong>Calibri, Segoe UI, Cambria</strong> &mdash; Microsoft Office / Windows installed</li>
+          <li><strong>SF Pro, San Francisco, Osaka</strong> &mdash; macOS or iOS device</li>
+          <li><strong>Ubuntu, Cantarell, Fira Sans</strong> &mdash; Linux desktop (GNOME/KDE)</li>
+          <li><strong>Noto CJK, SimSun, SimHei</strong> &mdash; Chinese locale or language pack</li>
+          <li><strong>Malgun Gothic, Gulim, Batang</strong> &mdash; Korean locale</li>
+          <li><strong>Hiragino, Yu Gothic, Meiryo</strong> &mdash; Japanese locale</li>
+          <li><strong>Arabic Typesetting</strong> &mdash; Arabic locale or Windows Arabic pack</li>
+        </ul>
+        <p>This technique requires no permission and works in all major browsers. Brave Browser adds noise to canvas measurements which may reduce accuracy slightly.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+
+  var FONTS = [
+    'Arial','Helvetica','Times New Roman','Courier New','Georgia','Verdana',
+    'Trebuchet MS','Impact','Comic Sans MS','Palatino','Tahoma','Calibri',
+    'Cambria','Segoe UI','Roboto','Open Sans','Lato','Montserrat',
+    'Ubuntu','Noto Sans','Noto Serif','Droid Sans','DejaVu Sans','Liberation Sans',
+    'Fira Sans','Source Code Pro','Consolas','Lucida Console','MS Gothic',
+    'Apple SD Gothic Neo','Hiragino Sans','Yu Gothic','Meiryo','SimSun',
+    'SimHei','Microsoft YaHei','Nanum Gothic','Arabic Typesetting',
+    'Traditional Arabic','Gulim','Batang','Dotum','Oxygen','Cantarell',
+    'Raleway','Oswald','Garamond','Bookman','Geneva',
+    'Segoe UI Emoji','Noto Color Emoji','San Francisco','SF Pro','Bangkok',
+    'Osaka','Malgun Gothic','WenQuanYi','Droid Serif','Terminal'
+  ];
+
+  var TEST_STRING = 'mmmmmmmmmmlli';
+  var FONT_SIZE = '72px';
+  var BASELINE_FONTS = ['monospace', 'serif', 'sans-serif'];
+
+  var probe = document.createElement('canvas');
+  probe.width = 500; probe.height = 100;
+  var pctx = probe.getContext('2d');
+
+  function measureFont(font) {
+    var baseWidths = BASELINE_FONTS.map(function(bf) {
+      pctx.font = FONT_SIZE + ' ' + bf;
+      return pctx.measureText(TEST_STRING).width;
+    });
+    return BASELINE_FONTS.some(function(bf, i) {
+      pctx.font = FONT_SIZE + ' "' + font + '",' + bf;
+      return pctx.measureText(TEST_STRING).width !== baseWidths[i];
+    });
+  }
+
+  var installed = [];
+  var absent = [];
+  var scanRunning = false;
+  var scanIndex = 0;
+  var chipEls = {};
+
+  function buildGrid() {
+    var grid = document.getElementById('font-grid');
+    grid.innerHTML = '';
+    FONTS.forEach(function(f) {
+      var chip = document.createElement('span');
+      chip.className = 'font-chip';
+      chip.textContent = f;
+      chip.id = 'fc-' + f.replace(/[\s\/]+/g, '_');
+      grid.appendChild(chip);
+      chipEls[f] = chip;
+    });
+  }
+
+  function processNext() {
+    if (scanIndex >= FONTS.length) { finishScan(); return; }
+    var font = FONTS[scanIndex];
+    var found = measureFont(font);
+    var chip = chipEls[font];
+    if (chip) {
+      chip.classList.add('visible');
+      if (found) {
+        chip.classList.add('installed');
+        installed.push(font);
+      } else {
+        absent.push(font);
+      }
+      document.getElementById('stat-found').textContent = installed.length;
+      document.getElementById('stat-absent').textContent = absent.length;
+      document.getElementById('scan-progress').textContent = (scanIndex + 1) + ' / ' + FONTS.length;
+    }
+    scanIndex++;
+    setTimeout(processNext, 12);
+  }
+
+  function finishScan() {
+    document.getElementById('scan-progress').textContent = 'done';
+    document.getElementById('btn-scan').style.display = 'none';
+    inferProfile();
+  }
+
+  function inferProfile() {
+    var panel = document.getElementById('inference-panel');
+    panel.style.display = 'flex';
+    var fontSet = new Set(installed);
+
+    // OS detection
+    var osScore = { windows: 0, macos: 0, linux: 0, android: 0 };
+    if (fontSet.has('Calibri') || fontSet.has('Segoe UI') || fontSet.has('Consolas') || fontSet.has('Cambria')) osScore.windows += 3;
+    if (fontSet.has('MS Gothic') || fontSet.has('Microsoft YaHei') || fontSet.has('Terminal')) osScore.windows += 2;
+    if (fontSet.has('SF Pro') || fontSet.has('San Francisco') || fontSet.has('Osaka') || fontSet.has('Apple SD Gothic Neo')) osScore.macos += 4;
+    if (fontSet.has('Hiragino Sans')) osScore.macos += 2;
+    if (fontSet.has('Ubuntu') || fontSet.has('Cantarell') || fontSet.has('Liberation Sans') || fontSet.has('DejaVu Sans')) osScore.linux += 3;
+    if (fontSet.has('Roboto') || fontSet.has('Droid Sans') || fontSet.has('Droid Serif')) osScore.android += 2;
+    var maxOs = Object.keys(osScore).reduce(function(a, b){ return osScore[a] > osScore[b] ? a : b; });
+    var os = osScore[maxOs] > 0 ? maxOs : 'unknown';
+
+    // Region detection
+    var region = 'western';
+    if (fontSet.has('SimSun') || fontSet.has('SimHei') || fontSet.has('Microsoft YaHei') || fontSet.has('WenQuanYi')) region = 'chinese';
+    else if (fontSet.has('Malgun Gothic') || fontSet.has('Gulim') || fontSet.has('Batang') || fontSet.has('Nanum Gothic')) region = 'korean';
+    else if (fontSet.has('Hiragino Sans') || fontSet.has('Yu Gothic') || fontSet.has('Meiryo') || fontSet.has('MS Gothic')) region = 'japanese';
+    else if (fontSet.has('Arabic Typesetting') || fontSet.has('Traditional Arabic')) region = 'arabic';
+    else if (fontSet.has('Bangkok')) region = 'thai';
+
+    // Software
+    var sw = [];
+    if (fontSet.has('Calibri') || fontSet.has('Cambria') || fontSet.has('Segoe UI')) sw.push('MS Office');
+    if (fontSet.has('Fira Sans') || fontSet.has('Cantarell') || fontSet.has('Ubuntu')) sw.push('Linux DE');
+    if (fontSet.has('Roboto') || fontSet.has('Open Sans') || fontSet.has('Lato')) sw.push('web fonts');
+    if (fontSet.has('Source Code Pro') || fontSet.has('Consolas') || fontSet.has('Fira Sans')) sw.push('dev tools');
+    var swStr = sw.length ? sw.join(', ') : 'none detected';
+
+    document.getElementById('inf-os').textContent = os;
+    document.getElementById('inf-os').classList.remove('pending');
+    document.getElementById('inf-region').textContent = region;
+    document.getElementById('inf-region').classList.remove('pending');
+    document.getElementById('inf-sw').textContent = swStr;
+    document.getElementById('inf-sw').classList.remove('pending');
+    document.getElementById('stat-profile').textContent = os + ' / ' + region;
+  }
+
+  window.startScan = function() {
+    if (scanRunning) return;
+    scanRunning = true;
+    installed = []; absent = []; scanIndex = 0; chipEls = {};
+    document.getElementById('inference-panel').style.display = 'none';
+    document.getElementById('btn-scan').disabled = true;
+    document.getElementById('btn-scan').style.opacity = '0.4';
+    document.getElementById('stat-found').textContent = '0';
+    document.getElementById('stat-absent').textContent = '0';
+    document.getElementById('stat-profile').textContent = '...';
+    buildGrid();
+    processNext();
+  };
+})();
+</script>
+<script src="../../../assets/js/i18n.js"></script>
+</body>
+</html>

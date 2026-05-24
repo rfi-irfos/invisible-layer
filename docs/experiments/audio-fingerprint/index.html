@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>audio fingerprint — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.wave-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.wave-wrap canvas {
+  width: 100%;
+  display: block;
+}
+.wave-label {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.wave-label span {
+  color: var(--green);
+}
+.fp-block {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.fp-block.visible { opacity: 1; }
+.fp-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.fp-value {
+  font-family: var(--font-mono);
+  font-size: clamp(0.9rem, 3.5vw, 1.4rem);
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.06em;
+  word-break: break-all;
+  text-align: center;
+}
+.fp-note {
+  font-size: 0.65rem;
+  color: var(--dim);
+  text-align: center;
+  line-height: 1.6;
+}
+.unavailable-notice {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: 4px;
+  padding: 14px 16px;
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.7;
+  display: none;
+}
+@keyframes fp-pulse {
+  0%, 100% { border-color: var(--border); }
+  50% { border-color: var(--green); box-shadow: 0 0 12px rgba(0,255,65,0.15); }
+}
+.fp-block.visible { animation: fp-pulse 2s ease-in-out 3; }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>audio fingerprint</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">&#x2715;</a>
+  </header>
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.audio-fingerprint.label">experiment 29 &middot; audio context &middot; no permissions</div>
+      <div class="exp-title" data-i18n="exp.audio-fingerprint.title">your speaker<br>has a fingerprint.</div>
+      <div class="exp-desc" data-i18n="exp.audio-fingerprint.desc">
+        The Web Audio API can render audio offline — silently, at zero volume, with no hardware output.
+        Microscopic differences in your audio hardware's signal processing produce a mathematically
+        unique waveform that identifies your device.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.audio-fingerprint.shock">
+      <strong>Computed with your volume at zero. No microphone. No sound.</strong>
+      Your digital-to-analog converter hardware produces a mathematically unique output — readable by any website.
+      Used in production by advertising networks since 2016.
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-rate">—</span><span class="stat-lbl">sample rate</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-sum">—</span><span class="stat-lbl">buffer sum</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-hash">—</span><span class="stat-lbl">hash</span></div>
+    </div>
+
+    <div class="unavailable-notice" id="unavailable">
+      <strong>OfflineAudioContext is unavailable in this browser.</strong>
+      This API is supported in all modern browsers. If you see this message, try Chrome, Firefox, or Safari.
+      Audio fingerprinting still works even if your speakers are muted or disconnected.
+    </div>
+
+    <div class="wave-wrap" id="wave-wrap" style="min-height:120px">
+      <div class="wave-label">rendered waveform &mdash; <span id="wave-status">computing...</span></div>
+      <canvas id="wave-canvas" style="height:120px"></canvas>
+    </div>
+
+    <div class="fp-block" id="fp-block">
+      <div class="fp-label">audio fingerprint</div>
+      <div class="fp-value" id="fp-value">rendering...</div>
+      <div class="fp-note">computed from OfflineAudioContext render — no microphone, no sound output</div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.audio-fingerprint.summary">&#x25B6; how does silent audio fingerprinting work?</summary>
+        <p>The <code>OfflineAudioContext</code> renders audio into a memory buffer rather than to speakers. The test signal: a triangle wave oscillator at 10,000 Hz routed through a <code>DynamicsCompressorNode</code> with specific settings (threshold: -50 dBFS, knee: 40 dB, ratio: 12:1, attack: 0 ms, release: 0.25 s). The compressor's nonlinear behavior exposes subtle hardware differences.</p>
+        <p>The Float32 sample buffer is summed and hashed. Different CPUs, audio subsystems, and audio driver implementations produce slightly different floating-point results due to differences in math co-processor behavior, rounding modes, and DSP instruction sets. The fingerprint remains stable across browser restarts, private windows, and cleared cookies.</p>
+        <p>This technique was documented by Mowery &amp; Shacham (2012) and later by Englehardt &amp; Narayanan's Princeton Web Census (2016), which found it deployed on over 1,400 of the top 100,000 sites. Brave Browser adds deliberate noise to the audio context to defeat it.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+function djb2(str) {
+  var hash = 5381;
+  for (var i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+function drawWaveform(samples) {
+  var canvas = document.getElementById('wave-canvas');
+  var dpr = window.devicePixelRatio || 1;
+  var W = canvas.parentElement.clientWidth || 400;
+  var H = 120;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // Background
+  ctx.fillStyle = 'var(--surface, #111)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (var g = 0; g < 5; g++) {
+    var gy = Math.round(H * g / 4) + 0.5;
+    ctx.beginPath();
+    ctx.moveTo(0, gy);
+    ctx.lineTo(W, gy);
+    ctx.stroke();
+  }
+
+  // Waveform
+  var step = Math.max(1, Math.floor(samples.length / W));
+  ctx.beginPath();
+  ctx.strokeStyle = '#00ff41';
+  ctx.lineWidth = 1.5;
+  var midY = H / 2;
+  var amp = H * 0.42;
+
+  for (var i = 0; i < W; i++) {
+    var idx = Math.min(i * step, samples.length - 1);
+    var y = midY - samples[idx] * amp;
+    if (i === 0) ctx.moveTo(i, y);
+    else ctx.lineTo(i, y);
+  }
+  ctx.stroke();
+
+  // Center line
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 6]);
+  ctx.beginPath();
+  ctx.moveTo(0, midY);
+  ctx.lineTo(W, midY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function run() {
+  if (typeof OfflineAudioContext === 'undefined' && typeof webkitOfflineAudioContext === 'undefined') {
+    document.getElementById('unavailable').style.display = 'block';
+    document.getElementById('wave-wrap').style.display = 'none';
+    return;
+  }
+
+  var Ctx = typeof OfflineAudioContext !== 'undefined' ? OfflineAudioContext : webkitOfflineAudioContext;
+  var sampleRate = 44100;
+  var bufLen = 4096;
+
+  var ctx;
+  try {
+    ctx = new Ctx(1, bufLen, sampleRate);
+  } catch (e) {
+    document.getElementById('unavailable').style.display = 'block';
+    document.getElementById('wave-wrap').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('stat-rate').textContent = sampleRate.toLocaleString() + ' Hz';
+
+  var osc = ctx.createOscillator();
+  osc.type = 'triangle';
+  osc.frequency.value = 10000;
+
+  var comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -50;
+  comp.knee.value = 40;
+  comp.ratio.value = 12;
+  comp.attack.value = 0;
+  comp.release.value = 0.25;
+
+  osc.connect(comp);
+  comp.connect(ctx.destination);
+  osc.start(0);
+
+  ctx.startRendering().then(function(rendered) {
+    var data = rendered.getChannelData(0);
+
+    // Sum for stat
+    var sum = 0;
+    for (var i = 0; i < data.length; i++) sum += Math.abs(data[i]);
+    var sumStr = sum.toFixed(8);
+
+    // Hash from stringified sum + sample values at fixed indices
+    var probe = sumStr;
+    for (var j = 0; j < Math.min(64, data.length); j += 8) {
+      probe += ',' + data[j].toFixed(10);
+    }
+    var h1 = djb2(probe);
+    var h2 = djb2(probe.split('').reverse().join(''));
+    var fingerprint = h1 + '-' + h2;
+
+    document.getElementById('stat-sum').textContent = sum.toFixed(4);
+    document.getElementById('stat-hash').textContent = h1.slice(0, 6) + '...';
+    document.getElementById('fp-value').textContent = fingerprint;
+    document.getElementById('fp-block').classList.add('visible');
+    document.getElementById('wave-status').textContent = bufLen + ' samples rendered';
+
+    drawWaveform(data);
+  }).catch(function(err) {
+    document.getElementById('wave-status').textContent = 'error: ' + err.message;
+  });
+}
+
+run();
+</script>
+<script src="../../../assets/js/i18n.js"></script>
+</body>
+</html>

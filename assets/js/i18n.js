@@ -13,7 +13,7 @@
 
       // hero
       'hero.h1': 'your phone<br>is <em>already</em><br>watching.',
-      'hero.sub': 'Right now, your device is reading a dozen physical layers of reality simultaneously — electromagnetic fields, acoustic signatures, motion, radio broadcasts from every device around you. Most people have no idea. 25 experiments that change that.',
+      'hero.sub': 'Right now, your device is reading a dozen physical layers of reality simultaneously — electromagnetic fields, acoustic signatures, motion, radio broadcasts from every device around you. Most people have no idea. 37 experiments that change that.',
       'hero.cta.meta': '⊙ open meta layer',
       'hero.cta.ble': 'BLE scanner',
       'hero.mobile-prompt': 'This site works best on a mobile device. The experiments use sensors your phone has but your laptop doesn\'t — camera, gyroscope, magnetometer, barometer.',
@@ -277,6 +277,142 @@
       'exp.wifi-density.summary': '▶ what does WiFi density tell you?',
       'exp.wifi-density.btn-start': '◉ start live scan',
 
+      // nav filter — digital fingerprint
+      'nav.filter.fp': 'digital fingerprint',
+      'section.fp': 'digital fingerprint',
+
+      // card titles — digital fingerprint
+      'card.canvas-fingerprint.title': 'canvas fingerprint',
+      'card.gpu-identity.title': 'GPU identity',
+      'card.audio-fingerprint.title': 'audio fingerprint',
+      'card.webrtc-ip-leak.title': 'WebRTC IP leak',
+      'card.device-identity.title': 'device identity',
+      'card.installed-voices.title': 'installed voices',
+      'card.codec-map.title': 'codec map',
+      'card.battery-api.title': 'battery API',
+
+      // card titles — motion additions
+      'card.keyboard-timing.title': 'keystroke timing biometric',
+      'card.touch-biometric.title': 'touch biometric',
+
+      // card titles — meta additions
+      'card.font-enumeration.title': 'font enumeration',
+      'card.network-timing.title': 'network timing',
+
+      // card descriptions — digital fingerprint
+      'card.canvas-fingerprint.desc': 'Your GPU renders a hidden scene. The sub-pixel result is a hash that never changes — clearing cookies does nothing.',
+      'card.gpu-identity.desc': 'Your GPU model, driver version, and shader precision are exposed to every website that loads a WebGL canvas.',
+      'card.audio-fingerprint.desc': 'Your speaker hardware produces a unique mathematical signature from a silent oscillator. Volume at zero. Works anyway.',
+      'card.webrtc-ip-leak.desc': 'Your real local IP address — the one behind your VPN. Every website can extract it in seconds using WebRTC.',
+      'card.device-identity.desc': '8 passive readings. No permission. No click. Enough to narrow you to 1 in 300,000 users.',
+      'card.installed-voices.desc': 'The speech voices on your device reveal your OS, region, language packs, and whether IT manages your phone.',
+      'card.codec-map.desc': 'Which video formats your hardware supports narrows your device to a handful of models.',
+      'card.battery-api.desc': 'Firefox removed this API in 2016 after researchers proved it tracked users who had cleared all cookies.',
+
+      // card descriptions — motion additions
+      'card.keyboard-timing.desc': 'Your inter-keystroke delays are a stable biometric. Type a sentence. See your rhythm captured.',
+      'card.touch-biometric.desc': 'Touch pressure and contact area are biometrically unique. Your fingertip on glass is a signature.',
+
+      // card descriptions — meta additions
+      'card.font-enumeration.desc': '80 font probes. No permission. Identifies your OS, region, and whether you use Microsoft Office.',
+      'card.network-timing.desc': 'Response times for login indicators can reveal which major services you are logged into — from timing alone.',
+
+      // experiment strings — canvas-fingerprint
+      'exp.canvas-fingerprint.label': 'digital fingerprint · canvas API · no permission needed',
+      'exp.canvas-fingerprint.title': 'your GPU just<br>signed its name.',
+      'exp.canvas-fingerprint.desc': 'This page drew text, gradients, and arcs on a hidden canvas. Your GPU rendered them — and the sub-pixel result is unique to your device. We hashed it. That hash is your fingerprint.',
+      'exp.canvas-fingerprint.shock': '<strong>clearing your cookies does not clear this.</strong> Canvas fingerprinting is present on 95% of the top 10,000 websites. It requires no storage, cannot be deleted, and persists across private browsing sessions. Every ad exchange uses it to rebuild your profile after you clear your browser data.',
+      'exp.canvas-fingerprint.btn-start': '◉ generate fingerprint',
+      'exp.canvas-fingerprint.summary': '▶ why does canvas rendering produce a unique result?',
+
+      // experiment strings — gpu-identity
+      'exp.gpu-identity.label': 'digital fingerprint · WebGL · no permission needed',
+      'exp.gpu-identity.title': 'your graphics card<br>is showing.',
+      'exp.gpu-identity.desc': 'WebGL exposes your GPU vendor, renderer string, driver version, shader precision, and every supported extension — all readable in JavaScript with no permission prompt. Combined, they identify your exact hardware configuration.',
+      'exp.gpu-identity.shock': '<strong>your GPU fingerprint survives private browsing, VPNs, and cookie deletion.</strong> Ad networks cross-reference WebGL parameters across sites to track you when all other identifiers have been removed. The fingerprint is stable for the lifetime of your device.',
+      'exp.gpu-identity.btn-start': '◉ read GPU identity',
+      'exp.gpu-identity.summary': '▶ how does WebGL expose hardware identity?',
+
+      // experiment strings — audio-fingerprint
+      'exp.audio-fingerprint.label': 'digital fingerprint · AudioContext · no permission needed',
+      'exp.audio-fingerprint.title': 'silence has<br>a signature.',
+      'exp.audio-fingerprint.desc': 'An oscillator runs through a DynamicsCompressor at specific settings. The float32 output buffer is summed and hashed. The result depends on your DAC hardware — and is unique to your device. Volume at zero. Works anyway.',
+      'exp.audio-fingerprint.shock': '<strong>this uses no microphone. your speaker hardware produces the signature.</strong> The AudioContext fingerprint is one of the most stable browser identifiers. It does not change across incognito sessions, does not clear with cookies, and does not change with VPN.',
+      'exp.audio-fingerprint.btn-start': '◉ run audio fingerprint',
+      'exp.audio-fingerprint.summary': '▶ how does hardware produce a unique audio signature?',
+
+      // experiment strings — webrtc-ip-leak
+      'exp.webrtc-ip-leak.label': 'digital fingerprint · WebRTC · no permission needed',
+      'exp.webrtc-ip-leak.title': 'your VPN<br>has a hole in it.',
+      'exp.webrtc-ip-leak.desc': 'WebRTC — the technology behind browser video calls — requires direct peer connections. To establish them, your browser collects ICE candidates: all your IP addresses, including local LAN addresses. This happens silently, before any network request is sent, and it bypasses VPN routing.',
+      'exp.webrtc-ip-leak.shock': '<strong>ad networks use WebRTC to re-identify VPN users.</strong> Your public IP changes with a VPN. Your local LAN IP does not. When a known fingerprint appears with a new public IP but the same local IP, ad servers know it is the same device.',
+      'exp.webrtc-ip-leak.btn-start': '◉ reveal my IPs',
+      'exp.webrtc-ip-leak.summary': '▶ why does WebRTC bypass VPN?',
+
+      // experiment strings — device-identity
+      'exp.device-identity.label': 'digital fingerprint · navigator API · no permission needed',
+      'exp.device-identity.title': '8 readings.<br>no permission.<br>that is you.',
+      'exp.device-identity.desc': 'Hardware concurrency. Device memory. Screen resolution. Pixel ratio. Touch points. Timezone. Language. Color depth. Eight numbers your browser exposes to every page — no click, no permission dialog, no notification. Combined, they narrow you to roughly 1 in 300,000 users.',
+      'exp.device-identity.shock': '<strong>this is the baseline every fingerprinting system starts with.</strong> Before canvas, before WebGL, before audio — these 8 passive values already build a partial identity. The subsequent layers refine it to near-certainty. This runs on every page load you have ever made.',
+      'exp.device-identity.btn-start': '◉ show my identity',
+      'exp.device-identity.summary': '▶ how unique is device hardware configuration?',
+
+      // experiment strings — installed-voices
+      'exp.installed-voices.label': 'digital fingerprint · SpeechSynthesis API · no permission needed',
+      'exp.installed-voices.title': 'your voices<br>give you away.',
+      'exp.installed-voices.desc': 'speechSynthesis.getVoices() returns the text-to-speech voices installed on your device. The exact set — which voices, which languages, which locales — reveals your OS, version, region, installed language packs, and whether your device is enterprise-managed.',
+      'exp.installed-voices.shock': '<strong>corporate devices have a different voice profile than personal devices.</strong> IT departments push specific language packs and remove others. The exact voice set narrows to a specific OS version and region. Ad networks use this to identify enterprise users and segment audiences by employer.',
+      'exp.installed-voices.btn-start': '◉ read my voices',
+      'exp.installed-voices.summary': '▶ what can installed voices reveal?',
+
+      // experiment strings — codec-map
+      'exp.codec-map.label': 'digital fingerprint · MediaSource API · no permission needed',
+      'exp.codec-map.title': 'your codec support<br>is a hardware fingerprint.',
+      'exp.codec-map.desc': 'canPlayType() probes whether your hardware supports specific video and audio codecs. H.264 profiles, HEVC, AV1, VP9, Opus, AAC — the exact support matrix depends on your chipset, OS, and installed hardware. The result is a binary string unique to your device configuration.',
+      'exp.codec-map.shock': '<strong>codec support narrows your device to a handful of models.</strong> AV1 hardware decode is only present in certain SoCs. HEVC Main 10 support differs between iPhone generations. Combined with screen resolution and timezone, codec support alone identifies your specific device model.',
+      'exp.codec-map.btn-start': '◉ probe codecs',
+      'exp.codec-map.summary': '▶ how do codecs reveal hardware identity?',
+
+      // experiment strings — battery-api
+      'exp.battery-api.label': 'digital fingerprint · Battery API · no permission needed',
+      'exp.battery-api.title': 'Firefox removed<br>this API in 2016.',
+      'exp.battery-api.desc': 'navigator.getBattery() exposes your battery level, charging state, time to full charge, and discharge time — with no permission required. In 2015, researchers showed that these values create a short-lived tracking identifier — enough to re-link a user who just cleared all cookies.',
+      'exp.battery-api.shock': '<strong>real-time battery level was used to track users across sites after cookie deletion.</strong> Battery level changes slowly and predictably. A user at 73% charging with 47 minutes to full is distinguishable from most others. Firefox removed the API entirely in 2016. Safari never implemented it. Chrome still has it.',
+      'exp.battery-api.btn-start': '◉ read battery state',
+      'exp.battery-api.summary': '▶ why did Firefox remove the Battery API?',
+
+      // experiment strings — keyboard-timing
+      'exp.keyboard-timing.label': 'motion biometric · keyboard events · no permission needed',
+      'exp.keyboard-timing.title': 'your typing rhythm<br>is a biometric.',
+      'exp.keyboard-timing.desc': 'Type the sentence below. Every key press is timestamped. The inter-key delays form a rhythm — your rhythm. It is stable across sessions, keyboards, and devices. Researchers identify individuals from keystroke timing alone with 95%+ accuracy, without reading a single character of the content.',
+      'exp.keyboard-timing.shock': '<strong>banks use keystroke dynamics to detect account takeovers.</strong> If your banking session shows a different typing rhythm than usual, fraud detection flags it silently. The same technique is used to identify political dissidents in countries with internet surveillance.',
+      'exp.keyboard-timing.btn-start': '◉ start typing',
+      'exp.keyboard-timing.summary': '▶ how stable is keystroke rhythm as a biometric?',
+
+      // experiment strings — touch-biometric
+      'exp.touch-biometric.label': 'motion biometric · touch events · no permission needed',
+      'exp.touch-biometric.title': 'your fingertip<br>has a profile.',
+      'exp.touch-biometric.desc': 'Touch events carry pressure, contact area radius, and rotation angle. These reflect the physical geometry of your finger — its size, softness, and how you hold the phone. The profile is stable across sessions and distinguishable from other users.',
+      'exp.touch-biometric.shock': '<strong>your touch profile identifies your device, your hand, and your grip style.</strong> Research showed touch dynamics achieve 90%+ user identification with just 5 taps. Insurance apps and fintech use this as a continuous authentication signal — verifying identity every time you touch the screen.',
+      'exp.touch-biometric.btn-start': '◉ touch the screen',
+      'exp.touch-biometric.summary': '▶ how unique is touch pressure as a biometric?',
+
+      // experiment strings — font-enumeration
+      'exp.font-enumeration.label': 'meta layer · Font Loading API · no permission needed',
+      'exp.font-enumeration.title': 'your fonts<br>are a map.',
+      'exp.font-enumeration.desc': 'By measuring how text renders at specific font names, a page can probe whether fonts are installed — without any permission. The presence or absence of each font reflects your OS, version, language region, and software. 80 probes. No dialog. No notification.',
+      'exp.font-enumeration.shock': '<strong>"Arial" and "Helvetica" are not the same font.</strong> Windows ships Arial. macOS ships Helvetica. The difference is a 1-bit OS signal. "Malgun Gothic" narrows to Korean Windows users. "NSimSun" to Chinese Windows. Corporate fonts without Mac fonts = Windows enterprise user. The full set narrows your profile to a region and employer.',
+      'exp.font-enumeration.btn-start': '◉ enumerate fonts',
+      'exp.font-enumeration.summary': '▶ how does font detection work?',
+
+      // experiment strings — network-timing
+      'exp.network-timing.label': 'meta layer · fetch timing · no permission needed',
+      'exp.network-timing.title': 'response time<br>reveals your sessions.',
+      'exp.network-timing.desc': 'Authenticated resources cached by your browser load faster than unauthenticated ones. By timing fetch requests to known login indicators, a page can infer which major services you are logged into — from timing alone, without reading cookies or credentials.',
+      'exp.network-timing.shock': '<strong>the "login oracle" attack was documented in academic research since 2009.</strong> It used iframe loading times to detect Gmail, Facebook, and Twitter sessions. Modern browsers now add timing noise and block cross-origin reads — but the technique still works partially on some configurations.',
+      'exp.network-timing.btn-start': '◉ probe login state',
+      'exp.network-timing.summary': '▶ how does timing reveal login state?',
+
       // footer
       'footer.rights': '© 2025 rfi-irfos. open source.',
     },
@@ -294,7 +430,7 @@
 
       // hero
       'hero.h1': 'Dein Handy<br><em>beobachtet</em><br>schon längst.',
-      'hero.sub': 'Gerade jetzt liest dein Gerät ein Dutzend physikalische Schichten der Realität — elektromagnetische Felder, akustische Signaturen, Bewegung, Funksignale von allen Geräten um dich herum. Die meisten Menschen wissen das nicht. 25 Experimente ändern das.',
+      'hero.sub': 'Gerade jetzt liest dein Gerät ein Dutzend physikalische Schichten der Realität — elektromagnetische Felder, akustische Signaturen, Bewegung, Funksignale von allen Geräten um dich herum. Die meisten Menschen wissen das nicht. 37 Experimente ändern das.',
       'hero.cta.meta': '⊙ Meta-Ebene öffnen',
       'hero.cta.ble': 'BLE-Scanner',
       'hero.mobile-prompt': 'Diese Seite funktioniert am besten auf einem Mobilgerät. Die Experimente nutzen Sensoren deines Handys, die dein Laptop nicht hat — Kamera, Gyroskop, Magnetometer, Barometer.',
@@ -557,6 +693,142 @@
       'exp.wifi-density.shock': '<strong>Google und Apple haben mit den Handys ihrer Nutzer den Standort jedes WLAN-Netzwerks auf der Erde kartiert.</strong> Jedes Mal, wenn ein Handy eine Standortabfrage macht, meldet es nahegelegene Netzwerke zusammen mit GPS-Koordinaten. Apple hat über 100 Millionen Access Points in seiner Datenbank. 2010 sammelten Googles Street-View-Fahrzeuge auch Paketdaten aus offenen Netzwerken.',
       'exp.wifi-density.summary': '▶ was sagt WLAN-Dichte aus?',
       'exp.wifi-density.btn-start': '◉ Live-Scan starten',
+
+      // nav filter — digital fingerprint
+      'nav.filter.fp': 'Digitaler Fingerabdruck',
+      'section.fp': 'Digitaler Fingerabdruck',
+
+      // card titles — digital fingerprint
+      'card.canvas-fingerprint.title': 'Canvas-Fingerabdruck',
+      'card.gpu-identity.title': 'GPU-Identität',
+      'card.audio-fingerprint.title': 'Audio-Fingerabdruck',
+      'card.webrtc-ip-leak.title': 'WebRTC-IP-Leck',
+      'card.device-identity.title': 'Geräte-Identität',
+      'card.installed-voices.title': 'Installierte Stimmen',
+      'card.codec-map.title': 'Codec-Karte',
+      'card.battery-api.title': 'Batterie-API',
+
+      // card titles — motion additions
+      'card.keyboard-timing.title': 'Tipprhythmus-Biometrie',
+      'card.touch-biometric.title': 'Touch-Biometrie',
+
+      // card titles — meta additions
+      'card.font-enumeration.title': 'Schriften-Enumeration',
+      'card.network-timing.title': 'Netzwerk-Timing',
+
+      // card descriptions — digital fingerprint
+      'card.canvas-fingerprint.desc': 'Deine GPU rendert eine versteckte Canvas. Das Ergebnis ist ein Hash, der dein Gerät identifiziert — Cookie-Löschen ändert nichts.',
+      'card.gpu-identity.desc': 'Dein GPU-Modell, Treiberversion und Shader-Präzision sind für jede Website sichtbar, die eine WebGL-Canvas lädt.',
+      'card.audio-fingerprint.desc': 'Deine Lautsprecher-Hardware erzeugt eine eindeutige Signatur aus einem stillen Oszillator. Lautstärke auf null. Funktioniert trotzdem.',
+      'card.webrtc-ip-leak.desc': 'Deine echte lokale IP — die hinter deinem VPN. Jede Website kann sie in Sekunden über WebRTC auslesen.',
+      'card.device-identity.desc': '8 passive Ablesungen. Keine Erlaubnis. Kein Klick. Genug, um dich auf 1 von 300.000 Nutzern einzugrenzen.',
+      'card.installed-voices.desc': 'Die Sprachsynthese-Stimmen auf deinem Gerät verraten dein OS, Region, Sprachpakete und ob IT dein Handy verwaltet.',
+      'card.codec-map.desc': 'Welche Videoformate deine Hardware unterstützt, grenzt dein Gerät auf eine Handvoll Modelle ein.',
+      'card.battery-api.desc': 'Firefox hat diese API 2016 entfernt, weil Forscher bewiesen, dass sie Nutzer nach dem Löschen aller Cookies verfolgte.',
+
+      // card descriptions — motion additions
+      'card.keyboard-timing.desc': 'Deine Zeitabstände zwischen Tastenanschlägen sind ein stabiles biometrisches Merkmal. Schreib einen Satz. Sieh deinen Rhythmus.',
+      'card.touch-biometric.desc': 'Berührungsdruck und Kontaktfläche sind biometrisch einzigartig. Deine Fingerkuppe auf Glas ist eine Signatur.',
+
+      // card descriptions — meta additions
+      'card.font-enumeration.desc': '80 Schrift-Probes. Keine Erlaubnis. Identifiziert dein OS, deine Region und ob du Microsoft Office nutzt.',
+      'card.network-timing.desc': 'Antwortzeiten für Login-Indikatoren verraten, bei welchen Diensten du eingeloggt bist — allein durch Timing.',
+
+      // experiment strings — canvas-fingerprint
+      'exp.canvas-fingerprint.label': 'Digitaler Fingerabdruck · Canvas API · keine Erlaubnis nötig',
+      'exp.canvas-fingerprint.title': 'deine GPU hat gerade<br>ihren Namen unterschrieben.',
+      'exp.canvas-fingerprint.desc': 'Diese Seite zeichnete Text, Verläufe und Bögen auf einer versteckten Canvas. Deine GPU renderte sie — das Subpixel-Ergebnis ist einzigartig für dein Gerät. Wir haben es gehasht. Dieser Hash ist dein Fingerabdruck.',
+      'exp.canvas-fingerprint.shock': '<strong>das Löschen deiner Cookies löscht das nicht.</strong> Canvas-Fingerprinting ist auf 95% der Top-10.000-Websites vorhanden. Es benötigt keinen Speicher, kann nicht gelöscht werden und übersteht den privaten Modus. Jedes Werbe-Netzwerk nutzt es, um dein Profil nach dem Löschen deiner Browser-Daten wieder aufzubauen.',
+      'exp.canvas-fingerprint.btn-start': '◉ Fingerabdruck generieren',
+      'exp.canvas-fingerprint.summary': '▶ warum erzeugt Canvas-Rendering ein eindeutiges Ergebnis?',
+
+      // experiment strings — gpu-identity
+      'exp.gpu-identity.label': 'Digitaler Fingerabdruck · WebGL · keine Erlaubnis nötig',
+      'exp.gpu-identity.title': 'deine Grafikkarte<br>ist sichtbar.',
+      'exp.gpu-identity.desc': 'WebGL gibt deinen GPU-Hersteller, Renderer-String, Treiberversion, Shader-Präzision und alle unterstützten Erweiterungen preis — alles über JavaScript ohne Erlaubnisdialog. Zusammen identifizieren sie deine genaue Hardware-Konfiguration.',
+      'exp.gpu-identity.shock': '<strong>dein GPU-Fingerabdruck übersteht privates Surfen, VPNs und Cookie-Löschung.</strong> Werbenetzwerke vergleichen WebGL-Parameter über Seiten hinweg, um dich zu verfolgen, wenn alle anderen Identifier entfernt wurden. Der Fingerabdruck ist für die Lebensdauer deines Geräts stabil.',
+      'exp.gpu-identity.btn-start': '◉ GPU-Identität lesen',
+      'exp.gpu-identity.summary': '▶ wie gibt WebGL die Hardware-Identität preis?',
+
+      // experiment strings — audio-fingerprint
+      'exp.audio-fingerprint.label': 'Digitaler Fingerabdruck · AudioContext · keine Erlaubnis nötig',
+      'exp.audio-fingerprint.title': 'Stille hat<br>eine Signatur.',
+      'exp.audio-fingerprint.desc': 'Ein Oszillator läuft durch einen DynamicsCompressor mit bestimmten Einstellungen. Der Float32-Ausgabepuffer wird summiert und gehasht. Das Ergebnis hängt von deiner DAC-Hardware ab — einzigartig für dein Gerät. Lautstärke auf null. Funktioniert trotzdem.',
+      'exp.audio-fingerprint.shock': '<strong>dabei wird kein Mikrofon verwendet. deine Lautsprecher-Hardware erzeugt die Signatur.</strong> Der AudioContext-Fingerabdruck ist einer der stabilsten Browser-Identifier. Er ändert sich nicht im Inkognito-Modus, lässt sich nicht mit Cookies löschen und ändert sich nicht mit VPN.',
+      'exp.audio-fingerprint.btn-start': '◉ Audio-Fingerabdruck erzeugen',
+      'exp.audio-fingerprint.summary': '▶ wie erzeugt Hardware eine eindeutige Audio-Signatur?',
+
+      // experiment strings — webrtc-ip-leak
+      'exp.webrtc-ip-leak.label': 'Digitaler Fingerabdruck · WebRTC · keine Erlaubnis nötig',
+      'exp.webrtc-ip-leak.title': 'dein VPN<br>hat ein Loch.',
+      'exp.webrtc-ip-leak.desc': 'WebRTC — die Technologie hinter Browser-Videoanrufen — benötigt direkte Peer-Verbindungen. Dafür sammelt dein Browser ICE-Kandidaten: alle deine IP-Adressen, einschliesslich lokaler LAN-Adressen. Das passiert still, vor jeder Netzwerkanfrage, und umgeht das VPN-Routing.',
+      'exp.webrtc-ip-leak.shock': '<strong>Werbenetzwerke nutzen WebRTC, um VPN-Nutzer wieder zu identifizieren.</strong> Deine öffentliche IP ändert sich mit einem VPN. Deine lokale LAN-IP nicht. Wenn ein bekannter Fingerabdruck mit neuer öffentlicher IP, aber derselben lokalen IP auftaucht, wissen die Werbeserver: dasselbe Gerät.',
+      'exp.webrtc-ip-leak.btn-start': '◉ Meine IPs enthüllen',
+      'exp.webrtc-ip-leak.summary': '▶ warum umgeht WebRTC das VPN?',
+
+      // experiment strings — device-identity
+      'exp.device-identity.label': 'Digitaler Fingerabdruck · Navigator API · keine Erlaubnis nötig',
+      'exp.device-identity.title': '8 Ablesungen.<br>keine Erlaubnis.<br>das bist du.',
+      'exp.device-identity.desc': 'Hardware-Kerne. Gerätespeicher. Bildschirmauflösung. Pixelverhältnis. Touch-Punkte. Zeitzone. Sprache. Farbtiefe. Acht Zahlen, die dein Browser jeder Seite preisgibt — kein Klick, kein Erlaubnisdialog. Zusammen grenzen sie dich auf rund 1 von 300.000 Nutzern ein.',
+      'exp.device-identity.shock': '<strong>das ist die Basis, mit der jedes Fingerprinting-System beginnt.</strong> Vor Canvas, vor WebGL, vor Audio — diese 8 passiven Werte bauen bereits eine Teil-Identität auf. Weitere Schichten verfeinern sie zur nahezu sicheren Identifikation. Das läuft bei jedem Seitenaufruf, den du je gemacht hast.',
+      'exp.device-identity.btn-start': '◉ Meine Identität anzeigen',
+      'exp.device-identity.summary': '▶ wie einzigartig ist die Hardware-Konfiguration?',
+
+      // experiment strings — installed-voices
+      'exp.installed-voices.label': 'Digitaler Fingerabdruck · SpeechSynthesis API · keine Erlaubnis nötig',
+      'exp.installed-voices.title': 'deine Stimmen<br>verraten dich.',
+      'exp.installed-voices.desc': 'speechSynthesis.getVoices() gibt die auf deinem Gerät installierten Text-to-Speech-Stimmen zurück. Die genaue Menge — welche Stimmen, welche Sprachen, welche Locales — verrät dein OS, Version, Region, Sprachpakete und ob dein Gerät IT-verwaltet ist.',
+      'exp.installed-voices.shock': '<strong>Firmengeräte haben ein anderes Stimmprofil als private Geräte.</strong> IT-Abteilungen pushen bestimmte Sprachpakete und entfernen andere. Das genaue Stimmenset grenzt auf eine bestimmte OS-Version und Region ein. Werbenetzwerke nutzen dies, um Unternehmensnutzer zu identifizieren und nach Arbeitgeber zu segmentieren.',
+      'exp.installed-voices.btn-start': '◉ Meine Stimmen lesen',
+      'exp.installed-voices.summary': '▶ was können installierte Stimmen verraten?',
+
+      // experiment strings — codec-map
+      'exp.codec-map.label': 'Digitaler Fingerabdruck · MediaSource API · keine Erlaubnis nötig',
+      'exp.codec-map.title': 'deine Codec-Unterstützung<br>ist ein Hardware-Fingerabdruck.',
+      'exp.codec-map.desc': 'canPlayType() prüft, ob deine Hardware bestimmte Video- und Audio-Codecs unterstützt. H.264-Profile, HEVC, AV1, VP9, Opus, AAC — die genaue Support-Matrix hängt von deinem Chip, OS und installierter Hardware ab. Das Ergebnis ist ein binärer String, der für deine Konfiguration einzigartig ist.',
+      'exp.codec-map.shock': '<strong>Codec-Unterstützung grenzt dein Gerät auf wenige Modelle ein.</strong> AV1-Hardware-Dekodierung ist nur in bestimmten SoCs vorhanden. HEVC Main 10-Unterstützung unterscheidet sich zwischen iPhone-Generationen. Zusammen mit Bildschirmauflösung und Zeitzone identifiziert Codec-Unterstützung dein spezifisches Gerätemodell.',
+      'exp.codec-map.btn-start': '◉ Codecs prüfen',
+      'exp.codec-map.summary': '▶ wie verraten Codecs die Hardware-Identität?',
+
+      // experiment strings — battery-api
+      'exp.battery-api.label': 'Digitaler Fingerabdruck · Battery API · keine Erlaubnis nötig',
+      'exp.battery-api.title': 'Firefox hat diese API<br>2016 entfernt.',
+      'exp.battery-api.desc': 'navigator.getBattery() gibt Akkustand, Ladezustand, Ladezeit und Entladezeit preis — ohne Erlaubnis. 2015 zeigten Forscher, dass diese Werte einen kurzlebigen Tracking-Identifier erzeugen — genug, um einen Nutzer nach dem Löschen aller Cookies wieder zu verknüpfen.',
+      'exp.battery-api.shock': '<strong>der Echtzeit-Akkustand wurde genutzt, um Nutzer nach Cookie-Löschung seitenübergreifend zu verfolgen.</strong> Der Akkustand ändert sich langsam und vorhersehbar. Ein Nutzer bei 73% Ladung mit 47 Minuten bis voll ist von den meisten anderen unterscheidbar. Firefox entfernte die API 2016 komplett. Safari implementierte sie nie. Chrome hat sie noch.',
+      'exp.battery-api.btn-start': '◉ Akkuzustand lesen',
+      'exp.battery-api.summary': '▶ warum hat Firefox die Battery API entfernt?',
+
+      // experiment strings — keyboard-timing
+      'exp.keyboard-timing.label': 'Bewegungsbiometrie · Tastatur-Events · keine Erlaubnis nötig',
+      'exp.keyboard-timing.title': 'dein Tipprhythmus<br>ist ein biometrisches Merkmal.',
+      'exp.keyboard-timing.desc': 'Schreib den Satz unten. Jeder Tastendruck wird mit Zeitstempel versehen. Die Zeitabstände zwischen den Tasten bilden einen Rhythmus — deinen Rhythmus. Er ist stabil über Sitzungen, Tastaturen und Geräte hinweg. Forscher identifizieren Personen allein aus Tipprhythmus mit über 95% Genauigkeit — ohne einen einzigen Buchstaben des Inhalts zu lesen.',
+      'exp.keyboard-timing.shock': '<strong>Banken nutzen Tastendynamik, um Kontoübernahmen zu erkennen.</strong> Wenn eine Banking-Sitzung einen anderen Tipprhythmus als üblich zeigt, markiert die Betrugserkennung sie still. Dieselbe Technik wird genutzt, um politische Dissidenten in Ländern mit Internet-Überwachung zu identifizieren.',
+      'exp.keyboard-timing.btn-start': '◉ Tippen starten',
+      'exp.keyboard-timing.summary': '▶ wie stabil ist Tipprhythmus als biometrisches Merkmal?',
+
+      // experiment strings — touch-biometric
+      'exp.touch-biometric.label': 'Bewegungsbiometrie · Touch-Events · keine Erlaubnis nötig',
+      'exp.touch-biometric.title': 'deine Fingerkuppe<br>hat ein Profil.',
+      'exp.touch-biometric.desc': 'Touch-Events tragen Druck, Kontaktflächenradius und Rotationswinkel. Diese spiegeln die physische Geometrie deines Fingers wider — Grösse, Weichheit und wie du das Handy hältst. Das Profil ist über Sitzungen stabil und von anderen Nutzern unterscheidbar.',
+      'exp.touch-biometric.shock': '<strong>dein Touch-Profil identifiziert dein Gerät, deine Hand und deinen Griffstil.</strong> Forschungen zeigten, dass Touch-Dynamik mit nur 5 Berührungen über 90% Nutzeridentifikation erreicht. Versicherungs-Apps und Fintechs nutzen dies als kontinuierliches Authentifizierungssignal — Identität wird bei jeder Berührung geprüft.',
+      'exp.touch-biometric.btn-start': '◉ Bildschirm berühren',
+      'exp.touch-biometric.summary': '▶ wie einzigartig ist Berührungsdruck als biometrisches Merkmal?',
+
+      // experiment strings — font-enumeration
+      'exp.font-enumeration.label': 'Meta-Ebene · Font Loading API · keine Erlaubnis nötig',
+      'exp.font-enumeration.title': 'deine Schriften<br>sind eine Karte.',
+      'exp.font-enumeration.desc': 'Indem gemessen wird, wie Text bei bestimmten Schriftnamen gerendert wird, kann eine Seite prüfen, ob Schriften installiert sind — ohne Erlaubnis. Vorhandensein oder Fehlen jeder Schrift spiegelt dein OS, Version, Sprachregion und genutzte Software wider. 80 Probes. Kein Dialog. Keine Benachrichtigung.',
+      'exp.font-enumeration.shock': '<strong>"Arial" und "Helvetica" sind nicht dieselbe Schrift.</strong> Windows enthält Arial. macOS enthält Helvetica. Der Unterschied ist ein 1-Bit-OS-Signal. "Malgun Gothic" grenzt auf koreanische Windows-Nutzer ein. "NSimSun" auf chinesisches Windows. Firmen-Schriften ohne Mac-Schriften = Windows-Unternehmensnutzer. Das volle Set grenzt Region und Arbeitgeber ein.',
+      'exp.font-enumeration.btn-start': '◉ Schriften aufzählen',
+      'exp.font-enumeration.summary': '▶ wie funktioniert Schriften-Erkennung?',
+
+      // experiment strings — network-timing
+      'exp.network-timing.label': 'Meta-Ebene · Fetch-Timing · keine Erlaubnis nötig',
+      'exp.network-timing.title': 'Antwortzeiten verraten<br>deine Sitzungen.',
+      'exp.network-timing.desc': 'Authentifizierte, vom Browser gecachte Ressourcen laden schneller als nicht-authentifizierte. Durch Zeitmessung von Fetch-Anfragen an bekannte Login-Indikatoren kann eine Seite ableiten, bei welchen grossen Diensten du eingeloggt bist — allein durch Timing, ohne Cookies zu lesen.',
+      'exp.network-timing.shock': '<strong>der "Login-Oracle"-Angriff ist seit 2009 dokumentiert.</strong> Er nutzte iFrame-Ladezeiten, um Gmail-, Facebook- und Twitter-Sitzungen zu erkennen. Moderne Browser fügen jetzt Timing-Rauschen hinzu und blockieren Cross-Origin-Lesezugriffe — aber die Technik funktioniert noch teilweise auf einigen Konfigurationen.',
+      'exp.network-timing.btn-start': '◉ Login-Status prüfen',
+      'exp.network-timing.summary': '▶ wie verraten Antwortzeiten den Login-Status?',
 
       // footer
       'footer.rights': '© 2025 rfi-irfos. Open Source.',

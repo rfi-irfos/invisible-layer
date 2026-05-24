@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>installed voices — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.os-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 16px;
+  width: 100%;
+}
+.os-badge-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  flex: 0 0 auto;
+}
+.os-badge-value {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--amber);
+  font-weight: 600;
+}
+.lang-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+.lang-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--cyan);
+  border-color: var(--cyan);
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.lang-tag.visible { opacity: 1; transform: scale(1); }
+.voice-list-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.voice-list-header {
+  display: flex;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  gap: 10px;
+}
+.voice-list-header .vh-lang { flex: 0 0 64px; }
+.voice-list-header .vh-name { flex: 1; }
+.voice-list-header .vh-type { flex: 0 0 70px; text-align: right; }
+.voice-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+.voice-item {
+  display: flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.2s, transform 0.2s;
+  font-size: 0.72rem;
+}
+.voice-item:last-child { border-bottom: none; }
+.voice-item.visible { opacity: 1; transform: translateX(0); }
+.voice-lang {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--cyan);
+  flex: 0 0 64px;
+  font-weight: 600;
+}
+.voice-name {
+  flex: 1;
+  color: var(--text);
+  font-size: 0.72rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.voice-type {
+  flex: 0 0 70px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.voice-type.local { color: var(--green); }
+.voice-type.remote { color: var(--dim); }
+.unavailable-notice {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: 4px;
+  padding: 14px 16px;
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.7;
+  display: none;
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>installed voices</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">&#x2715;</a>
+  </header>
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.installed-voices.label">experiment 30 &middot; speech synthesis api &middot; no permissions</div>
+      <div class="exp-title" data-i18n="exp.installed-voices.title">your voice list<br>is a profile.</div>
+      <div class="exp-desc" data-i18n="exp.installed-voices.desc">
+        Your operating system ships with a set of text-to-speech voices. Every language pack you install
+        adds more. The resulting list is specific to your OS version, region, and configuration —
+        all visible to any website without asking.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.installed-voices.shock">
+      <strong>Your text-to-speech voice list reveals your operating system, every language pack installed, your region, and whether IT issued this device.</strong>
+      No permission asked. The Speech Synthesis API is on by default in every major browser.
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-total">—</span><span class="stat-lbl">total voices</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-langs">—</span><span class="stat-lbl">languages</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-os">—</span><span class="stat-lbl">inferred OS</span></div>
+    </div>
+
+    <div class="unavailable-notice" id="unavailable">
+      <strong>SpeechSynthesis is unavailable in this browser.</strong>
+      This API is supported in Chrome, Edge, Firefox, and Safari. Some server-rendered or headless
+      environments disable it. Your voice list is still being read — try on a device with speakers.
+    </div>
+
+    <div class="os-badge" id="os-badge" style="display:none">
+      <span class="os-badge-label">inferred OS</span>
+      <span class="os-badge-value" id="os-value">detecting...</span>
+    </div>
+
+    <div style="width:100%;display:flex;flex-direction:column;gap:6px">
+      <div style="font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim)">installed language packs</div>
+      <div class="lang-row" id="lang-row"></div>
+    </div>
+
+    <div class="voice-list-wrap" id="voice-list-wrap" style="display:none">
+      <div class="voice-list-header">
+        <span class="vh-lang">lang</span>
+        <span class="vh-name">voice name</span>
+        <span class="vh-type">type</span>
+      </div>
+      <div class="voice-list" id="voice-list"></div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.installed-voices.summary">&#x25B6; what does your voice list reveal?</summary>
+        <p>The <code>SpeechSynthesis.getVoices()</code> method returns every text-to-speech engine installed on your device. On macOS, this exposes every language pack in System Preferences &gt; Language &amp; Region. On Windows, each language you've installed for Cortana or Narrator adds voices. Corporate devices managed by IT often have a standardized set that differs from consumer installs.</p>
+        <p>The pattern of voice names is OS-specific: macOS voices use names like "Samantha", "Daniel", "Karen"; Windows voices use "Microsoft Zira", "Microsoft David"; Android uses "Google US English"; iOS voices are identifiable by locale strings. The combination of OS-specific voice names, languages, and local vs. remote voice flags narrows your device to a very small population.</p>
+        <p>This signal is stable across VPNs, private windows, and cookie clears. It changes only when you change your OS language settings — an infrequent operation. When combined with canvas or audio fingerprints, it forms part of a cross-device tracking vector used by ad networks to re-identify users after cookie deletion.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+function inferOS(voices) {
+  var names = voices.map(function(v) { return v.name; }).join(' ');
+  if (/Microsoft/.test(names)) return 'Windows';
+  if (/Samantha|Daniel|Karen|Moira|Fiona|Veena|Tessa/.test(names)) return 'macOS / iOS';
+  if (/Google/.test(names)) return 'Android / Chrome';
+  if (/Android/.test(names)) return 'Android';
+  if (/eSpeak|Festival/.test(names)) return 'Linux';
+  return 'Unknown';
+}
+
+function processVoices(voices) {
+  if (!voices || voices.length === 0) {
+    document.getElementById('unavailable').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('os-badge').style.display = 'flex';
+  document.getElementById('voice-list-wrap').style.display = 'block';
+
+  var os = inferOS(voices);
+  document.getElementById('os-value').textContent = os;
+  document.getElementById('stat-total').textContent = String(voices.length);
+  document.getElementById('stat-os').textContent = os.split(' ')[0];
+
+  // Group by language prefix
+  var langMap = {};
+  voices.forEach(function(v) {
+    var lang = (v.lang || 'unknown').split('-')[0].toLowerCase();
+    langMap[lang] = (langMap[lang] || 0) + 1;
+  });
+
+  var langs = Object.keys(langMap).sort();
+  document.getElementById('stat-langs').textContent = String(langs.length);
+
+  // Language tags
+  var langRow = document.getElementById('lang-row');
+  langs.forEach(function(lang, i) {
+    var tag = document.createElement('div');
+    tag.className = 'lang-tag';
+    tag.textContent = lang + ' (' + langMap[lang] + ')';
+    langRow.appendChild(tag);
+    setTimeout(function(t) { return function() { t.classList.add('visible'); }; }(tag), i * 40);
+  });
+
+  // Voice list
+  var list = document.getElementById('voice-list');
+  var sorted = voices.slice().sort(function(a, b) {
+    var la = (a.lang || '').toLowerCase();
+    var lb = (b.lang || '').toLowerCase();
+    return la < lb ? -1 : la > lb ? 1 : 0;
+  });
+
+  sorted.forEach(function(v, i) {
+    var item = document.createElement('div');
+    item.className = 'voice-item';
+    var langShort = (v.lang || 'xx').split('-').slice(0, 2).join('-');
+    var isLocal = v.localService;
+    item.innerHTML =
+      '<span class="voice-lang">' + langShort + '</span>' +
+      '<span class="voice-name" title="' + v.name + '">' + v.name + '</span>' +
+      '<span class="voice-type ' + (isLocal ? 'local' : 'remote') + '">' + (isLocal ? 'local' : 'remote') + '</span>';
+    list.appendChild(item);
+    setTimeout(function(el) { return function() { el.classList.add('visible'); }; }(item), Math.min(i * 30, 1500) + 200);
+  });
+}
+
+function init() {
+  if (!window.speechSynthesis) {
+    document.getElementById('unavailable').style.display = 'block';
+    return;
+  }
+
+  var voices = window.speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    processVoices(voices);
+  } else {
+    window.speechSynthesis.addEventListener('voiceschanged', function handler() {
+      window.speechSynthesis.removeEventListener('voiceschanged', handler);
+      processVoices(window.speechSynthesis.getVoices());
+    });
+    // Timeout fallback for browsers that never fire voiceschanged
+    setTimeout(function() {
+      var v = window.speechSynthesis.getVoices();
+      if (v.length > 0) processVoices(v);
+      else document.getElementById('unavailable').style.display = 'block';
+    }, 2000);
+  }
+}
+
+init();
+</script>
+<script src="../../../assets/js/i18n.js"></script>
+</body>
+</html>

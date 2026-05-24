@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>canvas fingerprint — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.canvas-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.canvas-wrap canvas {
+  width: 100%;
+  display: block;
+  image-rendering: pixelated;
+}
+.canvas-label {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.hash-block {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.hash-block.visible { opacity: 1; }
+.hash-block-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.hash-block-value {
+  font-family: var(--font-mono);
+  font-size: clamp(0.9rem, 3.5vw, 1.4rem);
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.05em;
+  word-break: break-all;
+  text-align: center;
+}
+@keyframes hash-pulse {
+  0%, 100% { border-color: var(--border); }
+  50% { border-color: var(--green); box-shadow: 0 0 12px rgba(0,255,65,0.15); }
+}
+.hash-block.visible { animation: hash-pulse 2s ease-in-out 3; }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>canvas fingerprint</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">&#x2715;</a>
+  </header>
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.canvas-fingerprint.label">experiment 27 &middot; canvas 2d &middot; no permissions</div>
+      <div class="exp-title" data-i18n="exp.canvas-fingerprint.title">your GPU just<br>signed its name.</div>
+      <div class="exp-desc" data-i18n="exp.canvas-fingerprint.desc">
+        When a browser draws text, gradients, and shapes onto a canvas, tiny rendering differences
+        emerge from your GPU driver, font rasterizer, and antialiasing engine.
+        The result is a pixel-level signature — invisible to the eye, but mathematically unique.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.canvas-fingerprint.shock">
+      <strong>This fingerprint does not change when you clear cookies, switch VPNs, or use private browsing.</strong>
+      It is your GPU's rendering signature — permanent until you change hardware.
+      Browser vendors have tried to add noise to defeat it; tracking companies have adapted.
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-pixels">—</span><span class="stat-lbl">canvas pixels</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-hash">—</span><span class="stat-lbl">hash</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-unique">—</span><span class="stat-lbl">uniqueness</span></div>
+    </div>
+
+    <div class="canvas-wrap" id="canvas-wrap" style="min-height:120px">
+      <div class="canvas-label">live render</div>
+      <canvas id="fp-canvas"></canvas>
+    </div>
+
+    <div class="hash-block" id="hash-block">
+      <div class="hash-block-label">canvas fingerprint</div>
+      <div class="hash-block-value" id="hash-value">rendering...</div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.canvas-fingerprint.summary">&#x25B6; why does canvas rendering differ between devices?</summary>
+        <p>The HTML Canvas 2D API calls your operating system's graphics stack: font rendering (FreeType, CoreText, DirectWrite), GPU compositing, and antialiasing algorithms. Each combination of OS, GPU, driver version, and installed fonts produces slightly different pixel values for the same drawing instructions.</p>
+        <p>The test scene above is deliberately rich: a gradient (GPU blend), text in multiple fonts (font rasterizer), curved arcs (path approximation), bezier curves (sub-pixel rendering), and emoji (color font rendering). Each element stresses a different part of the pipeline.</p>
+        <p>The resulting fingerprint has been measured at ~90% uniqueness on desktop browsers. In practice, tracking systems combine canvas with WebGL, audio, and navigator data to achieve near-perfect identification.</p>
+        <p>Some browsers (Brave, Firefox with resistFingerprinting) add random noise to canvas output. You can check if yours does — reload this page and see if the hash changes.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+function djb2(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+function djb2Bytes(data) {
+  let hash = 5381;
+  for (let i = 0; i < data.length; i += 4) {
+    hash = ((hash << 5) + hash) + data[i];
+    hash = hash & hash;
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+function drawScene(ctx, W, H) {
+  // Gradient background
+  var grd = ctx.createLinearGradient(0, 0, W, H);
+  grd.addColorStop(0, '#1a1a2e');
+  grd.addColorStop(0.5, '#16213e');
+  grd.addColorStop(1, '#0f3460');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  // Radial gradient overlay
+  var rg = ctx.createRadialGradient(W * 0.7, H * 0.3, 0, W * 0.7, H * 0.3, W * 0.5);
+  rg.addColorStop(0, 'rgba(99,102,241,0.3)');
+  rg.addColorStop(1, 'rgba(99,102,241,0)');
+  ctx.fillStyle = rg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Text in multiple fonts — this stresses the font rasterizer
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font = 'bold 14px Arial, sans-serif';
+  ctx.fillText('invisible layer', 10, 22);
+
+  ctx.font = '12px "Courier New", monospace';
+  ctx.fillStyle = '#22d3ee';
+  ctx.fillText('Cwm fjordbank glyphs vext quiz', 10, 42);
+
+  ctx.font = 'italic 11px Georgia, serif';
+  ctx.fillStyle = '#a78bfa';
+  ctx.fillText('The quick brown fox jumps', 10, 60);
+
+  // Emoji — color font rendering differs significantly by OS
+  ctx.font = '14px sans-serif';
+  ctx.fillStyle = 'white';
+  ctx.fillText('🔍', 10, 80);
+
+  // Arc shapes
+  ctx.beginPath();
+  ctx.arc(W - 40, 30, 22, 0, Math.PI * 2);
+  ctx.strokeStyle = '#00ff41';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(W - 40, 30, 14, 0, Math.PI * 1.3);
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Bezier curves
+  ctx.beginPath();
+  ctx.moveTo(10, H - 10);
+  ctx.bezierCurveTo(W * 0.25, H * 0.2, W * 0.75, H * 0.8, W - 10, H - 10);
+  ctx.strokeStyle = 'rgba(34,211,238,0.5)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(10, H * 0.4);
+  ctx.quadraticCurveTo(W * 0.5, H * 0.1, W - 10, H * 0.4);
+  ctx.strokeStyle = 'rgba(248,113,113,0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Small rectangles with sub-pixel positioning
+  for (var i = 0; i < 5; i++) {
+    ctx.fillStyle = 'rgba(' + (100 + i * 30) + ',' + (200 - i * 20) + ',255,0.6)';
+    ctx.fillRect(10 + i * 18.5, H - 28, 14.7, 16.3);
+  }
+}
+
+function run() {
+  var canvas = document.getElementById('fp-canvas');
+  var dpr = window.devicePixelRatio || 1;
+  var W = 480, H = 100;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  drawScene(ctx, W, H);
+
+  // Get pixel data and hash it
+  var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  var data = imageData.data;
+
+  var h1 = djb2Bytes(data);
+  // Second pass with stride 7 for more entropy
+  var hash2 = 5381;
+  for (var i = 0; i < data.length; i += 7) {
+    hash2 = ((hash2 << 5) + hash2) + data[i];
+    hash2 = hash2 & hash2;
+  }
+  var h2 = (hash2 >>> 0).toString(16).padStart(8, '0');
+  var fingerprint = h1 + '-' + h2;
+
+  // Stats
+  document.getElementById('stat-pixels').textContent = (W * H).toLocaleString();
+  document.getElementById('stat-hash').textContent = h1.slice(0, 6) + '...';
+  document.getElementById('stat-unique').textContent = '~90%';
+
+  // Show hash
+  document.getElementById('hash-value').textContent = fingerprint;
+  var block = document.getElementById('hash-block');
+  block.classList.add('visible');
+}
+
+setTimeout(run, 300);
+</script>
+<script src="../../../assets/js/i18n.js"></script>
+</body>
+</html>

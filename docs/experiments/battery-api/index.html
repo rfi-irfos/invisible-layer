@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>battery API — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.battery-display {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 0 10px;
+}
+.battery-svg-wrap {
+  position: relative;
+  width: 120px;
+}
+.battery-svg-wrap svg {
+  display: block;
+}
+.battery-pct-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.battery-status-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.battery-status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.battery-status-val {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--cyan);
+}
+.battery-status-lbl {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.removed-panel {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--red);
+  border-radius: 6px;
+  padding: 16px 18px;
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+.removed-title {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--red);
+  font-weight: 600;
+}
+.removed-body {
+  font-size: 0.78rem;
+  color: var(--text);
+  line-height: 1.7;
+}
+.removed-body strong { color: var(--amber); }
+.removed-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+.timeline-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.timeline-year {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--dim);
+  flex: 0 0 36px;
+  padding-top: 1px;
+}
+.timeline-text {
+  font-size: 0.7rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: live-pulse 1.5s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.charging-indicator {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 3px;
+}
+.charging-indicator.yes { color: var(--green); background: rgba(0,255,65,0.1); border: 1px solid rgba(0,255,65,0.3); }
+.charging-indicator.no { color: var(--dim); background: var(--surface2); border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>battery API</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">&#x2715;</a>
+  </header>
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.battery-api.label">experiment 33 &middot; battery api &middot; no permissions</div>
+      <div class="exp-title" data-i18n="exp.battery-api.title">your battery level<br>was a tracking tool.</div>
+      <div class="exp-desc" data-i18n="exp.battery-api.desc">
+        The W3C Battery Status API exposed your exact battery charge level, charging state, and
+        estimated drain time to every website you visited. No permission. No dialog. Firefox removed
+        it in 2016 after researchers proved it was being used to track users after cookie deletion.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.battery-api.shock">
+      <strong>Firefox removed this API in 2016.</strong>
+      Researchers proved the battery drain rate was being used to re-identify users who cleared all cookies.
+      Chrome kept a limited version. Safari never implemented it.
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-level">—</span><span class="stat-lbl">level</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-charging">—</span><span class="stat-lbl">charging</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-time">—</span><span class="stat-lbl">time remaining</span></div>
+    </div>
+
+    <!-- Battery available state -->
+    <div id="battery-available" style="display:none;width:100%;flex-direction:column;gap:16px;align-items:center">
+      <div class="live-indicator"><span class="live-dot"></span> live updates active</div>
+
+      <div class="battery-display">
+        <div class="battery-svg-wrap">
+          <svg id="battery-svg" viewBox="0 0 120 60" width="120" height="60" xmlns="http://www.w3.org/2000/svg">
+            <!-- Battery outline -->
+            <rect x="2" y="8" width="104" height="44" rx="6" ry="6"
+              fill="none" stroke="currentColor" stroke-width="2.5" opacity="0.4"/>
+            <!-- Terminal nub -->
+            <rect x="106" y="20" width="10" height="20" rx="3" ry="3"
+              fill="currentColor" opacity="0.3"/>
+            <!-- Fill bar -->
+            <rect id="battery-fill" x="6" y="12" width="0" height="36" rx="3" ry="3"
+              fill="var(--green)" style="transition: width 0.8s ease, fill 0.5s ease"/>
+          </svg>
+          <div class="battery-pct-label" id="battery-pct-label">—</div>
+        </div>
+        <div class="battery-status-row">
+          <div class="battery-status-item">
+            <span class="charging-indicator no" id="charging-badge">discharging</span>
+          </div>
+          <div class="battery-status-item">
+            <span class="battery-status-val" id="batt-charge-time">—</span>
+            <span class="battery-status-lbl">time to full</span>
+          </div>
+          <div class="battery-status-item">
+            <span class="battery-status-val" id="batt-discharge-time">—</span>
+            <span class="battery-status-lbl">time remaining</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Battery removed / unavailable state -->
+    <div class="removed-panel" id="removed-panel">
+      <div class="removed-title">Battery Status API — removed / unavailable</div>
+      <div class="removed-body">
+        <strong>This browser does not expose battery data.</strong>
+        This is intentional — the API was removed or restricted after its tracking potential was documented.
+      </div>
+      <div class="removed-timeline">
+        <div class="timeline-item">
+          <span class="timeline-year">2012</span>
+          <span class="timeline-text">W3C Battery Status API published. Designed for web apps to adapt behavior to low-power conditions.</span>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-year">2015</span>
+          <span class="timeline-text">Olejnik, Acar, Castelluccia &amp; Juels publish "The leaking battery" — demonstrating that exact battery level + drain rate creates a short-lived but precise cross-site identifier, usable even after cookie deletion.</span>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-year">2016</span>
+          <span class="timeline-text">Firefox removes the Battery Status API entirely (Bug 1313580). Mozilla cites the privacy research directly in the decision.</span>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-year">2019</span>
+          <span class="timeline-text">Chrome restricts the API to HTTPS origins and removes it from workers. Safari never shipped it.</span>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-year">2023+</span>
+          <span class="timeline-text">The Battery Status API remains in the W3C spec but is considered deprecated for privacy-sensitive contexts. The episode became a canonical example of how "helpful" APIs become tracking tools.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.battery-api.summary">&#x25B6; how was battery level used for tracking?</summary>
+        <p>The Battery Status API reported battery level as a floating-point number between 0 and 1 (e.g. 0.83), plus the estimated charging and discharging times in seconds. The precision of these values, combined with their slow decay rate, created a fingerprint that persisted for hours — long enough to re-identify a user who had cleared cookies, switched to private browsing, or enabled a VPN.</p>
+        <p>The tracking technique worked across websites within the same browsing session. As the battery level decayed by small increments, the combination of (level, chargingTime, dischargingTime) remained unique to one device. An ad network could record this tuple on site A, then re-identify the same device on unrelated site B — even with no shared cookies, storage, or network identifiers.</p>
+        <p>This case became important in privacy regulation. The GDPR's data minimization principle is now interpreted to prohibit APIs like this even when labeled as "functional." The W3C Privacy Interest Group (PING) now reviews all new browser APIs for fingerprinting surface before publication — a process directly inspired by the battery API incident.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+function formatTime(seconds) {
+  if (!isFinite(seconds) || seconds < 0) return 'unknown';
+  if (seconds === 0) return '0 min';
+  var h = Math.floor(seconds / 3600);
+  var m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + ' min';
+}
+
+function updateUI(battery) {
+  var level = battery.level;
+  var pct = Math.round(level * 100);
+
+  document.getElementById('stat-level').textContent = pct + '%';
+  document.getElementById('stat-charging').textContent = battery.charging ? 'yes' : 'no';
+  var timeVal = battery.charging
+    ? (battery.chargingTime < Infinity ? battery.chargingTime : null)
+    : (battery.dischargingTime < Infinity ? battery.dischargingTime : null);
+  document.getElementById('stat-time').textContent = timeVal != null ? formatTime(timeVal) : 'unknown';
+
+  // SVG fill bar: max width = 96px (x=6 to x=102, total=96)
+  var fillWidth = Math.round(level * 96);
+  document.getElementById('battery-fill').setAttribute('width', String(fillWidth));
+
+  var fillColor = level > 0.5 ? 'var(--green)' : level > 0.2 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('battery-fill').style.fill = fillColor;
+
+  document.getElementById('battery-pct-label').textContent = pct + '%';
+
+  var chargeBadge = document.getElementById('charging-badge');
+  if (battery.charging) {
+    chargeBadge.textContent = 'charging';
+    chargeBadge.className = 'charging-indicator yes';
+  } else {
+    chargeBadge.textContent = 'discharging';
+    chargeBadge.className = 'charging-indicator no';
+  }
+
+  document.getElementById('batt-charge-time').textContent =
+    battery.charging && battery.chargingTime < Infinity ? formatTime(battery.chargingTime) : '—';
+  document.getElementById('batt-discharge-time').textContent =
+    !battery.charging && battery.dischargingTime < Infinity ? formatTime(battery.dischargingTime) : '—';
+}
+
+function showBattery(battery) {
+  document.getElementById('battery-available').style.display = 'flex';
+  document.getElementById('removed-panel').style.display = 'none';
+  updateUI(battery);
+
+  battery.addEventListener('levelchange', function() { updateUI(battery); });
+  battery.addEventListener('chargingchange', function() { updateUI(battery); });
+  battery.addEventListener('chargingtimechange', function() { updateUI(battery); });
+  battery.addEventListener('dischargingtimechange', function() { updateUI(battery); });
+}
+
+function showRemoved() {
+  document.getElementById('battery-available').style.display = 'none';
+  document.getElementById('removed-panel').style.display = 'flex';
+  document.getElementById('stat-level').textContent = 'N/A';
+  document.getElementById('stat-charging').textContent = 'N/A';
+  document.getElementById('stat-time').textContent = 'N/A';
+}
+
+if (navigator.getBattery) {
+  navigator.getBattery().then(function(battery) {
+    showBattery(battery);
+  }).catch(function() {
+    showRemoved();
+  });
+} else {
+  showRemoved();
+}
+</script>
+<script src="../../../assets/js/i18n.js"></script>
+</body>
+</html>

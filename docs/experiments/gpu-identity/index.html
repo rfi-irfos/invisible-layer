@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>GPU identity — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.webgl-canvas-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.webgl-canvas-wrap canvas {
+  width: 100%;
+  display: block;
+}
+.webgl-label {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.param-table {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.param-row {
+  display: flex;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  gap: 12px;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+.param-row:last-child { border-bottom: none; }
+.param-row.visible { opacity: 1; transform: translateX(0); }
+.param-row-key {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--dim);
+  flex: 0 0 160px;
+  padding-top: 1px;
+}
+.param-row-val {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--cyan);
+  word-break: break-all;
+  flex: 1;
+}
+.param-row-val.highlight { color: var(--amber); font-weight: 600; }
+.ext-list {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ext-tag {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--dim);
+}
+.ext-tag.important { border-color: var(--cyan); color: var(--cyan); }
+.unavailable-notice {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: 4px;
+  padding: 14px 16px;
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.7;
+  display: none;
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>GPU identity</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">&#x2715;</a>
+  </header>
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.gpu-identity.label">experiment 28 &middot; webgl &middot; no permissions</div>
+      <div class="exp-title" data-i18n="exp.gpu-identity.title">your GPU model<br>is not a secret.</div>
+      <div class="exp-desc" data-i18n="exp.gpu-identity.desc">
+        Every time a website renders 3D graphics, your GPU exposes its vendor, model, and driver
+        through the WebGL API. No permission required. The information is available to any script
+        on any page you visit.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.gpu-identity.shock">
+      <strong>Your GPU vendor, model, and driver version are readable by every website that renders 3D graphics.</strong>
+      This is used to track you across browsers, VPNs, and private windows.
+      The UNMASKED_RENDERER string often includes the exact GPU model number.
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-vendor">—</span><span class="stat-lbl">vendor</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-tex">—</span><span class="stat-lbl">max texture</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-ext">—</span><span class="stat-lbl">extensions</span></div>
+    </div>
+
+    <div class="webgl-canvas-wrap" style="height:140px">
+      <div class="webgl-label">webgl live render — triangle proof</div>
+      <canvas id="gl-canvas" style="height:140px"></canvas>
+    </div>
+
+    <div class="param-table" id="param-table"></div>
+
+    <div id="ext-section" style="display:none;width:100%;display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim)">supported extensions</div>
+      <div class="ext-list" id="ext-list"></div>
+    </div>
+
+    <div class="unavailable-notice" id="unavailable">
+      <strong>WebGL is unavailable in this browser.</strong>
+      This may be due to hardware acceleration being disabled, a headless environment,
+      or a privacy browser that blocks WebGL. Try Chrome or Firefox with hardware acceleration enabled.
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.gpu-identity.summary">&#x25B6; why is the GPU renderer string so identifying?</summary>
+        <p>WebGL exposes two layers of GPU information. The basic <code>RENDERER</code> string is already identifying — it may say something like "ANGLE (Intel, Mesa Intel UHD Graphics 620)". But if the <code>WEBGL_debug_renderer_info</code> extension is available, you get the unmasked string, which includes the full GPU model name and sometimes driver version.</p>
+        <p>The combination of GPU model, max texture size, and the exact set of supported extensions is highly unique. Different GPU generations support different extension subsets. A GeForce RTX 4090 and a Mali-G710 will have almost completely different extension lists.</p>
+        <p>Even when browsers try to mask this (Firefox does by default; Chrome does not), the rendering behavior itself can be fingerprinted by drawing specific scenes and measuring pixel output — defeating the masking.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+var IMPORTANT_EXTS = ['WEBGL_debug_renderer_info', 'EXT_color_buffer_float', 'OES_texture_float', 'WEBGL_compressed_texture_s3tc', 'EXT_float_blend', 'OES_draw_buffers_indexed', 'WEBGL_multi_draw'];
+
+function run() {
+  var canvas = document.getElementById('gl-canvas');
+  var dpr = window.devicePixelRatio || 1;
+  var W = canvas.parentElement.clientWidth || 400;
+  var H = 140;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) {
+    document.getElementById('unavailable').style.display = 'block';
+    document.getElementById('gl-canvas').parentElement.style.display = 'none';
+    return;
+  }
+
+  // Draw a colored triangle (proof of live WebGL)
+  var vsrc = 'attribute vec2 pos;attribute vec3 col;varying vec3 vCol;void main(){gl_Position=vec4(pos,0.0,1.0);vCol=col;}';
+  var fsrc = 'precision mediump float;varying vec3 vCol;void main(){gl_FragColor=vec4(vCol,1.0);}';
+
+  function compileShader(type, src) {
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compileShader(gl.VERTEX_SHADER, vsrc));
+  gl.attachShader(prog, compileShader(gl.FRAGMENT_SHADER, fsrc));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  var verts = new Float32Array([
+    // x, y, r, g, b
+     0.0,  0.6,  0.0, 0.85, 0.93,  // top: cyan
+    -0.6, -0.5,  0.65, 0.44, 0.98, // bottom-left: purple
+     0.6, -0.5,  0.98, 0.45, 0.44  // bottom-right: red
+  ]);
+
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+
+  var posLoc = gl.getAttribLocation(prog, 'pos');
+  var colLoc = gl.getAttribLocation(prog, 'col');
+  var stride = 5 * 4;
+  gl.enableVertexAttribArray(posLoc);
+  gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, stride, 0);
+  gl.enableVertexAttribArray(colLoc);
+  gl.vertexAttribPointer(colLoc, 3, gl.FLOAT, false, stride, 2 * 4);
+
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.clearColor(0.04, 0.04, 0.04, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+  // Collect parameters
+  var debugExt = gl.getExtension('WEBGL_debug_renderer_info');
+  var params = [];
+
+  if (debugExt) {
+    var unmaskedVendor = gl.getParameter(debugExt.UNMASKED_VENDOR_WEBGL);
+    var unmaskedRenderer = gl.getParameter(debugExt.UNMASKED_RENDERER_WEBGL);
+    params.push({ key: 'UNMASKED_VENDOR', val: unmaskedVendor, highlight: true });
+    params.push({ key: 'UNMASKED_RENDERER', val: unmaskedRenderer, highlight: true });
+    document.getElementById('stat-vendor').textContent = (unmaskedVendor || '?').split(' ')[0];
+  } else {
+    var vendor = gl.getParameter(gl.VENDOR);
+    var renderer = gl.getParameter(gl.RENDERER);
+    params.push({ key: 'VENDOR', val: vendor || 'masked' });
+    params.push({ key: 'RENDERER', val: renderer || 'masked' });
+    document.getElementById('stat-vendor').textContent = (vendor || '?').split(' ')[0];
+  }
+
+  params.push({ key: 'VERSION', val: gl.getParameter(gl.VERSION) });
+  params.push({ key: 'SHADING_LANGUAGE_VERSION', val: gl.getParameter(gl.SHADING_LANGUAGE_VERSION) });
+  params.push({ key: 'MAX_TEXTURE_SIZE', val: String(gl.getParameter(gl.MAX_TEXTURE_SIZE)) });
+  params.push({ key: 'MAX_VERTEX_ATTRIBS', val: String(gl.getParameter(gl.MAX_VERTEX_ATTRIBS)) });
+  params.push({ key: 'MAX_VERTEX_UNIFORM_VECTORS', val: String(gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS)) });
+  params.push({ key: 'MAX_FRAGMENT_UNIFORM_VECTORS', val: String(gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS)) });
+
+  var aliasedRange = gl.getParameter(gl.ALIASED_LINE_WIDTH_RANGE);
+  params.push({ key: 'ALIASED_LINE_WIDTH_RANGE', val: aliasedRange[0] + ' – ' + aliasedRange[1] });
+
+  document.getElementById('stat-tex').textContent = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+
+  // Render param table
+  var table = document.getElementById('param-table');
+  params.forEach(function(p, i) {
+    var row = document.createElement('div');
+    row.className = 'param-row';
+    row.innerHTML = '<span class="param-row-key">' + p.key + '</span><span class="param-row-val' + (p.highlight ? ' highlight' : '') + '">' + p.val + '</span>';
+    table.appendChild(row);
+    setTimeout(function(r) { return function() { r.classList.add('visible'); }; }(row), i * 80);
+  });
+
+  // Extensions
+  var allExts = gl.getSupportedExtensions() || [];
+  document.getElementById('stat-ext').textContent = allExts.length;
+
+  var extList = document.getElementById('ext-list');
+  var extSection = document.getElementById('ext-section');
+  extSection.style.display = 'flex';
+  allExts.forEach(function(ext) {
+    var tag = document.createElement('div');
+    tag.className = 'ext-tag' + (IMPORTANT_EXTS.indexOf(ext) >= 0 ? ' important' : '');
+    tag.textContent = ext;
+    extList.appendChild(tag);
+  });
+}
+
+run();
+</script>
+<script src="../../../assets/js/i18n.js"></script>
+</body>
+</html>

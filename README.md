@@ -1,6 +1,6 @@
 # invisible layer
 
-![experiments](https://img.shields.io/badge/experiments-25-22d3ee?style=flat&labelColor=0f172a)
+![experiments](https://img.shields.io/badge/experiments-37-22d3ee?style=flat&labelColor=0f172a)
 ![sensors](https://img.shields.io/badge/sensors-25%2B-a78bfa?style=flat&labelColor=0f172a)
 ![fingerprints](https://img.shields.io/badge/fingerprints_exposed-yours-ef4444?style=flat&labelColor=0f172a)
 ![languages](https://img.shields.io/badge/languages-EN_%C2%B7_DE-f59e0b?style=flat&labelColor=0f172a)
@@ -40,7 +40,7 @@ Not an app. Not a product. Not a company with a privacy policy nobody reads. A m
 
 ## what this is
 
-25 browser-based experiments that use your phone's built-in sensors to reveal the hidden layers of physical reality — and one profile page that shows you exactly how you look to the systems that are watching.
+37 browser-based experiments that use your phone's built-in sensors and browser APIs to reveal the hidden layers of physical reality — and one profile page that shows you exactly how you look to the systems that are watching.
 
 No app install. No account. No server. Everything runs locally in your browser.
 
@@ -72,7 +72,7 @@ The profile page answers a different question: *what do they already know about 
 |---|---|---|
 | [full spectrum FFT](docs/experiments/acoustic/) | microphone | live |
 | [mains hum detector](docs/experiments/mains-hum/) | microphone | live |
-| [ultrasonic pest repellers](docs/experiments/ultrasonic/) | microphone | partial |
+| [ultrasonic pest repellers](docs/experiments/ultrasonic/) | microphone | live |
 | [room size from echo](docs/experiments/room-acoustics/) | microphone | partial |
 | [infrasound](docs/experiments/infrasound/) | microphone | partial |
 
@@ -83,6 +83,8 @@ The profile page answers a different question: *what do they already know about 
 | [gait biometric](docs/experiments/gait/) | accel + gyro | partial |
 | [micro-seismic logger](docs/experiments/seismic/) | accelerometer | partial |
 | [floor-by-floor altimeter](docs/experiments/barometer/) | barometer | partial |
+| [keystroke timing biometric](docs/experiments/keyboard-timing/) | keyboard events | live |
+| [touch biometric](docs/experiments/touch-biometric/) | touch events | live |
 
 ### light & optical
 | experiment | sensor | status |
@@ -100,7 +102,21 @@ The profile page answers a different question: *what do they already know about 
 | [network fingerprint](docs/experiments/network-fingerprint/) | navigator API | live |
 | [urban canyon detector](docs/experiments/urban-canyon/) | GPS accuracy | partial |
 | [human density from WiFi](docs/experiments/human-density/) | WiFi probes | soon |
+| [font enumeration](docs/experiments/font-enumeration/) | font API | live |
+| [network timing](docs/experiments/network-timing/) | fetch timing | partial |
 | [the full picture](docs/experiments/the-meta/) | everything | partial |
+
+### digital fingerprint
+| experiment | sensor | status |
+|---|---|---|
+| [device identity](docs/experiments/device-identity/) | navigator API | live |
+| [canvas fingerprint](docs/experiments/canvas-fingerprint/) | canvas API | live |
+| [GPU identity](docs/experiments/gpu-identity/) | WebGL API | live |
+| [audio fingerprint](docs/experiments/audio-fingerprint/) | AudioContext | live |
+| [installed voices](docs/experiments/installed-voices/) | speech API | live |
+| [codec map](docs/experiments/codec-map/) | media API | live |
+| [WebRTC IP leak](docs/experiments/webrtc-ip-leak/) | WebRTC | live |
+| [battery API](docs/experiments/battery-api/) | battery API | live |
 
 ---
 

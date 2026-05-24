@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>invisible layer</title>
-<meta name="description" content="Your phone is a military-grade sensor array. 25 browser experiments that make the invisible visible."/>
+<meta name="description" content="Your phone is a military-grade sensor array. 37 browser experiments that make the invisible visible."/>
 <meta property="og:title" content="invisible layer — your phone is already watching"/>
 <meta property="og:description" content="25 experiments. No install. Open on your phone."/>
 <meta name="theme-color" content="#000000"/>
@@ -324,6 +324,7 @@ body { display:flex; flex-direction:column; align-items:center; }
     <button class="drawer-filter-btn" onclick="filter('motion',this);closeMenu()" data-i18n="nav.filter.motion">motion</button>
     <button class="drawer-filter-btn" onclick="filter('light',this);closeMenu()" data-i18n="nav.filter.light">light</button>
     <button class="drawer-filter-btn" onclick="filter('meta',this);closeMenu()" data-i18n="nav.filter.meta">meta layer</button>
+    <button class="drawer-filter-btn" onclick="filter('fp',this);closeMenu()" data-i18n="nav.filter.fp">digital fingerprint</button>
   </div>
   <div class="drawer-divider"></div>
   <a class="drawer-link" href="docs/experiments/the-profile/" style="color:#ef4444;border:1px solid rgba(239,68,68,0.18);border-radius:8px;background:rgba(239,68,68,0.04);" onclick="closeMenu()" data-i18n="drawer.profile">
@@ -402,6 +403,7 @@ body { display:flex; flex-direction:column; align-items:center; }
     <button class="filter-btn" onclick="filter('motion',this)" data-i18n="nav.filter.motion">motion</button>
     <button class="filter-btn" onclick="filter('light',this)" data-i18n="nav.filter.light">light</button>
     <button class="filter-btn" onclick="filter('meta',this)" data-i18n="nav.filter.meta">meta layer</button>
+    <button class="filter-btn" onclick="filter('fp',this)" data-i18n="nav.filter.fp">digital fingerprint</button>
   </div>
 </div>
 
@@ -470,7 +472,7 @@ body { display:flex; flex-direction:column; align-items:center; }
         <div class="card-title" data-i18n="card.ultrasonic.title">ultrasonic detector</div>
         <div class="card-desc" data-i18n="card.ultrasonic.desc">"Silent" pest repellers emit 20–40kHz. Your phone hears them. Find out who's running one nearby.</div>
       </div>
-      <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">microphone · hi-freq</span></div>
+      <div class="card-right"><span class="badge live">live</span><span class="card-sensor">microphone · hi-freq</span></div>
     </a>
     <a class="card" data-cat="acoustic" href="docs/experiments/room-acoustics/">
       <div class="card-icon">◎</div>
@@ -532,6 +534,22 @@ body { display:flex; flex-direction:column; align-items:center; }
         <div class="card-desc" data-i18n="card.barometer.desc">Your barometer is precise enough to detect each floor of a building. Your altitude is always known.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">barometer</span></div>
+    </a>
+    <a class="card" data-cat="motion" href="docs/experiments/keyboard-timing/">
+      <div class="card-icon">⊠</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="card.keyboard-timing.title">keystroke timing biometric</div>
+        <div class="card-desc" data-i18n="card.keyboard-timing.desc">Your inter-keystroke delays are a stable biometric. Type a sentence. See your rhythm captured.</div>
+      </div>
+      <div class="card-right"><span class="badge live">live</span><span class="card-sensor">keyboard events</span></div>
+    </a>
+    <a class="card" data-cat="motion" href="docs/experiments/touch-biometric/">
+      <div class="card-icon">⊤</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="card.touch-biometric.title">touch biometric</div>
+        <div class="card-desc" data-i18n="card.touch-biometric.desc">Touch pressure and contact area are biometrically unique. Your fingertip on glass is a signature.</div>
+      </div>
+      <div class="card-right"><span class="badge live">live</span><span class="card-sensor">touch events</span></div>
     </a>
   </div>
 
@@ -623,6 +641,22 @@ body { display:flex; flex-direction:column; align-items:center; }
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">mic · network · ble</span></div>
     </a>
+    <a class="card" data-cat="meta" href="docs/experiments/font-enumeration/">
+      <div class="card-icon">⊧</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="card.font-enumeration.title">font enumeration</div>
+        <div class="card-desc" data-i18n="card.font-enumeration.desc">80 font probes. No permission. Identifies your OS, region, and whether you use Microsoft Office.</div>
+      </div>
+      <div class="card-right"><span class="badge live">live</span><span class="card-sensor">font api</span></div>
+    </a>
+    <a class="card" data-cat="meta" href="docs/experiments/network-timing/">
+      <div class="card-icon">⊨</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="card.network-timing.title">network timing</div>
+        <div class="card-desc" data-i18n="card.network-timing.desc">Response times for login indicators can reveal which major services you are logged into — from timing alone.</div>
+      </div>
+      <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">fetch timing</span></div>
+    </a>
     <a class="card" data-cat="meta" href="docs/experiments/the-meta/">
       <div class="card-icon">∞</div>
       <div class="card-body">
@@ -630,6 +664,75 @@ body { display:flex; flex-direction:column; align-items:center; }
         <div class="card-desc" data-i18n="card.the-meta.desc">Everything running simultaneously. This is what your phone generates every second. This is what's collected.</div>
       </div>
       <div class="card-right"><span class="badge live">AR · live</span><span class="card-sensor">everything</span></div>
+    </a>
+  </div>
+
+  <!-- DIGITAL FINGERPRINT -->
+  <div class="section-label" data-cat="fp" data-i18n="section.fp">digital fingerprint</div>
+  <div class="grid">
+    <a class="card" data-cat="fp" href="docs/experiments/device-identity/">
+      <div class="card-icon">⊟</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="card.device-identity.title">device identity</div>
+        <div class="card-desc" data-i18n="card.device-identity.desc">8 passive readings. No permission. No click. Enough to narrow you to 1 in 300,000 users.</div>
+      </div>
+      <div class="card-right"><span class="badge live">live</span><span class="card-sensor">navigator api</span></div>
+    </a>
+    <a class="card" data-cat="fp" href="docs/experiments/canvas-fingerprint/">
+      <div class="card-icon">▣</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="card.canvas-fingerprint.title">canvas fingerprint</div>
+        <div class="card-desc" data-i18n="card.canvas-fingerprint.desc">Your GPU renders a hidden scene. The sub-pixel result is a hash that never changes — clearing cookies does nothing.</div>
+      </div>
+      <div class="card-right"><span class="badge live">live</span><span class="card-sensor">canvas api</span></div>
+    </a>
+    <a class="card" data-cat="fp" href="docs/experiments/gpu-identity/">
+      <div class="card-icon">⬢</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="card.gpu-identity.title">GPU identity</div>
+        <div class="card-desc" data-i18n="card.gpu-identity.desc">Your GPU model, driver version, and shader precision are exposed to every website that loads a WebGL canvas.</div>
+      </div>
+      <div class="card-right"><span class="badge live">live</span><span class="card-sensor">webgl api</span></div>
+    </a>
+    <a class="card" data-cat="fp" href="docs/experiments/audio-fingerprint/">
+      <div class="card-icon">◌</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="card.audio-fingerprint.title">audio fingerprint</div>
+        <div class="card-desc" data-i18n="card.audio-fingerprint.desc">Your speaker hardware produces a unique mathematical signature from a silent oscillator. Volume at zero. Works anyway.</div>
+      </div>
+      <div class="card-right"><span class="badge live">live</span><span class="card-sensor">audiocontext</span></div>
+    </a>
+    <a class="card" data-cat="fp" href="docs/experiments/installed-voices/">
+      <div class="card-icon">⊦</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="card.installed-voices.title">installed voices</div>
+        <div class="card-desc" data-i18n="card.installed-voices.desc">The speech voices on your device reveal your OS, region, language packs, and whether IT manages your phone.</div>
+      </div>
+      <div class="card-right"><span class="badge live">live</span><span class="card-sensor">speech api</span></div>
+    </a>
+    <a class="card" data-cat="fp" href="docs/experiments/codec-map/">
+      <div class="card-icon">⊝</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="card.codec-map.title">codec map</div>
+        <div class="card-desc" data-i18n="card.codec-map.desc">Which video formats your hardware supports narrows your device to a handful of models.</div>
+      </div>
+      <div class="card-right"><span class="badge live">live</span><span class="card-sensor">media api</span></div>
+    </a>
+    <a class="card" data-cat="fp" href="docs/experiments/webrtc-ip-leak/">
+      <div class="card-icon">⊜</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="card.webrtc-ip-leak.title">WebRTC IP leak</div>
+        <div class="card-desc" data-i18n="card.webrtc-ip-leak.desc">Your real local IP address — the one behind your VPN. Every website can extract it in seconds using WebRTC.</div>
+      </div>
+      <div class="card-right"><span class="badge danger">identity</span><span class="card-sensor">webrtc api</span></div>
+    </a>
+    <a class="card" data-cat="fp" href="docs/experiments/battery-api/">
+      <div class="card-icon">⊛</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="card.battery-api.title">battery API</div>
+        <div class="card-desc" data-i18n="card.battery-api.desc">Firefox removed this API in 2016 after researchers proved it tracked users who had cleared all cookies.</div>
+      </div>
+      <div class="card-right"><span class="badge live">live</span><span class="card-sensor">battery api</span></div>
     </a>
   </div>
 

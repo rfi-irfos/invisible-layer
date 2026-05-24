@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>touch biometric — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>/* experiment-specific styles */
+.touch-canvas-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: crosshair;
+}
+.touch-canvas-wrap canvas { width: 100%; display: block; }
+.touch-prompt {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+.touch-label {
+  position: absolute;
+  top: 8px; left: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  pointer-events: none;
+}
+.touch-log {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 6px 0;
+}
+.touch-log-row {
+  display: flex;
+  gap: 8px;
+  padding: 4px 14px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--dim);
+  border-bottom: 1px solid var(--border);
+  line-height: 1.4;
+}
+.touch-log-row:last-child { border-bottom: none; }
+.touch-log-row .tl-n  { color: var(--cyan);   width: 22px;  flex-shrink: 0; }
+.touch-log-row .tl-xy { color: var(--text);   width: 110px; flex-shrink: 0; }
+.touch-log-row .tl-r  { color: var(--purple); width: 60px;  flex-shrink: 0; }
+.touch-log-row .tl-f  { flex: 1; }
+.force-note {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--amber);
+  padding: 4px 0;
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>touch-biometric</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">&#x2715;</a>
+  </header>
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.touch-biometric.label">experiment 35 &middot; touch events &middot; no permissions</div>
+      <div class="exp-title" data-i18n="exp.touch-biometric.title">your fingertip<br>is a signature.</div>
+      <div class="exp-desc" data-i18n="exp.touch-biometric.desc">
+        Every touch carries a physical signature: the size of your fingertip, the pressure you apply,
+        and the angle of contact. The Touch API exposes all of this &mdash; radius, force, rotation &mdash;
+        without any permission prompt.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.touch-biometric.shock">
+      <strong>The physical size, pressure, and angle of your finger on glass is biometrically unique.</strong>
+      Combined with typing rhythm, it identifies you to authentication systems &mdash; without any password.
+      Mobile banking apps already use touch biometrics as a continuous background authentication layer.
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell">
+        <span class="stat-val" id="stat-touches">0</span>
+        <span class="stat-lbl" data-i18n="exp.touch-biometric.stat.touches">touches</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-val" id="stat-radius">&#x2014;</span>
+        <span class="stat-lbl" data-i18n="exp.touch-biometric.stat.radius">avg radius px</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-val" id="stat-force">&#x2014;</span>
+        <span class="stat-lbl" data-i18n="exp.touch-biometric.stat.force">force support</span>
+      </div>
+    </div>
+
+    <div class="touch-canvas-wrap" id="touch-wrap" style="height:300px"
+         ontouchstart="handleTouchStart(event)"
+         ontouchmove="handleTouchMove(event)"
+         ontouchend="handleTouchEnd(event)">
+      <canvas id="touch-canvas"></canvas>
+      <div class="touch-label" data-i18n="exp.touch-biometric.canvas-label">touch fingerprint canvas</div>
+      <div class="touch-prompt" id="touch-prompt" data-i18n="exp.touch-biometric.prompt">touch anywhere</div>
+    </div>
+
+    <div id="force-note" class="force-note" style="display:none" data-i18n="exp.touch-biometric.force-note">
+      force = 0 on all touches &mdash; this device does not expose pressure data
+    </div>
+
+    <div class="touch-log" id="touch-log">
+      <div style="color:var(--dim);font-size:0.62rem;font-family:var(--font-mono);text-align:center;padding:14px 0" data-i18n="exp.touch-biometric.log-empty">no touches recorded yet</div>
+    </div>
+
+    <button class="exp-btn ghost" onclick="clearTouch()" style="align-self:flex-start" data-i18n="exp.touch-biometric.clear">clear canvas</button>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.touch-biometric.summary">&#x25B6; the biometrics of a touch</summary>
+        <p>The browser's <code>TouchEvent</code> API exposes far more than just X/Y coordinates. Each touch point includes:</p>
+        <ul>
+          <li><strong>radiusX / radiusY</strong> &mdash; the elliptical contact area of your fingertip in CSS pixels</li>
+          <li><strong>rotationAngle</strong> &mdash; the angle of the ellipse (how tilted your finger is)</li>
+          <li><strong>force</strong> &mdash; pressure from 0.0 (lightest) to 1.0 (maximum), on supported hardware</li>
+        </ul>
+        <p>Your fingertip size is determined by the width of your distal phalanx &mdash; typically 8&ndash;20mm. This varies by person and is stable over time. Combined with how hard you tap and your natural tilt angle, it forms a biometric signature that is independent of which finger you use.</p>
+        <p>Most Android devices do not expose force data (it returns 0). Apple devices with 3D Touch (iPhone 6s&ndash;11) or Haptic Touch expose partial force data. The radius and rotation data are available on almost all touch screens.</p>
+        <p>This data is accessible to any webpage you visit on a touch device &mdash; no permission required.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+
+  var touchCanvas = document.getElementById('touch-canvas');
+  var ctx = touchCanvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var touchCount = 0;
+  var radiusSamples = [];
+  var forceAlwaysZero = true;
+  var forceEverNonZero = false;
+  var touchLog = [];
+  var rings = [];
+  var rafId = null;
+
+  function resizeCanvas() {
+    var wrap = touchCanvas.parentElement;
+    var r = wrap.getBoundingClientRect();
+    touchCanvas.width = Math.round(r.width * dpr);
+    touchCanvas.height = Math.round(r.height * dpr);
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  function drawRings() {
+    var W = touchCanvas.width;
+    var H = touchCanvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    var now = Date.now();
+    rings = rings.filter(function(ring) { return now - ring.time < 1800; });
+
+    rings.forEach(function(ring) {
+      var age = (now - ring.time) / 1800;
+      var alpha = (1 - age) * 0.8;
+      var scale = 1 + age * 1.6;
+      var x = ring.x * dpr;
+      var y = ring.y * dpr;
+      var r = ring.radius * dpr;
+      var force = ring.force;
+
+      var color = force > 0.4 ? '#f87171' : force > 0.0001 ? '#f59e0b' : '#22d3ee';
+
+      // fill
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.18;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(x, y, r, r, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // expanding ring
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.7;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5 * dpr;
+      ctx.beginPath();
+      ctx.ellipse(x, y, r * scale, r * scale, ring.rotation || 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      // center dot
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#22d3ee';
+      ctx.beginPath();
+      ctx.arc(x, y, 2 * dpr, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    rafId = requestAnimationFrame(drawRings);
+  }
+
+  rafId = requestAnimationFrame(drawRings);
+
+  function recordTouch(t, wrap) {
+    var rect = wrap.getBoundingClientRect();
+    var rx = t.radiusX || 0;
+    var ry = t.radiusY || 0;
+    var r = Math.max(rx, ry, 15);
+    var force = t.force || 0;
+    var rotation = (t.rotationAngle || 0) * Math.PI / 180;
+    var x = t.clientX - rect.left;
+    var y = t.clientY - rect.top;
+
+    rings.push({ x: x, y: y, radius: r, force: force, rotation: rotation, time: Date.now() });
+
+    touchCount++;
+    radiusSamples.push(r);
+
+    if (force > 0.001) {
+      forceEverNonZero = true;
+      forceAlwaysZero = false;
+    }
+
+    // update stats
+    document.getElementById('stat-touches').textContent = touchCount;
+    var avgR = radiusSamples.reduce(function(a, b){ return a + b; }, 0) / radiusSamples.length;
+    document.getElementById('stat-radius').textContent = avgR.toFixed(1);
+    document.getElementById('stat-force').textContent = forceEverNonZero ? 'yes' : 'no';
+
+    // show force note if all zeros after 3+ touches
+    if (touchCount >= 3 && forceAlwaysZero) {
+      document.getElementById('force-note').style.display = 'block';
+    }
+
+    // log entry
+    touchLog.unshift({
+      n: touchCount,
+      x: Math.round(x),
+      y: Math.round(y),
+      r: r.toFixed(1),
+      force: forceEverNonZero ? force.toFixed(2) : (force === 0 ? '0.00' : force.toFixed(2)),
+      rot: Math.round(t.rotationAngle || 0)
+    });
+    if (touchLog.length > 30) touchLog.pop();
+
+    renderLog();
+    document.getElementById('touch-prompt').style.opacity = '0';
+  }
+
+  function renderLog() {
+    var log = document.getElementById('touch-log');
+    if (touchLog.length === 0) {
+      log.innerHTML = '<div style="color:var(--dim);font-size:0.62rem;font-family:var(--font-mono);text-align:center;padding:14px 0">no touches recorded yet</div>';
+      return;
+    }
+    var html = '';
+    touchLog.slice(0, 20).forEach(function(entry) {
+      html += '<div class="touch-log-row">'
+        + '<span class="tl-n">#' + entry.n + '</span>'
+        + '<span class="tl-xy">x:' + entry.x + ' y:' + entry.y + '</span>'
+        + '<span class="tl-r">r:' + entry.r + 'px</span>'
+        + '<span class="tl-f">f:' + entry.force + ' ang:' + entry.rot + '&#xb0;</span>'
+        + '</div>';
+    });
+    log.innerHTML = html;
+  }
+
+  window.handleTouchStart = function(e) {
+    e.preventDefault();
+    var wrap = document.getElementById('touch-wrap');
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      recordTouch(e.changedTouches[i], wrap);
+    }
+  };
+
+  window.handleTouchMove = function(e) {
+    e.preventDefault();
+    var wrap = document.getElementById('touch-wrap');
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      recordTouch(e.changedTouches[i], wrap);
+    }
+  };
+
+  window.handleTouchEnd = function(e) {
+    e.preventDefault();
+  };
+
+  window.clearTouch = function() {
+    touchCount = 0;
+    radiusSamples = [];
+    forceAlwaysZero = true;
+    forceEverNonZero = false;
+    touchLog = [];
+    rings = [];
+    document.getElementById('stat-touches').textContent = '0';
+    document.getElementById('stat-radius').textContent = '—';
+    document.getElementById('stat-force').textContent = '—';
+    document.getElementById('touch-prompt').style.opacity = '1';
+    document.getElementById('force-note').style.display = 'none';
+    renderLog();
+  };
+})();
+</script>
+<script src="../../../assets/js/i18n.js"></script>
+</body>
+</html>

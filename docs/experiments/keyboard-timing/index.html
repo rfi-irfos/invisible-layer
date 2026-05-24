@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>keystroke rhythm — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>/* experiment-specific styles */
+.kt-textarea {
+  width: 100%;
+  min-height: 90px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 12px 14px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.kt-textarea:focus { border-color: var(--cyan); }
+.kt-textarea::placeholder { color: var(--dim); }
+
+.kt-chart-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.kt-chart-wrap canvas { width: 100%; display: block; }
+.kt-chart-label {
+  position: absolute;
+  top: 8px; left: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.kt-hash {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.kt-hash-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  flex-shrink: 0;
+}
+.kt-hash-val {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--cyan);
+  letter-spacing: 0.08em;
+  word-break: break-all;
+}
+.kt-hint {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--dim);
+  text-align: center;
+  padding: 6px 0;
+}
+.kt-minmax {
+  display: flex;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--dim);
+}
+.kt-minmax span { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>keyboard-timing</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">&#x2715;</a>
+  </header>
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.keyboard-timing.label">experiment 34 &middot; keyboard events &middot; no permissions</div>
+      <div class="exp-title" data-i18n="exp.keyboard-timing.title">your typing rhythm<br>is a biometric.</div>
+      <div class="exp-desc" data-i18n="exp.keyboard-timing.desc">
+        Every key you press carries a timestamp accurate to sub-millisecond precision.
+        The gap between each keystroke forms a rhythm fingerprint &mdash; stable across sessions,
+        impossible to consciously control, and specific enough to identify you.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.keyboard-timing.shock">
+      <strong>Your keystroke timing pattern is stable across sessions.</strong>
+      Researchers identify individuals from typing rhythm alone with over 95% accuracy &mdash;
+      without reading a single character you typed. Banks and enterprise software already
+      use this for continuous authentication.
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell">
+        <span class="stat-val" id="stat-keys">0</span>
+        <span class="stat-lbl" data-i18n="exp.keyboard-timing.stat.keys">keystrokes</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-val" id="stat-avg">&#x2014;</span>
+        <span class="stat-lbl" data-i18n="exp.keyboard-timing.stat.avg">avg delay ms</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-val" id="stat-hash-short">&#x2014;</span>
+        <span class="stat-lbl" data-i18n="exp.keyboard-timing.stat.hash">rhythm hash</span>
+      </div>
+    </div>
+
+    <div class="kt-chart-wrap" style="height:120px">
+      <canvas id="kt-canvas"></canvas>
+      <div class="kt-chart-label" data-i18n="exp.keyboard-timing.chart-label">inter-key delay ms</div>
+    </div>
+
+    <div class="kt-minmax" id="kt-minmax" style="display:none">
+      <span data-i18n="exp.keyboard-timing.min-label">min:</span> <span id="kt-min">&#x2014;</span>ms
+      &nbsp;&nbsp;
+      <span data-i18n="exp.keyboard-timing.max-label">max:</span> <span id="kt-max">&#x2014;</span>ms
+    </div>
+
+    <textarea
+      id="kt-input"
+      class="kt-textarea"
+      placeholder="start typing here — any text, any language"
+      data-i18n-placeholder="exp.keyboard-timing.placeholder"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
+      aria-label="typing input for keystroke timing analysis"
+    ></textarea>
+
+    <div class="kt-hint" id="kt-hint" data-i18n="exp.keyboard-timing.hint">type 10+ keys to generate your rhythm fingerprint</div>
+
+    <div class="kt-hash" id="kt-hash-block" style="opacity:0;transition:opacity 0.4s">
+      <span class="kt-hash-label" data-i18n="exp.keyboard-timing.fingerprint-label">rhythm fingerprint</span>
+      <span class="kt-hash-val" id="kt-hash-display">&#x2014;</span>
+    </div>
+
+    <button class="exp-btn ghost" onclick="clearKT()" style="align-self:flex-start" data-i18n="exp.keyboard-timing.clear">clear</button>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.keyboard-timing.summary">&#x25B6; how keystroke dynamics biometrics work</summary>
+        <p>Keystroke dynamics (also called typing rhythm or typing biometrics) is the study of how people type &mdash; specifically the timing between keystrokes. Two measurements matter most:</p>
+        <ul>
+          <li><strong>Dwell time</strong> &mdash; how long a key is held down before release</li>
+          <li><strong>Flight time</strong> &mdash; the gap between releasing one key and pressing the next</li>
+        </ul>
+        <p>These form a pattern that is as individual as a signature. Your motor memory, finger length, and learned habits combine to create timing patterns you cannot consciously alter.</p>
+        <p>Continuous authentication systems use this to verify identity throughout a session &mdash; not just at login. If someone else sits down at your keyboard mid-session, the typing rhythm shifts and the system flags it.</p>
+        <p>Keystroke dynamics require no special hardware &mdash; just the timestamps your browser already provides via <code>KeyboardEvent.timeStamp</code>, accessible to any webpage, with no permission required.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+
+  var delays = [];
+  var lastTs = null;
+  var totalKeys = 0;
+
+  var canvas = document.getElementById('kt-canvas');
+  var ctx = canvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+
+  function resizeCanvas() {
+    var wrap = canvas.parentElement;
+    var r = wrap.getBoundingClientRect();
+    canvas.width = Math.round(r.width * dpr);
+    canvas.height = Math.round(r.height * dpr);
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // auto-focus textarea
+  document.getElementById('kt-input').focus();
+
+  function djb2(arr) {
+    var hash = 5381;
+    for (var i = 0; i < arr.length; i++) {
+      var v = Math.round(arr[i]);
+      hash = ((hash << 5) + hash) + (v & 0xff);
+      hash = hash & hash;
+    }
+    return (hash >>> 0).toString(16).padStart(8, '0');
+  }
+
+  function drawChart() {
+    var W = canvas.width;
+    var H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    if (delays.length === 0) return;
+
+    var maxDelay = Math.max.apply(null, delays);
+    if (maxDelay < 1) maxDelay = 1;
+    var capDelay = Math.min(maxDelay, 600);
+
+    var margin = Math.round(14 * dpr);
+    var chartH = H - margin;
+    var barW = Math.max(2 * dpr, (W / Math.max(delays.length, 1)) - dpr);
+    var gap = dpr;
+
+    // grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = dpr;
+    ctx.font = (9 * dpr) + 'px monospace';
+    ctx.fillStyle = 'rgba(100,116,139,0.5)';
+    [100, 200, 300, 400, 500].forEach(function(g) {
+      if (g > capDelay) return;
+      var y = chartH - (g / capDelay) * chartH;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+      ctx.fillText(g + 'ms', 2 * dpr, y - 2 * dpr);
+    });
+
+    // cyan bars
+    for (var i = 0; i < delays.length; i++) {
+      var d = Math.min(delays[i], capDelay);
+      var h = (d / capDelay) * chartH;
+      var x = i * (barW + gap);
+      // cyan
+      ctx.fillStyle = 'rgba(34,211,238,0.85)';
+      ctx.fillRect(x, chartH - h, barW, h);
+    }
+  }
+
+  function updateStats() {
+    document.getElementById('stat-keys').textContent = totalKeys;
+
+    if (delays.length === 0) {
+      document.getElementById('stat-avg').textContent = '—';
+      document.getElementById('stat-hash-short').textContent = '—';
+      document.getElementById('kt-hash-block').style.opacity = '0';
+      document.getElementById('kt-hint').style.display = '';
+      document.getElementById('kt-minmax').style.display = 'none';
+      return;
+    }
+
+    var sum = delays.reduce(function(a, b){ return a + b; }, 0);
+    var avg = Math.round(sum / delays.length);
+    document.getElementById('stat-avg').textContent = avg;
+
+    var minD = Math.round(Math.min.apply(null, delays));
+    var maxD = Math.round(Math.max.apply(null, delays));
+    document.getElementById('kt-min').textContent = minD;
+    document.getElementById('kt-max').textContent = maxD;
+    document.getElementById('kt-minmax').style.display = 'flex';
+
+    if (delays.length >= 10) {
+      var hash = djb2(delays);
+      document.getElementById('stat-hash-short').textContent = hash.slice(0, 6) + '..';
+      document.getElementById('kt-hash-display').textContent = hash;
+      document.getElementById('kt-hash-block').style.opacity = '1';
+      document.getElementById('kt-hint').style.display = 'none';
+    } else {
+      document.getElementById('kt-hint').style.display = '';
+      var remaining = 10 - delays.length;
+      document.getElementById('kt-hint').textContent = remaining + ' more keys to generate rhythm fingerprint';
+    }
+  }
+
+  document.getElementById('kt-input').addEventListener('keydown', function(e) {
+    var ts = e.timeStamp;
+    totalKeys++;
+    if (lastTs !== null) {
+      var delta = ts - lastTs;
+      if (delta > 0 && delta < 2000) {
+        delays.push(delta);
+        drawChart();
+        updateStats();
+      }
+    }
+    lastTs = ts;
+  });
+
+  window.clearKT = function() {
+    delays = [];
+    lastTs = null;
+    totalKeys = 0;
+    document.getElementById('kt-input').value = '';
+    drawChart();
+    updateStats();
+    document.getElementById('kt-hash-block').style.opacity = '0';
+    document.getElementById('kt-hint').style.display = '';
+    document.getElementById('kt-hint').textContent = 'type 10+ keys to generate your rhythm fingerprint';
+    document.getElementById('kt-input').focus();
+  };
+})();
+</script>
+<script src="../../../assets/js/i18n.js"></script>
+</body>
+</html>

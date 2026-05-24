@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>device identity — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.param-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+.param-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.param-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.param-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.param-value {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: var(--cyan);
+  word-break: break-all;
+}
+.param-note {
+  font-size: 0.62rem;
+  color: var(--dim);
+  line-height: 1.5;
+}
+.param-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+.param-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--cyan);
+  transition: width 0.6s ease;
+}
+.hash-display {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.hash-display.visible { opacity: 1; }
+.hash-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.hash-value {
+  font-family: var(--font-mono);
+  font-size: clamp(1rem, 4vw, 1.5rem);
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.06em;
+  word-break: break-all;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>device identity</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">&#x2715;</a>
+  </header>
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.device-identity.label">experiment 26 &middot; navigator api &middot; no permissions</div>
+      <div class="exp-title" data-i18n="exp.device-identity.title">you were identified<br>before you clicked.</div>
+      <div class="exp-desc" data-i18n="exp.device-identity.desc">
+        Every browser exposes a set of hardware and environment properties that require no permission dialog,
+        no click, and no user action whatsoever. Combined, they form a stable identifier unique to your device.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.device-identity.shock">
+      <strong>8 passive readings. No click. No permission dialog.</strong>
+      Enough to narrow your device to 1 in 300,000 users — before you've done anything.
+      These values don't change when you clear cookies, use a VPN, or open a private window.
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-cores">—</span><span class="stat-lbl">cores</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-mem">—</span><span class="stat-lbl">memory</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-touch">—</span><span class="stat-lbl">touch points</span></div>
+    </div>
+
+    <div class="param-grid" id="param-grid"></div>
+
+    <div class="hash-display" id="hash-display">
+      <div class="hash-label">device fingerprint hash</div>
+      <div class="hash-value" id="hash-value">computing...</div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.device-identity.summary">&#x25B6; how does passive device fingerprinting work?</summary>
+        <p>These APIs were designed to help websites adapt their content — serve the right resolution, pick the right codec, show the right language. The side effect is that every value you expose for legitimate adaptation is also a dimension of a fingerprinting vector.</p>
+        <p>The combination of hardware concurrency, device memory, color depth, pixel ratio, touch points, timezone, language, and screen dimensions creates a joint probability space. Each value alone is widely shared. Together, the intersection is rare — typically 1 in tens of thousands to 1 in millions, depending on the device.</p>
+        <p>None of these require a permission dialog. They are readable synchronously on the main thread with zero user interaction. They are stable across browser restarts, private windows, and VPN changes.</p>
+        <ul style="margin-top:10px;padding-left:18px">
+          <li><code>navigator.hardwareConcurrency</code> — logical CPU core count</li>
+          <li><code>navigator.deviceMemory</code> — GB of RAM (rounded to nearest power of 2)</li>
+          <li><code>screen.colorDepth</code> — bits per pixel in the display</li>
+          <li><code>window.devicePixelRatio</code> — physical vs CSS pixel ratio</li>
+          <li><code>navigator.maxTouchPoints</code> — max simultaneous touch contacts</li>
+          <li><code>Intl.DateTimeFormat().resolvedOptions().timeZone</code> — IANA timezone string</li>
+          <li><code>navigator.language / navigator.languages</code> — locale preference chain</li>
+          <li><code>screen.width &times; screen.height</code> — physical screen resolution</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+function djb2(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash = hash & hash; // 32-bit
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+const PARAMS = [
+  {
+    key: 'hardwareConcurrency',
+    label: 'CPU cores',
+    get: () => String(navigator.hardwareConcurrency || 'unknown'),
+    note: 'Logical core count — distinguishes workstation from phone',
+    pct: () => Math.min(100, ((navigator.hardwareConcurrency || 1) / 32) * 100)
+  },
+  {
+    key: 'deviceMemory',
+    label: 'Device memory',
+    get: () => navigator.deviceMemory != null ? navigator.deviceMemory + ' GB' : 'not exposed',
+    note: 'Rounded to nearest power of 2: 0.25, 0.5, 1, 2, 4, 8 GB',
+    pct: () => Math.min(100, ((navigator.deviceMemory || 0) / 16) * 100)
+  },
+  {
+    key: 'colorDepth',
+    label: 'Color depth',
+    get: () => screen.colorDepth + ' bit',
+    note: 'Bits per channel — 24 = standard, 30 = HDR display',
+    pct: () => (screen.colorDepth / 32) * 100
+  },
+  {
+    key: 'pixelRatio',
+    label: 'Pixel ratio',
+    get: () => window.devicePixelRatio + 'x',
+    note: 'High DPI ratios (2x, 3x) identify Retina and OLED displays',
+    pct: () => Math.min(100, (window.devicePixelRatio / 4) * 100)
+  },
+  {
+    key: 'maxTouchPoints',
+    label: 'Touch points',
+    get: () => String(navigator.maxTouchPoints),
+    note: '0 = desktop mouse, 5 = smartphone, 10 = tablet',
+    pct: () => Math.min(100, (navigator.maxTouchPoints / 10) * 100)
+  },
+  {
+    key: 'timezone',
+    label: 'Timezone',
+    get: () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+    note: 'IANA name — narrows location to a region or city',
+    pct: 50
+  },
+  {
+    key: 'language',
+    label: 'Language',
+    get: () => navigator.language,
+    note: 'Primary locale — combined with timezone, infers country',
+    pct: 40
+  },
+  {
+    key: 'languages',
+    label: 'Language chain',
+    get: () => (navigator.languages || [navigator.language]).join(', '),
+    note: 'All accepted languages reveal multilingual installs and region',
+    pct: 55
+  },
+  {
+    key: 'screen',
+    label: 'Screen size',
+    get: () => screen.width + '×' + screen.height,
+    note: 'Physical resolution — narrows device model significantly',
+    pct: () => {
+      const res = screen.width * screen.height;
+      return Math.min(100, (res / (3840 * 2160)) * 100);
+    }
+  }
+];
+
+function reveal() {
+  const grid = document.getElementById('param-grid');
+  const values = [];
+
+  PARAMS.forEach((p, i) => {
+    const val = p.get();
+    values.push(val);
+
+    const pct = typeof p.pct === 'function' ? p.pct() : p.pct;
+
+    const card = document.createElement('div');
+    card.className = 'param-card';
+    card.innerHTML =
+      '<div class="param-label">' + p.label + '</div>' +
+      '<div class="param-value">' + val + '</div>' +
+      '<div class="param-bar"><div class="param-bar-fill" style="width:0%" id="bar-' + i + '"></div></div>' +
+      '<div class="param-note">' + p.note + '</div>';
+    grid.appendChild(card);
+
+    setTimeout(function(card, idx, pct) {
+      return function() {
+        card.classList.add('visible');
+        setTimeout(function() {
+          document.getElementById('bar-' + idx).style.width = pct + '%';
+        }, 100);
+      };
+    }(card, i, pct), i * 120);
+  });
+
+  // Stats
+  document.getElementById('stat-cores').textContent = navigator.hardwareConcurrency || '?';
+  document.getElementById('stat-mem').textContent = navigator.deviceMemory != null ? navigator.deviceMemory + 'GB' : 'N/A';
+  document.getElementById('stat-touch').textContent = String(navigator.maxTouchPoints);
+
+  // Hash
+  const combined = values.join('|');
+  const h1 = djb2(combined);
+  const h2 = djb2(combined.split('').reverse().join(''));
+  const h3 = djb2(combined + navigator.userAgent.slice(0, 20));
+  const fingerprint = h1 + h2 + h3;
+
+  const totalDelay = PARAMS.length * 120 + 300;
+  setTimeout(function() {
+    const disp = document.getElementById('hash-display');
+    document.getElementById('hash-value').textContent = fingerprint;
+    disp.classList.add('visible');
+  }, totalDelay);
+}
+
+setTimeout(reveal, 200);
+</script>
+<script src="../../../assets/js/i18n.js"></script>
+</body>
+</html>

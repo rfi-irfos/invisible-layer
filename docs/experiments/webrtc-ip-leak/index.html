@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>WebRTC IP leak — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.ip-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.ip-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.35s ease, transform 0.35s ease, border-color 0.35s;
+}
+.ip-card.visible { opacity: 1; transform: translateY(0); }
+.ip-card.lan { border-left: 3px solid var(--amber); }
+.ip-card.public { border-left: 3px solid var(--red); }
+.ip-card.link-local { border-left: 3px solid var(--dim); }
+.ip-addr {
+  font-family: var(--font-mono);
+  font-size: clamp(1rem, 4vw, 1.4rem);
+  font-weight: 700;
+  color: var(--text);
+}
+.ip-addr.lan { color: var(--amber); }
+.ip-addr.public { color: var(--red); }
+.ip-addr.link-local { color: var(--dim); }
+.ip-meta {
+  font-size: 0.66rem;
+  color: var(--dim);
+  line-height: 1.5;
+}
+.ip-type-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  margin-bottom: 2px;
+}
+.ip-type-tag.lan { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+.ip-type-tag.public { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+.ip-type-tag.link-local { background: var(--surface2); color: var(--dim); border: 1px solid var(--border); }
+.waiting-state {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--dim);
+}
+.scanning-dot {
+  display: inline-block;
+  animation: blink 1.2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+.xref-panel {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.xref-title {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.xref-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.xref-num {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--red);
+  flex: 0 0 18px;
+  font-weight: 700;
+  padding-top: 1px;
+}
+.xref-text {
+  font-size: 0.72rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+.unavailable-notice {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: 4px;
+  padding: 14px 16px;
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.7;
+  display: none;
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>WebRTC IP leak</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">&#x2715;</a>
+  </header>
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.webrtc-ip-leak.label">experiment 32 &middot; webrtc &middot; no permissions</div>
+      <div class="exp-title" data-i18n="exp.webrtc-ip-leak.title">your VPN<br>has a hole.</div>
+      <div class="exp-desc" data-i18n="exp.webrtc-ip-leak.desc">
+        WebRTC uses ICE (Interactive Connectivity Establishment) to find the best network path for
+        real-time communication. As part of this process, the browser enumerates all your network
+        interfaces — including those hidden behind a VPN.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.webrtc-ip-leak.shock">
+      <strong>Your real local IP — not masked by VPN.</strong>
+      WebRTC bypasses proxies to reveal your router-assigned address.
+      Ad networks use this to re-identify users who think they are anonymous.
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-found">—</span><span class="stat-lbl">IPs found</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-lan">—</span><span class="stat-lbl">LAN IPs</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-cands">—</span><span class="stat-lbl">candidates</span></div>
+    </div>
+
+    <div class="unavailable-notice" id="unavailable">
+      <strong>RTCPeerConnection is unavailable in this browser.</strong>
+      WebRTC is supported in all major modern browsers. Some privacy browsers (Tor Browser, Brave Shield) block
+      this API or prevent local IP disclosure. If you see this, your browser is already protecting you.
+    </div>
+
+    <div id="waiting" class="waiting-state">
+      gathering ICE candidates<span class="scanning-dot">...</span>
+    </div>
+
+    <div class="ip-cards" id="ip-cards"></div>
+
+    <div class="xref-panel" id="xref-panel" style="display:none">
+      <div class="xref-title">how ad networks cross-reference VPN users</div>
+      <div class="xref-step">
+        <span class="xref-num">1</span>
+        <span class="xref-text">User enables VPN. Public IP changes. Cookie-based session ends. User thinks they're anonymous.</span>
+      </div>
+      <div class="xref-step">
+        <span class="xref-num">2</span>
+        <span class="xref-text">WebRTC leaks the <em>local</em> IP — e.g. 192.168.1.42. This is assigned by your router, not by your ISP. It does not change when you enable a VPN.</span>
+      </div>
+      <div class="xref-step">
+        <span class="xref-num">3</span>
+        <span class="xref-text">Canvas fingerprint + local IP + timezone form a stable cross-session identifier. A returning user with the same LAN IP, canvas hash, and timezone is re-identified with high confidence — regardless of VPN, cookies, or private browsing.</span>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.webrtc-ip-leak.summary">&#x25B6; what is ICE candidate harvesting?</summary>
+        <p>WebRTC is a peer-to-peer communication protocol built into browsers. When establishing a connection, both peers gather "ICE candidates" — network addresses where they can potentially be reached. These include host candidates (local interface IPs), server-reflexive candidates (your public IP as seen by a STUN server), and relay candidates (TURN server addresses).</p>
+        <p>The local IP enumeration happens even when no STUN server is configured — creating an <code>RTCPeerConnection</code> with <code>null</code> config and a data channel is sufficient to trigger host candidate collection on most browsers. The browser reports the IP of every active network interface: Ethernet, Wi-Fi, VPN tunnel, loopback, and virtual adapters.</p>
+        <p>This behavior was documented as a privacy issue in 2015. Firefox added a mitigatio in 2019 via <code>media.peerconnection.ice.default_address_only</code>. Chrome's behavior has varied. The Safari implementation also leaks local IPs. Users can check if they are protected by whether this experiment finds IPs that match their LAN subnet.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+var ipRe = /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/;
+
+function classifyIP(ip) {
+  if (/^192\.168\./.test(ip)) return 'lan';
+  if (/^10\./.test(ip)) return 'lan';
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(ip)) return 'lan';
+  if (/^169\.254\./.test(ip)) return 'link-local';
+  if (/^127\./.test(ip)) return 'link-local';
+  return 'public';
+}
+
+function classLabel(cls) {
+  if (cls === 'lan') return 'LAN (router-assigned)';
+  if (cls === 'public') return 'public IP';
+  return 'link-local';
+}
+
+function classMeta(ip, cls) {
+  if (cls === 'lan') return 'Private address assigned by your router. Stable across sessions. Survives VPN changes. Used for cross-session identification.';
+  if (cls === 'public') return 'Public-facing IP. May be a VPN exit node or your real ISP address. Cross-reference with your VPN state.';
+  return 'Link-local address. Used for local network discovery. Low uniqueness.';
+}
+
+var seenIPs = {};
+var totalCandidates = 0;
+var foundIPs = 0;
+var lanIPs = 0;
+
+function addIPCard(ip, cls) {
+  var cards = document.getElementById('ip-cards');
+  var card = document.createElement('div');
+  card.className = 'ip-card ' + cls;
+  card.innerHTML =
+    '<div><span class="ip-type-tag ' + cls + '">' + classLabel(cls) + '</span></div>' +
+    '<div class="ip-addr ' + cls + '">' + ip + '</div>' +
+    '<div class="ip-meta">' + classMeta(ip, cls) + '</div>';
+  cards.appendChild(card);
+  requestAnimationFrame(function() {
+    setTimeout(function() { card.classList.add('visible'); }, 20);
+  });
+}
+
+function run() {
+  if (typeof RTCPeerConnection === 'undefined') {
+    document.getElementById('unavailable').style.display = 'block';
+    document.getElementById('waiting').style.display = 'none';
+    return;
+  }
+
+  var pc;
+  try {
+    pc = new RTCPeerConnection(null);
+  } catch(e) {
+    try {
+      pc = new RTCPeerConnection({ iceServers: [] });
+    } catch(e2) {
+      document.getElementById('unavailable').style.display = 'block';
+      document.getElementById('waiting').style.display = 'none';
+      return;
+    }
+  }
+
+  // Create a data channel to trigger ICE gathering
+  try { pc.createDataChannel('fp'); } catch(e) {}
+
+  pc.onicecandidate = function(e) {
+    if (!e.candidate) {
+      // Gathering complete
+      finalise();
+      return;
+    }
+    totalCandidates++;
+    document.getElementById('stat-cands').textContent = String(totalCandidates);
+
+    var c = e.candidate.candidate || '';
+    var m = c.match(ipRe);
+    if (m) {
+      var ip = m[1];
+      if (!seenIPs[ip]) {
+        seenIPs[ip] = true;
+        var cls = classifyIP(ip);
+        foundIPs++;
+        if (cls === 'lan') lanIPs++;
+        document.getElementById('stat-found').textContent = String(foundIPs);
+        document.getElementById('stat-lan').textContent = String(lanIPs);
+        document.getElementById('waiting').style.display = 'none';
+        addIPCard(ip, cls);
+      }
+    }
+  };
+
+  function finalise() {
+    if (foundIPs === 0) {
+      document.getElementById('waiting').textContent = 'no IP candidates collected — browser may be blocking WebRTC local IP disclosure';
+    } else {
+      document.getElementById('waiting').style.display = 'none';
+    }
+    document.getElementById('xref-panel').style.display = 'flex';
+    try { pc.close(); } catch(e) {}
+  }
+
+  pc.createOffer().then(function(offer) {
+    return pc.setLocalDescription(offer);
+  }).catch(function(err) {
+    document.getElementById('waiting').textContent = 'WebRTC offer failed: ' + err.message;
+    document.getElementById('xref-panel').style.display = 'flex';
+  });
+
+  // Timeout safety — some browsers stop firing candidates but never send null
+  setTimeout(finalise, 5000);
+}
+
+run();
+</script>
+<script src="../../../assets/js/i18n.js"></script>
+</body>
+</html>

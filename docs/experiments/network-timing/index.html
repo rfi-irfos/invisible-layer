@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>login state detection — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>/* experiment-specific styles */
+.service-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.service-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  transition: border-color 0.25s;
+}
+.service-row.fast   { border-color: var(--green);  background: rgba(0,255,65,0.04); }
+.service-row.medium { border-color: var(--amber);  background: rgba(245,158,11,0.04); }
+.service-row.slow   { border-color: var(--red);    background: rgba(248,113,113,0.04); }
+.service-row.blocked { border-color: var(--border); }
+.service-name {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text);
+  width: 90px;
+  flex-shrink: 0;
+}
+.service-bar-wrap {
+  flex: 1;
+  height: 5px;
+  background: var(--border);
+  border-radius: 2px;
+}
+.service-bar {
+  height: 100%;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.4s;
+}
+.service-ms {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--dim);
+  width: 56px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.service-status {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  width: 80px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.service-status.fast    { color: var(--green); }
+.service-status.medium  { color: var(--amber); }
+.service-status.slow    { color: var(--red); }
+.service-status.blocked { color: var(--dim); }
+
+.nt-context {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--dim);
+  line-height: 1.8;
+}
+.nt-context strong { color: var(--amber); }
+.nt-context code {
+  font-family: var(--font-mono);
+  background: var(--muted);
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 0.67rem;
+}
+
+.nt-timeline {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+}
+.nt-timeline-title {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 10px;
+}
+.nt-event {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.nt-event:last-child { border-bottom: none; }
+.nt-event-year {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--cyan);
+  width: 40px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.nt-event-text {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text);
+  opacity: 0.75;
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>network-timing</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">&#x2715;</a>
+  </header>
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.network-timing.label">experiment 37 &middot; fetch timing &middot; partial</div>
+      <div class="exp-title" data-i18n="exp.network-timing.title">which sites<br>know you&rsquo;re there.</div>
+      <div class="exp-desc" data-i18n="exp.network-timing.desc">
+        A cached, authenticated resource loads faster than an uncached one.
+        Before 2019, any website could measure this and infer whether you were logged in
+        to other services &mdash; from timing alone, with no cookies and no interaction.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.network-timing.shock">
+      <strong>Before 2020, any website could detect which social networks you were logged into
+      &mdash; from load time alone, in under 100ms, no permission needed.</strong>
+      Browsers patched this in 2020&ndash;2021 via partitioned caches and SameSite cookie policy.
+      The attack required zero cooperation from the target site and worked across all browsers.
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell">
+        <span class="stat-val" id="stat-probed">0</span>
+        <span class="stat-lbl" data-i18n="exp.network-timing.stat.probed">probed</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-val" id="stat-detectable">&#x2014;</span>
+        <span class="stat-lbl" data-i18n="exp.network-timing.stat.detectable">ms measured</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-val" id="stat-blocked">&#x2014;</span>
+        <span class="stat-lbl" data-i18n="exp.network-timing.stat.blocked">browser protected</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button class="exp-btn" id="btn-probe" onclick="startProbe()" data-i18n="exp.network-timing.btn-probe">&#x25C9; probe timing</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopProbe()" style="display:none" data-i18n="btn.stop">&#x25A0; stop</button>
+    </div>
+
+    <div class="service-list" id="service-list">
+      <!-- populated by JS -->
+    </div>
+
+    <div class="nt-context" id="nt-context" style="display:none">
+      <strong>why most results show blocked:</strong> Modern browsers enforce <code>SameSite=Lax</code> cookies
+      and partitioned HTTP caches that prevent cross-site timing attacks. The fetch() calls above complete
+      with CORS errors rather than returning cached resources &mdash; intentionally defeating this attack.<br><br>
+      <strong>What the attack looked like pre-2019:</strong> An attacker page loaded an image from
+      <code>https://facebook.com/favicon.ico</code> and measured the time. Logged-in users returned the
+      cached favicon in ~5ms. Logged-out users triggered a redirect and auth check &mdash; 80&ndash;200ms.
+      The difference identified login state with &gt;90% accuracy.
+    </div>
+
+    <div class="nt-timeline" id="nt-timeline" style="display:none">
+      <div class="nt-timeline-title" data-i18n="exp.network-timing.timeline-title">browser mitigations timeline</div>
+      <div class="nt-event">
+        <span class="nt-event-year">2009</span>
+        <span class="nt-event-text">Felten &amp; Schneider document timing side-channel for login state detection. Shared HTTP cache exploitable from any origin.</span>
+      </div>
+      <div class="nt-event">
+        <span class="nt-event-year">2010</span>
+        <span class="nt-event-text">Widespread exploitation via <code>&lt;img&gt;</code> tags and <code>fetch()</code>. No browser mitigation. Works across all browsers.</span>
+      </div>
+      <div class="nt-event">
+        <span class="nt-event-year">2016</span>
+        <span class="nt-event-text">SameSite cookie attribute proposed. Not yet enforced by default in any major browser.</span>
+      </div>
+      <div class="nt-event">
+        <span class="nt-event-year">2019</span>
+        <span class="nt-event-text">Chrome 76 begins enforcing SameSite=Lax by default. Partial mitigation; cache partitioning not yet deployed.</span>
+      </div>
+      <div class="nt-event">
+        <span class="nt-event-year">2020</span>
+        <span class="nt-event-text">Chrome 86 ships double-keyed HTTP cache partitioning (top-frame origin + request origin). Safari 13.1 ships ITP with full cache partitioning. Firefox 85 follows in 2021.</span>
+      </div>
+      <div class="nt-event">
+        <span class="nt-event-year">2021</span>
+        <span class="nt-event-text">Attack is largely defeated in modern browsers. CSS <code>:visited</code> history sniffing and XS-Leaks remain partial vectors in some configurations.</span>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.network-timing.summary">&#x25B6; history of login state detection attacks</summary>
+        <p>The <strong>timing side-channel attack</strong> for login state detection was first documented by Felten and Schneider (2000, &ldquo;Timing Attacks on Web Privacy&rdquo;). The key insight: browsers maintain a shared HTTP cache across all origins. If you're logged into Facebook, the Facebook favicon is cached. Any page can try to load it and measure the time &mdash; cached = fast = logged in.</p>
+        <p>The attack was publicly documented, widely known, and remained exploitable for over a decade. Major browsers finally patched it between 2019 and 2021 through a combination of:</p>
+        <ul>
+          <li><strong>SameSite cookie policy</strong> &mdash; cookies no longer sent on cross-site subresource requests by default</li>
+          <li><strong>Partitioned HTTP cache</strong> &mdash; each origin gets its own cache partition (Chrome 86, 2020; Firefox 85, 2021; Safari 13.1, 2020)</li>
+          <li><strong>CORS restrictions</strong> &mdash; cross-origin fetch() calls blocked unless the target explicitly allows it</li>
+        </ul>
+        <p>Before these mitigations, the attack required: one malicious webpage, a list of target URLs, <code>fetch()</code> or an <code>&lt;img&gt;</code> tag, and a timer. No user interaction. No permissions. No cookies from the attacker.</p>
+        <p>Variants using CSS <code>:visited</code> link style detection (history sniffing) remain partially effective. If a user has visited a URL, <code>:visited</code> styling applies and can be measured via <code>getComputedStyle()</code>.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+
+  var SERVICES = [
+    { name: 'Google',    url: 'https://accounts.google.com/favicon.ico',              probe: 'img'   },
+    { name: 'Facebook',  url: 'https://www.facebook.com/favicon.ico',                 probe: 'fetch' },
+    { name: 'Twitter/X', url: 'https://abs.twimg.com/favicons/twitter.3.ico',         probe: 'fetch' },
+    { name: 'LinkedIn',  url: 'https://static.licdn.com/aero-v1/sc/h/al2o9zrvru7zan5wp7ils5s8', probe: 'fetch' },
+    { name: 'GitHub',    url: 'https://github.githubassets.com/favicons/favicon.ico', probe: 'fetch' },
+  ];
+
+  var results = {};
+  var blockedCount = 0;
+  var probeCount = 0;
+  var running = false;
+  var timers = [];
+
+  function buildList() {
+    var list = document.getElementById('service-list');
+    list.innerHTML = '';
+    SERVICES.forEach(function(svc) {
+      var row = document.createElement('div');
+      row.className = 'service-row';
+      row.id = 'sr-' + svc.name;
+      row.innerHTML = ''
+        + '<span class="service-name">' + svc.name + '</span>'
+        + '<div class="service-bar-wrap"><div class="service-bar" id="bar-' + svc.name + '"></div></div>'
+        + '<span class="service-ms" id="ms-' + svc.name + '">&#x2014;</span>'
+        + '<span class="service-status blocked" id="st-' + svc.name + '">waiting</span>';
+      list.appendChild(row);
+    });
+  }
+
+  function probeService(svc, cb) {
+    var t0 = performance.now();
+    if (svc.probe === 'img') {
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload  = function() { cb(performance.now() - t0, 'load',  false); };
+      img.onerror = function() { cb(performance.now() - t0, 'error', false); };
+      img.src = svc.url + '?t=' + Date.now();
+    } else {
+      fetch(svc.url, { mode: 'no-cors', cache: 'no-cache', credentials: 'include' })
+        .then(function() { cb(performance.now() - t0, 'opaque', false); })
+        .catch(function() { cb(performance.now() - t0, 'cors-blocked', true); });
+    }
+  }
+
+  function updateRow(svc, ms, corsBlocked) {
+    var row = document.getElementById('sr-' + svc.name);
+    var bar = document.getElementById('bar-' + svc.name);
+    var msEl = document.getElementById('ms-' + svc.name);
+    var stEl = document.getElementById('st-' + svc.name);
+    var cls = corsBlocked ? 'blocked' : ms < 40 ? 'fast' : ms < 150 ? 'medium' : 'slow';
+    row.className = 'service-row ' + cls;
+    msEl.textContent = corsBlocked ? 'n/a' : Math.round(ms) + 'ms';
+    if (!corsBlocked) {
+      bar.style.width = Math.min(100, (ms / 400) * 100) + '%';
+      bar.style.background = cls === 'fast' ? 'var(--green)' : cls === 'medium' ? 'var(--amber)' : 'var(--red)';
+    }
+    var statusText = corsBlocked ? 'cors blocked' : cls === 'fast' ? 'fast' : cls === 'medium' ? 'medium' : 'slow';
+    stEl.textContent = statusText;
+    stEl.className = 'service-status ' + (corsBlocked ? 'blocked' : cls);
+  }
+
+  function finishProbe() {
+    running = false;
+    document.getElementById('btn-probe').style.display = 'inline-flex';
+    document.getElementById('btn-stop').style.display = 'none';
+    document.getElementById('nt-context').style.display = 'block';
+    document.getElementById('nt-timeline').style.display = 'block';
+    document.getElementById('stat-blocked').textContent = blockedCount + '/' + SERVICES.length;
+
+    var allMs = Object.keys(results).map(function(k){ return results[k]; });
+    if (allMs.length > 0) {
+      var avg = allMs.reduce(function(a, b){ return a + b; }, 0) / allMs.length;
+      document.getElementById('stat-detectable').textContent = Math.round(avg) + 'ms';
+    } else {
+      document.getElementById('stat-detectable').textContent = 'n/a';
+    }
+  }
+
+  window.startProbe = function() {
+    if (running) return;
+    running = true;
+    blockedCount = 0;
+    probeCount = 0;
+    results = {};
+    document.getElementById('btn-probe').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('nt-context').style.display = 'none';
+    document.getElementById('nt-timeline').style.display = 'none';
+    document.getElementById('stat-probed').textContent = '0';
+    document.getElementById('stat-detectable').textContent = '...';
+    document.getElementById('stat-blocked').textContent = '...';
+    buildList();
+
+    SERVICES.forEach(function(svc, i) {
+      var t = setTimeout(function() {
+        if (!running) return;
+        probeService(svc, function(ms, status, corsBlocked) {
+          if (!running) return;
+          if (corsBlocked) blockedCount++;
+          else results[svc.name] = ms;
+          probeCount++;
+          document.getElementById('stat-probed').textContent = probeCount;
+          updateRow(svc, ms, corsBlocked);
+          if (probeCount >= SERVICES.length) finishProbe();
+        });
+      }, i * 200);
+      timers.push(t);
+    });
+  };
+
+  window.stopProbe = function() {
+    running = false;
+    timers.forEach(function(t){ clearTimeout(t); });
+    timers = [];
+    document.getElementById('btn-probe').style.display = 'inline-flex';
+    document.getElementById('btn-stop').style.display = 'none';
+  };
+
+  buildList();
+})();
+</script>
+<script src="../../../assets/js/i18n.js"></script>
+</body>
+</html>
