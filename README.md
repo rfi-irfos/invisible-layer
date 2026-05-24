@@ -4,8 +4,6 @@
 
 The right question is: *now that you see it, what do you do?*
 
-[![try it live →](https://img.shields.io/badge/open_on_your_phone_%E2%86%92-rfi--irfos.github.io%2Finvisible--layer-22d3ee?style=for-the-badge&labelColor=0f172a&color=22d3ee)](https://rfi-irfos.github.io/invisible-layer/)
-
 ![experiments](https://img.shields.io/badge/experiments-25-22d3ee?style=flat&labelColor=0f172a)
 ![sensors](https://img.shields.io/badge/sensors-25%2B-a78bfa?style=flat&labelColor=0f172a)
 ![fingerprints](https://img.shields.io/badge/fingerprints_exposed-yours-ef4444?style=flat&labelColor=0f172a)
