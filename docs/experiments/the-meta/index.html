@@ -12,86 +12,81 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:
 #cam-video{
   position:fixed;inset:0;width:100%;height:100%;
   object-fit:cover;z-index:0;
-  transform:scaleX(1); /* start neutral; JS overrides if front cam */
+  transform:scaleX(1);
 }
 #ar-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
 
-/* scanline overlay */
 #scanlines{
   position:fixed;inset:0;z-index:2;pointer-events:none;
-  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.12) 3px,rgba(0,0,0,0.12) 4px);
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.10) 3px,rgba(0,0,0,0.10) 4px);
   mix-blend-mode:overlay;
 }
-/* vignette */
 #vignette{
   position:fixed;inset:0;z-index:2;pointer-events:none;
-  background:radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%);
+  background:radial-gradient(ellipse at 50% 50%,transparent 50%,rgba(0,0,0,0.65) 100%);
 }
 
-/* header */
 .ar-header{
   position:fixed;top:0;left:0;right:0;height:50px;z-index:10;
   display:flex;align-items:center;justify-content:space-between;
   padding:0 16px;
-  background:linear-gradient(to bottom,rgba(0,0,0,0.8) 0%,transparent 100%);
+  background:linear-gradient(to bottom,rgba(0,0,0,0.85) 0%,transparent 100%);
 }
-.ar-brand{
-  display:flex;flex-direction:column;gap:1px;
-}
+.ar-brand{display:flex;flex-direction:column;gap:1px}
 .ar-brand-main{font-size:0.7rem;color:#22d3ee;letter-spacing:0.18em;text-transform:uppercase}
-.ar-brand-sub{font-size:0.5rem;color:rgba(255,255,255,0.3);letter-spacing:0.12em}
+.ar-brand-sub{font-size:0.5rem;color:rgba(255,255,255,0.25);letter-spacing:0.12em}
 .ar-close{
   display:flex;align-items:center;justify-content:center;
-  width:32px;height:32px;border:1px solid rgba(255,255,255,0.25);border-radius:50%;
-  color:rgba(255,255,255,0.6);font-size:0.85rem;text-decoration:none;
+  width:32px;height:32px;border:1px solid rgba(255,255,255,0.2);border-radius:50%;
+  color:rgba(255,255,255,0.5);font-size:0.85rem;text-decoration:none;
   transition:all 0.15s;
 }
 .ar-close:hover{background:rgba(255,255,255,0.15);border-color:#fff;color:#fff}
 
-/* spectrum bar */
-.spectrum-bar{
-  position:fixed;bottom:88px;left:0;right:0;height:32px;z-index:10;
-  pointer-events:none;
-}
+.spectrum-bar{position:fixed;bottom:90px;left:0;right:0;height:36px;z-index:10;pointer-events:none}
 
-/* layer chip tray */
 .layer-tray{
   position:fixed;bottom:0;left:0;right:0;z-index:10;
-  padding:10px 10px max(10px,env(safe-area-inset-bottom));
-  background:linear-gradient(to top,rgba(0,0,0,0.85) 0%,transparent 100%);
-  display:flex;gap:6px;flex-wrap:wrap;justify-content:center;
+  padding:8px 10px max(10px,env(safe-area-inset-bottom));
+  background:linear-gradient(to top,rgba(0,0,0,0.9) 0%,transparent 100%);
+  display:flex;gap:5px;flex-wrap:wrap;justify-content:center;
 }
 .chip{
   display:flex;align-items:center;gap:5px;
-  padding:6px 12px;
-  background:rgba(0,0,0,0.55);
-  border:1px solid rgba(255,255,255,0.12);
+  padding:6px 11px;
+  background:rgba(0,0,0,0.6);
+  border:1px solid rgba(255,255,255,0.1);
   border-radius:100px;
-  font-size:0.58rem;color:rgba(255,255,255,0.4);
+  font-size:0.55rem;color:rgba(255,255,255,0.35);
   letter-spacing:0.06em;text-transform:uppercase;
   cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;
   transition:all 0.15s;
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
 }
-.chip.on{border-color:var(--c);color:var(--c);background:rgba(0,0,0,0.7)}
-.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0.4}
+.chip.on{border-color:var(--c);color:var(--c);background:rgba(0,0,0,0.75)}
+.chip-dot{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:0.4}
 .chip.on .chip-dot{opacity:1;animation:blink 2s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
 
-/* start screen */
 .start{
   position:fixed;inset:0;z-index:30;
   background:#000;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:18px;padding:32px;text-align:center;
+  gap:20px;padding:32px;text-align:center;
 }
 .start.gone{display:none}
 .start-eyebrow{font-size:0.6rem;color:rgba(255,255,255,0.2);letter-spacing:0.18em}
 .start-eyebrow a{color:inherit;text-decoration:none}
 .start-eyebrow a:hover{color:rgba(255,255,255,0.5)}
 .start-title{font-size:clamp(1.8rem,8vw,2.8rem);font-weight:400;color:#fff;line-height:1.1;letter-spacing:-0.02em}
-.start-sub{font-size:0.72rem;color:rgba(255,255,255,0.35);line-height:1.7;max-width:320px}
-.start-sub strong{color:rgba(255,255,255,0.6)}
+.start-sub{font-size:0.75rem;color:rgba(255,255,255,0.32);line-height:1.8;max-width:320px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.start-sub strong{color:rgba(255,255,255,0.55);font-weight:500}
+.start-sensors{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:300px}
+.start-sensor-chip{
+  font-size:0.52rem;letter-spacing:0.08em;padding:3px 8px;
+  border:1px solid rgba(255,255,255,0.1);border-radius:100px;
+  color:rgba(255,255,255,0.25);
+}
 .start-btn{
   display:inline-flex;align-items:center;gap:10px;
   background:none;border:1px solid #22d3ee;border-radius:6px;
@@ -99,9 +94,10 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:
   padding:14px 28px;cursor:pointer;letter-spacing:0.06em;
   transition:background 0.12s,color 0.12s;
   -webkit-tap-highlight-color:transparent;
+  margin-top:4px;
 }
 .start-btn:hover,.start-btn:active{background:#22d3ee;color:#000}
-.start-warn{font-size:0.6rem;color:rgba(255,255,255,0.18);max-width:280px;line-height:1.6}
+.start-warn{font-size:0.58rem;color:rgba(255,255,255,0.15);max-width:280px;line-height:1.7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 </style>
 </head>
 <body>
@@ -116,17 +112,19 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:
     <div class="ar-brand-main">full metal layer</div>
     <div class="ar-brand-sub">invisible layer · palantir mode</div>
   </div>
-  <a class="ar-close" href="../../../" title="close">✕</a>
+  <a class="ar-close" href="../../../" title="close">&#10005;</a>
 </div>
 
 <canvas class="spectrum-bar" id="spec-bar"></canvas>
 
 <div class="layer-tray" id="tray">
-  <div class="chip on" style="--c:#00ff41"  data-l="sound"   onclick="tog(this)"><div class="chip-dot"></div>sound</div>
-  <div class="chip on" style="--c:#a78bfa"  data-l="em"      onclick="tog(this)"><div class="chip-dot"></div>EM field</div>
-  <div class="chip on" style="--c:#22d3ee"  data-l="motion"  onclick="tog(this)"><div class="chip-dot"></div>motion</div>
-  <div class="chip on" style="--c:#f59e0b"  data-l="rf"      onclick="tog(this)"><div class="chip-dot"></div>RF signals</div>
-  <div class="chip on" style="--c:#f87171"  data-l="hud"     onclick="tog(this)"><div class="chip-dot"></div>telemetry</div>
+  <div class="chip on" style="--c:#00ff41"  data-l="sound"    onclick="tog(this)"><div class="chip-dot"></div>sound</div>
+  <div class="chip on" style="--c:#a78bfa"  data-l="em"       onclick="tog(this)"><div class="chip-dot"></div>EM field</div>
+  <div class="chip on" style="--c:#22d3ee"  data-l="motion"   onclick="tog(this)"><div class="chip-dot"></div>accel</div>
+  <div class="chip on" style="--c:#60a5fa"  data-l="gyro"     onclick="tog(this)"><div class="chip-dot"></div>gyro</div>
+  <div class="chip on" style="--c:#f59e0b"  data-l="rf"       onclick="tog(this)"><div class="chip-dot"></div>RF signals</div>
+  <div class="chip on" style="--c:#8b5cf6"  data-l="altitude" onclick="tog(this)"><div class="chip-dot"></div>altitude</div>
+  <div class="chip on" style="--c:#f87171"  data-l="hud"      onclick="tog(this)"><div class="chip-dot"></div>telemetry</div>
   <div class="chip on" style="--c:#34d399"  data-l="spectrum" onclick="tog(this)"><div class="chip-dot"></div>spectrum</div>
 </div>
 
@@ -134,167 +132,265 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:
   <div class="start-eyebrow"><a href="../../../">invisible layer</a> / full metal layer</div>
   <div class="start-title">this is what<br>AI sees.</div>
   <div class="start-sub">
-    Sound pressure. Magnetic fields. Motion forces. RF signals.
-    <strong>Every invisible layer that surrounds you right now</strong> — rendered on the world in real time.
+    Every invisible signal, field, and force around you — rendered on the world.
+    <strong>Sound waves. Magnetic fields. Gravity. RF broadcasts. Atmospheric pressure. All at once.</strong>
   </div>
-  <button class="start-btn" onclick="boot()">◉ open all sensors</button>
-  <div class="start-warn">grants camera + microphone + motion access. all processing stays on-device.</div>
+  <div class="start-sensors">
+    <span class="start-sensor-chip">microphone</span>
+    <span class="start-sensor-chip">magnetometer</span>
+    <span class="start-sensor-chip">accelerometer</span>
+    <span class="start-sensor-chip">gyroscope</span>
+    <span class="start-sensor-chip">barometer</span>
+    <span class="start-sensor-chip">GPS</span>
+    <span class="start-sensor-chip">network</span>
+    <span class="start-sensor-chip">battery</span>
+    <span class="start-sensor-chip">camera</span>
+    <span class="start-sensor-chip">orientation</span>
+  </div>
+  <button class="start-btn" onclick="boot()">&#9711; open all sensors</button>
+  <div class="start-warn">grants camera, microphone, and motion access. all processing stays on-device.</div>
 </div>
 
 <script>
 'use strict';
-// ── Layer state ────────────────────────────────────────────
-const L = {sound:true, em:true, motion:true, rf:true, hud:true, spectrum:true};
+
+// ── Layer toggles ──────────────────────────────────────────────
+const L = {sound:true, em:true, motion:true, gyro:true, rf:true, altitude:true, hud:true, spectrum:true};
 function tog(chip) { const k=chip.dataset.l; L[k]=!L[k]; chip.classList.toggle('on',L[k]); }
 
-// ── Sensor state ───────────────────────────────────────────
+// ── Sensor state ──────────────────────────────────────────────
 const S = {
   // audio
   audioLevel:0, audioPeak:0, audioRMS:0,
-  fftBands:[0,0,0,0,0,0,0,0], // 8 FFT bands, normalized 0-1
+  fftBands:new Array(8).fill(0),
   // magnetometer
   mx:0, my:0, mz:0, magTotal:0, magBaseline:null, magSamples:0,
-  // motion
+  // accelerometer
   ax:0, ay:0, az:0,
+  // gyroscope / orientation
+  gyrX:0, gyrY:0, gyrZ:0,
+  orAlpha:0, orBeta:0, orGamma:0,
+  // barometer
+  pressure:null, pressureBaseline:null,
   // network
   netType:'?', netRtt:null, netDown:null,
   // battery
   battLevel:null, battCharging:false,
   // geo
   lat:null, lon:null, locAcc:null,
-  // device
-  screenHz: screen.width + 'x' + screen.height,
-  ua: navigator.userAgent.match(/\(([^)]+)\)/)?.[1] || '?'
+  // device / screen
+  hw: navigator.hardwareConcurrency || '?',
+  screenRes: screen.width + 'x' + screen.height,
+  dpr: (window.devicePixelRatio || 1).toFixed(1),
+  // ambient light
+  lux: null,
 };
 
-// ── Canvas ─────────────────────────────────────────────────
+// ── Canvas setup ───────────────────────────────────────────────
 const cv = document.getElementById('ar-canvas');
 const cx = cv.getContext('2d');
 const sb = document.getElementById('spec-bar');
 const sc = sb.getContext('2d');
-let W=0, H=0;
+let W=0, H=0, DPR=1;
+
 function resize() {
-  const dpr = window.devicePixelRatio || 1;
+  DPR = window.devicePixelRatio || 1;
   W = window.innerWidth;
   H = window.innerHeight;
-  cv.width  = W * dpr; cv.height = H * dpr;
-  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  sb.width  = W * dpr; sb.height = 32 * dpr;
-  sc.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cv.width  = Math.round(W * DPR);
+  cv.height = Math.round(H * DPR);
+  cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  sb.width  = Math.round(W * DPR);
+  sb.height = Math.round(36 * DPR);
+  sc.setTransform(DPR, 0, 0, DPR, 0, 0);
   initParticles();
 }
 resize();
 window.addEventListener('resize', resize);
 
-// ── Audio ──────────────────────────────────────────────────
+// ── Audio ──────────────────────────────────────────────────────
 let aCtx, analyser, aData, aTD;
 function startAudio() {
-  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})
-    .then(stream => {
-      aCtx = new (window.AudioContext||window.webkitAudioContext)();
-      analyser = aCtx.createAnalyser();
-      analyser.fftSize = 2048;
-      analyser.smoothingTimeConstant = 0.7;
-      aCtx.createMediaStreamSource(stream).connect(analyser);
-      aData = new Float32Array(analyser.frequencyBinCount);
-      aTD   = new Float32Array(analyser.fftSize); // time-domain waveform
-    }).catch(()=>{});
+  navigator.mediaDevices.getUserMedia({
+    audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}
+  }).then(stream => {
+    aCtx = new (window.AudioContext||window.webkitAudioContext)();
+    analyser = aCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.75;
+    aCtx.createMediaStreamSource(stream).connect(analyser);
+    aData = new Float32Array(analyser.frequencyBinCount);
+    aTD   = new Float32Array(analyser.fftSize);
+  }).catch(()=>{});
 }
 
-// ── Magnetometer ───────────────────────────────────────────
+// ── Magnetometer ───────────────────────────────────────────────
 function startMag() {
-  const onReading = (x, y, z) => {
+  const onR = (x,y,z) => {
     S.mx=x; S.my=y; S.mz=z;
     S.magTotal = Math.sqrt(x*x+y*y+z*z);
-    if (S.magSamples < 120) {
-      S.magBaseline = S.magBaseline===null ? S.magTotal : S.magBaseline*0.97+S.magTotal*0.03;
+    if (S.magSamples < 150) {
+      S.magBaseline = S.magBaseline===null ? S.magTotal : S.magBaseline*0.96+S.magTotal*0.04;
       S.magSamples++;
     }
   };
   if (typeof Magnetometer !== 'undefined') {
     try {
-      const m = new Magnetometer({frequency:25});
-      m.addEventListener('reading',()=>onReading(m.x,m.y,m.z));
+      const m = new Magnetometer({frequency:20});
+      m.addEventListener('reading',()=>onR(m.x,m.y,m.z));
       m.start(); return;
     } catch(e){}
   }
-  const h = e => {
-    const proxy = Math.sqrt((e.beta||0)**2+(e.gamma||0)**2);
-    onReading(e.gamma||0, e.beta||0, (e.alpha||0)*0.1);
-  };
+  const h = e => onR(e.gamma||0, e.beta||0, (e.alpha||0)*0.1);
   if (typeof DeviceOrientationEvent.requestPermission==='function') {
-    DeviceOrientationEvent.requestPermission().then(s=>{if(s==='granted')window.addEventListener('deviceorientation',h,true);}).catch(()=>{});
+    DeviceOrientationEvent.requestPermission()
+      .then(s=>{if(s==='granted')window.addEventListener('deviceorientation',h,true);})
+      .catch(()=>{});
   } else {
     window.addEventListener('deviceorientation',h,true);
     window.addEventListener('deviceorientationabsolute',h,true);
   }
 }
 
-// ── Motion ─────────────────────────────────────────────────
+// ── Accelerometer ──────────────────────────────────────────────
 function startMotion() {
   const h = e => {
-    if (!e.accelerationIncludingGravity) return;
-    S.ax=e.accelerationIncludingGravity.x||0;
-    S.ay=e.accelerationIncludingGravity.y||0;
-    S.az=e.accelerationIncludingGravity.z||0;
+    const a = e.accelerationIncludingGravity;
+    if (!a) return;
+    S.ax=a.x||0; S.ay=a.y||0; S.az=a.z||0;
   };
   if (typeof DeviceMotionEvent.requestPermission==='function') {
-    DeviceMotionEvent.requestPermission().then(s=>{if(s==='granted')window.addEventListener('devicemotion',h);}).catch(()=>{});
+    DeviceMotionEvent.requestPermission()
+      .then(s=>{if(s==='granted')window.addEventListener('devicemotion',h);})
+      .catch(()=>{});
   } else { window.addEventListener('devicemotion',h); }
 }
 
-// ── Network + Battery + Geo ────────────────────────────────
+// ── Gyroscope / Orientation ─────────────────────────────────────
+function startGyro() {
+  // Generic Sensor API first
+  if (typeof Gyroscope !== 'undefined') {
+    try {
+      const g = new Gyroscope({frequency:30});
+      g.addEventListener('reading', () => {
+        S.gyrX=g.x||0; S.gyrY=g.y||0; S.gyrZ=g.z||0;
+      });
+      g.start();
+    } catch(e){}
+  }
+  // Orientation fallback (always available on mobile)
+  const h = e => {
+    S.orAlpha = e.alpha || 0;
+    S.orBeta  = e.beta  || 0;
+    S.orGamma = e.gamma || 0;
+  };
+  window.addEventListener('deviceorientation', h);
+  window.addEventListener('deviceorientationabsolute', h);
+}
+
+// ── Barometer ──────────────────────────────────────────────────
+function startBaro() {
+  const onPressure = p => { S.pressure = p; };
+  if (typeof Barometer !== 'undefined') {
+    try {
+      const b = new Barometer({frequency:2});
+      b.addEventListener('reading', () => onPressure(b.pressure));
+      b.start(); return;
+    } catch(e){}
+  }
+  if (typeof AbsolutePressureSensor !== 'undefined') {
+    try {
+      const b = new AbsolutePressureSensor({frequency:2});
+      b.addEventListener('reading', () => onPressure(b.pressure));
+      b.start();
+    } catch(e){}
+  }
+}
+
+// ── Ambient Light ──────────────────────────────────────────────
+function startLight() {
+  if (typeof AmbientLightSensor !== 'undefined') {
+    try {
+      const l = new AmbientLightSensor({frequency:2});
+      l.addEventListener('reading', () => { S.lux = l.illuminance; });
+      l.start();
+    } catch(e){}
+  }
+}
+
+// ── Network ─────────────────────────────────────────────────────
 function startNetwork() {
   const upd = () => {
-    const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+    const c = navigator.connection||navigator.mozConnection||navigator.webkitConnection;
     if(c){S.netType=c.effectiveType||c.type||'?';S.netRtt=c.rtt;S.netDown=c.downlink;}
   };
-  upd(); setInterval(upd,4000);
+  upd(); setInterval(upd, 3000);
 }
+
+// ── Battery ─────────────────────────────────────────────────────
 function startBattery() {
-  if(!navigator.getBattery)return;
+  if (!navigator.getBattery) return;
   navigator.getBattery().then(b=>{
     const u=()=>{S.battLevel=b.level;S.battCharging=b.charging;};
     u(); b.addEventListener('levelchange',u); b.addEventListener('chargingchange',u);
   }).catch(()=>{});
 }
-function startGeo() {
-  if(!navigator.geolocation)return;
-  navigator.geolocation.watchPosition(p=>{
-    S.lat=p.coords.latitude; S.lon=p.coords.longitude; S.locAcc=p.coords.accuracy;
-  },()=>{},{enableHighAccuracy:true});
-}
 
-// ── Camera ─────────────────────────────────────────────────
-function startCamera() {
-  const attach = (stream) => {
-    const v = document.getElementById('cam-video');
-    v.srcObject = stream;
-    v.style.transform = 'scaleX(1)'; // never mirror — AR needs real-world orientation
-    return v.play().catch(()=>{});
-  };
-  return navigator.mediaDevices.getUserMedia({
-    video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
-  }).then(attach).catch(()=>
-    navigator.mediaDevices.getUserMedia({video:true}).then(attach)
+// ── Geolocation ─────────────────────────────────────────────────
+function startGeo() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.watchPosition(
+    p=>{S.lat=p.coords.latitude;S.lon=p.coords.longitude;S.locAcc=p.coords.accuracy;},
+    ()=>{}, {enableHighAccuracy:true}
   );
 }
 
-// ── Boot ───────────────────────────────────────────────────
-function boot() {
-  startCamera().finally(()=>{
-    document.getElementById('start').classList.add('gone');
-    startAudio(); startMag(); startMotion(); startNetwork(); startBattery(); startGeo();
-    requestAnimationFrame(loop);
-  });
+// ── Camera ──────────────────────────────────────────────────────
+function startCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  const attach = async (stream) => {
+    const v = document.getElementById('cam-video');
+    v.srcObject = stream;
+    // detect facing mode from track settings
+    const track = stream.getVideoTracks()[0];
+    if (track) {
+      const settings = track.getSettings();
+      // For AR: show the world as-is — never mirror
+      v.style.transform = 'scaleX(1)';
+    }
+    await v.play().catch(()=>{});
+  };
+  navigator.mediaDevices.getUserMedia({
+    video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
+  }).then(attach).catch(()=>
+    navigator.mediaDevices.getUserMedia({video:true}).then(attach).catch(()=>{})
+  );
 }
 
-// ══════════════════════════════════════════════════════════════
+// ── Boot ─────────────────────────────────────────────────────────
+function boot() {
+  // Hide start screen and begin render loop immediately
+  // Camera is async/optional — loop never blocks waiting for it
+  document.getElementById('start').classList.add('gone');
+  startAudio();
+  startMag();
+  startMotion();
+  startGyro();
+  startBaro();
+  startLight();
+  startNetwork();
+  startBattery();
+  startGeo();
+  startCamera(); // async, optional
+  requestAnimationFrame(loop);
+}
+
+// ══════════════════════════════════════════════════════════════════
 // RENDER SYSTEM
-// ══════════════════════════════════════════════════════════════
-let t0 = performance.now();
+// ══════════════════════════════════════════════════════════════════
+const t0 = performance.now();
 let frame = 0;
-const shockwaves = []; // {x,y,r,maxR,alpha,born}
+const shockwaves = [];
 
 function loop() {
   requestAnimationFrame(loop);
@@ -302,507 +398,574 @@ function loop() {
   const t = (now - t0) / 1000;
   frame++;
 
-  // Update audio
+  // ── Update audio ──
   if (analyser && aData) {
     analyser.getFloatFrequencyData(aData);
     if (aTD) analyser.getFloatTimeDomainData(aTD);
     const bins = aData.length;
     const bSize = Math.floor(bins / 8);
-    let rms = 0, peak = -Infinity;
+    let rms=0, peak=-Infinity;
     for (let i=0;i<bins;i++) { const v=aData[i]; if(v>peak)peak=v; rms+=v*v; }
     S.audioPeak = Math.max(0, Math.min(1, (peak+90)/90));
-    S.audioRMS = Math.max(0, Math.min(1, (Math.sqrt(rms/bins)+90)/90));
+    S.audioRMS  = Math.max(0, Math.min(1, (Math.sqrt(rms/bins)+90)/90));
     for (let b=0;b<8;b++) {
       let sum=0;
       for (let i=b*bSize;i<(b+1)*bSize;i++) sum+=aData[i];
       S.fftBands[b] = Math.max(0, Math.min(1, (sum/bSize+90)/70));
     }
     S.audioLevel = S.fftBands.reduce((a,v)=>a+v,0)/8;
-    // spawn shockwave on loud transient
-    if (S.audioPeak > 0.55 && frame % 6 === 0) {
-      shockwaves.push({x:W*0.5, y:H*0.5, r:10, maxR:Math.min(W,H)*0.52, alpha:0.7, born:now});
+    if (S.audioPeak > 0.6 && frame % 5 === 0) {
+      shockwaves.push({x:W*0.5,y:H*0.5,r:8,alpha:0.75,born:now});
     }
   }
 
+  // ── Clear canvas ──
   cx.clearRect(0, 0, W, H);
 
-  // Dark sidebars so labels read against any camera background
-  const lGrad = cx.createLinearGradient(0,0,W*0.22,0);
-  lGrad.addColorStop(0,'rgba(0,0,0,0.55)'); lGrad.addColorStop(1,'rgba(0,0,0,0)');
-  cx.fillStyle = lGrad; cx.fillRect(0,0,W*0.22,H);
-  const rGrad = cx.createLinearGradient(W*0.72,0,W,0);
-  rGrad.addColorStop(0,'rgba(0,0,0,0)'); rGrad.addColorStop(1,'rgba(0,0,0,0.55)');
-  cx.fillStyle = rGrad; cx.fillRect(W*0.72,0,W*0.28,H);
+  // Subtle dark gradient sidebars so labels are legible over any camera feed
+  const lG = cx.createLinearGradient(0,0,W*0.2,0);
+  lG.addColorStop(0,'rgba(0,0,0,0.5)'); lG.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle=lG; cx.fillRect(0,0,W*0.2,H);
+  const rG = cx.createLinearGradient(W*0.75,0,W,0);
+  rG.addColorStop(0,'rgba(0,0,0,0)'); rG.addColorStop(1,'rgba(0,0,0,0.5)');
+  cx.fillStyle=rG; cx.fillRect(W*0.75,0,W*0.25,H);
 
-  if (L.sound)    drawSound(t);
+  if (L.sound)    drawSound(t, now);
   if (L.em)       drawEM(t);
   if (L.motion)   drawMotion(t);
+  if (L.gyro)     drawGyro(t);
   if (L.rf)       drawRF(t);
+  if (L.altitude) drawAltitude(t);
   if (L.hud)      drawHUD(t);
   if (L.spectrum) drawSpectrumBar(t);
 }
 
-// ─── SOUND — oscilloscope waveform + frequency bands ────────
-function drawSound(t) {
+// ── SOUND: oscilloscope + frequency band waves ─────────────────
+function drawSound(t, now) {
   cx.save();
 
-  // ── Shockwaves ──
-  for (let i = shockwaves.length - 1; i >= 0; i--) {
-    const sw = shockwaves[i];
-    const age = (performance.now() - sw.born) / 1000;
-    sw.r   = 10 + age * 220;
-    sw.alpha = Math.max(0, 0.65 - age * 0.55);
-    if (sw.alpha <= 0) { shockwaves.splice(i, 1); continue; }
-    // 3 concentric rings
-    [1.0, 0.65, 0.35].forEach((rFrac, ri) => {
-      const a = sw.alpha * (1 - ri * 0.28);
+  // Expanding shockwaves from loud sounds
+  for (let i=shockwaves.length-1;i>=0;i--) {
+    const sw=shockwaves[i];
+    const age=(now-sw.born)/1000;
+    sw.r = 8 + age*250;
+    sw.alpha = Math.max(0, 0.75-age*0.65);
+    if (sw.alpha<=0){shockwaves.splice(i,1);continue;}
+    [1.0,0.6,0.3].forEach((frac,ri)=>{
+      const a=sw.alpha*(1-ri*0.3);
       cx.beginPath();
-      cx.arc(sw.x, sw.y, sw.r * rFrac, 0, Math.PI*2);
-      cx.strokeStyle = `rgba(0,255,65,${a})`;
-      cx.lineWidth = ri === 0 ? 2.5 : 1;
-      cx.shadowBlur = ri === 0 ? 18 : 4;
-      cx.shadowColor = '#00ff41';
-      cx.stroke(); cx.shadowBlur = 0;
+      cx.arc(sw.x, sw.y, sw.r*frac, 0, Math.PI*2);
+      cx.strokeStyle=`rgba(0,255,65,${a.toFixed(2)})`;
+      cx.lineWidth = ri===0?2:1;
+      if(ri===0){cx.shadowBlur=20;cx.shadowColor='#00ff41';}
+      cx.stroke(); cx.shadowBlur=0;
     });
   }
 
-  // ── Real time-domain oscilloscope waveform ──
+  // Real-time oscilloscope waveform across screen center
   if (aTD) {
-    const baseY = H * 0.5;
-    const maxAmp = H * 0.22;
+    const baseY=H*0.5, maxAmp=H*0.2;
+    const glow=8+S.audioLevel*30;
+    // Ghost echo
+    cx.globalAlpha=0.14;
     cx.beginPath();
-    const step = Math.max(1, Math.floor(aTD.length / (W * 2)));
-    for (let i = 0; i < W; i++) {
-      const idx = Math.floor(i / W * aTD.length);
-      const v   = aTD[idx];
-      const y   = baseY + v * maxAmp;
-      i === 0 ? cx.moveTo(i, y) : cx.lineTo(i, y);
+    for (let i=0;i<W;i++) {
+      const idx=Math.floor(i/W*aTD.length);
+      const y=baseY+aTD[Math.max(0,idx-16)]*maxAmp;
+      i===0?cx.moveTo(i,y):cx.lineTo(i,y);
     }
-    const glow = 6 + S.audioLevel * 28;
-    cx.strokeStyle = `rgba(0,255,65,${0.55 + S.audioLevel * 0.35})`;
-    cx.lineWidth   = 2;
-    cx.shadowBlur  = glow; cx.shadowColor = '#00ff41';
-    cx.stroke(); cx.shadowBlur = 0;
-
-    // ghost echo a few ms behind
-    cx.globalAlpha = 0.18;
+    cx.strokeStyle='#00ff41'; cx.lineWidth=1; cx.stroke();
+    cx.globalAlpha=1;
+    // Live waveform
     cx.beginPath();
-    for (let i = 0; i < W; i++) {
-      const idx = Math.floor(i / W * aTD.length);
-      const v   = aTD[Math.max(0, idx - 20)];
-      const y   = baseY + v * maxAmp;
-      i === 0 ? cx.moveTo(i, y) : cx.lineTo(i, y);
+    for (let i=0;i<W;i++) {
+      const y=baseY+aTD[Math.floor(i/W*aTD.length)]*maxAmp;
+      i===0?cx.moveTo(i,y):cx.lineTo(i,y);
     }
-    cx.strokeStyle = '#00ff41';
-    cx.lineWidth   = 1;
-    cx.stroke();
-    cx.globalAlpha = 1;
+    cx.strokeStyle=`rgba(0,255,65,${0.5+S.audioLevel*0.4})`;
+    cx.lineWidth=2;
+    cx.shadowBlur=glow; cx.shadowColor='#00ff41';
+    cx.stroke(); cx.shadowBlur=0;
   }
 
-  // ── 6 frequency band waves (wider, more prominent) ──
-  const yPos   = [0.14, 0.23, 0.38, 0.62, 0.77, 0.86];
-  const alphas = ['55','77','99','99','77','55'];
-  [0,1,2,3,4,5].forEach((b, idx) => {
-    const amp  = S.fftBands[b] * H * 0.07 + 14;
-    const freq = (b + 1) * 0.8 + 1;
-    const baseY = H * yPos[idx];
+  // 6 frequency band sine waves at different heights
+  const yPos=[0.12,0.20,0.36,0.64,0.80,0.88];
+  const alphas=['44','66','99','99','66','44'];
+  [0,1,2,3,4,5].forEach((b,idx)=>{
+    const amp=S.fftBands[b]*H*0.065+12;
+    const freq=(b+1)*0.9+0.8;
+    const bY=H*yPos[idx];
     cx.beginPath();
-    for (let i = 0; i <= W; i += 3) {
-      const phase = t * freq * (0.8 + b * 0.15);
-      const y = baseY + Math.sin(i * 0.16 + phase) * amp
-                      + Math.sin(i * 0.06 + phase * 0.6) * amp * 0.35;
-      i === 0 ? cx.moveTo(i, y) : cx.lineTo(i, y);
+    for (let i=0;i<=W;i+=3) {
+      const phase=t*freq*(0.8+b*0.12);
+      const y=bY+Math.sin(i*0.15+phase)*amp+Math.sin(i*0.055+phase*0.5)*amp*0.4;
+      i===0?cx.moveTo(i,y):cx.lineTo(i,y);
     }
-    cx.strokeStyle = '#00ff41' + alphas[idx];
-    cx.lineWidth   = idx === 2 || idx === 3 ? 2.8 : 2;
-    cx.shadowBlur  = 10 + S.fftBands[b] * 18;
-    cx.shadowColor = '#00ff41';
-    cx.stroke(); cx.shadowBlur = 0;
+    cx.strokeStyle='#00ff41'+alphas[idx];
+    cx.lineWidth=idx===2||idx===3?2.5:1.8;
+    cx.shadowBlur=8+S.fftBands[b]*16; cx.shadowColor='#00ff41';
+    cx.stroke(); cx.shadowBlur=0;
   });
 
-  const db = Math.round(S.audioRMS * 120);
-  pill(cx, 14, H * 0.38, '#00ff41', 'SOUND  ' + db + ' dB');
-
+  const db=Math.round(S.audioRMS*120);
+  pill(cx,14,H*0.4,'#00ff41','SOUND  '+db+' dB');
   cx.restore();
 }
 
-// ─── EM FIELD — vector field lines ──────────────────────────
+// ── EM FIELD: vector field lines from a magnetic dipole ────────
 function drawEM(t) {
-  const anom = S.magBaseline ? Math.abs(S.magTotal - S.magBaseline) : 0;
-  const norm = S.magTotal || 50;
-  const fx = S.mx / norm;
-  const fy = S.my / norm;
-  const fz = S.mz / norm;
-  const intensity = Math.min(1, S.magTotal / 60);
-  const isAnom = anom > 50;
+  const anom = S.magBaseline ? Math.abs(S.magTotal-S.magBaseline) : 0;
+  const norm  = S.magTotal||50;
+  const fx=S.mx/norm, fy=S.my/norm;
+  const intensity=Math.min(1,S.magTotal/80);
+  const isAnom=anom>60;
+  const col=isAnom?'#f87171':'#a78bfa';
 
   cx.save();
-  cx.globalAlpha = 0.55 + intensity * 0.2;
+  cx.globalAlpha=0.5+intensity*0.25;
 
-  const cx_ = W * 0.5, cy_ = H * 0.5;
-  const fieldColor = isAnom ? '#f87171' : '#a78bfa';
-  const N = 12; // field lines
+  const cX=W*0.5, cY=H*0.5;
+  const N=14;
 
-  for (let i = 0; i < N; i++) {
-    const angle0 = (i / N) * Math.PI * 2 + t * 0.08;
-    const r0 = 30 + intensity * 10;
-    const startX = cx_ + Math.cos(angle0) * r0;
-    const startY = cy_ + Math.sin(angle0) * r0 * 0.7;
-
-    cx.beginPath();
-    cx.moveTo(startX, startY);
-
-    // trace field line in steps
-    let px = startX, py = startY;
-    for (let s = 0; s < 18; s++) {
-      const bx = fx + Math.cos(angle0) * 0.3;
-      const by = fy + Math.sin(angle0) * 0.3;
-      const step = 18 + intensity * 8;
-      px += bx * step * 0.5 + Math.sin(t * 0.4 + i) * 2;
-      py += by * step * 0.4 + Math.cos(t * 0.4 + i) * 1.5;
-      cx.lineTo(px, py);
+  for (let i=0;i<N;i++) {
+    const angle0=(i/N)*Math.PI*2+t*0.07;
+    const r0=28+intensity*12;
+    let px=cX+Math.cos(angle0)*r0;
+    let py=cY+Math.sin(angle0)*r0*0.65;
+    cx.beginPath(); cx.moveTo(px,py);
+    for (let s=0;s<20;s++) {
+      const bx=fx+Math.cos(angle0)*0.28;
+      const by=fy+Math.sin(angle0)*0.28;
+      const step=16+intensity*10;
+      px+=bx*step*0.5+Math.sin(t*0.35+i)*1.8;
+      py+=by*step*0.38+Math.cos(t*0.35+i)*1.3;
+      cx.lineTo(px,py);
     }
-
-    const g = cx.createLinearGradient(startX, startY, px, py);
-    g.addColorStop(0, fieldColor + '00');
-    g.addColorStop(0.3, fieldColor + 'cc');
-    g.addColorStop(1, fieldColor + '00');
-    cx.strokeStyle = g;
-    cx.lineWidth = isAnom ? 1.5 : 1;
-    cx.shadowBlur = isAnom ? 12 : 6;
-    cx.shadowColor = fieldColor;
-    cx.stroke();
-    cx.shadowBlur = 0;
+    const g=cx.createLinearGradient(cX+Math.cos(angle0)*r0,cY+Math.sin(angle0)*r0*0.65,px,py);
+    g.addColorStop(0,col+'00');
+    g.addColorStop(0.25,col+'cc');
+    g.addColorStop(1,col+'00');
+    cx.strokeStyle=g;
+    cx.lineWidth=isAnom?1.8:1;
+    cx.shadowBlur=isAnom?14:6; cx.shadowColor=col;
+    cx.stroke(); cx.shadowBlur=0;
   }
 
-  // center hex grid — distorts with field
-  const hexR = 14, rows = 4, cols = 5;
-  const offX = cx_ - (cols-1)*hexR*1.73*0.5;
-  const offY = cy_ - (rows-1)*hexR*1.5*0.5;
-  for (let row=0; row<rows; row++) {
-    for (let col=0; col<cols; col++) {
-      const hx = offX + col*hexR*1.73 + (row%2)*hexR*0.87 + fx*8*Math.sin(t*0.3);
-      const hy = offY + row*hexR*1.5 + fy*6*Math.cos(t*0.3);
-      const pulse = 0.3 + intensity*0.4 + Math.sin(t*1.5 + row+col)*0.1;
+  // Hex grid — distorts with field
+  const hexR=13,rows=4,cols=5;
+  const offX=cX-(cols-1)*hexR*1.73*0.5;
+  const offY=cY-(rows-1)*hexR*1.5*0.5;
+  for (let row=0;row<rows;row++) {
+    for (let col=0;col<cols;col++) {
+      const hx=offX+col*hexR*1.73+(row%2)*hexR*0.87+fx*7*Math.sin(t*0.28);
+      const hy=offY+row*hexR*1.5+fy*5*Math.cos(t*0.28);
+      const pulse=0.25+intensity*0.45+Math.sin(t*1.4+row+col)*0.12;
       cx.save();
-      cx.globalAlpha = pulse * 0.55;
-      hexagon(cx, hx, hy, hexR * (0.4 + intensity * 0.2));
-      cx.strokeStyle = fieldColor;
-      cx.lineWidth = 0.8;
+      cx.globalAlpha=pulse*0.55;
+      hexagon(cx,hx,hy,hexR*(0.35+intensity*0.25));
+      cx.strokeStyle=col+''; cx.strokeStyle=col; cx.lineWidth=0.7;
+      cx.strokeStyle=isAnom?'#f87171':'#a78bfa';
       cx.stroke();
       cx.restore();
     }
   }
 
-  // field label — pill on left
-  cx.globalAlpha = 1;
-  cx.textAlign = 'left';
-  const emLbl = isAnom ? '! EM ANOMALY  ' + S.magTotal.toFixed(0) + ' µT' : 'MAGNETIC FIELD  ' + S.magTotal.toFixed(0) + ' µT';
-  pill(cx, 14, cy_ - 60, isAnom ? '#f87171' : '#a78bfa', emLbl);
+  // EM strength bar on right
+  const barX=W-18, barH=H*0.4, barY=H*0.3;
+  const pct=Math.min(1,S.magTotal/120);
+  cx.globalAlpha=0.7;
+  cx.strokeStyle=col+'55'; cx.lineWidth=1;
+  cx.strokeRect(barX-4,barY,8,barH);
+  const fillH=barH*pct;
+  cx.fillStyle=col;
+  cx.fillRect(barX-3,barY+barH-fillH,6,fillH);
+  cx.shadowBlur=8; cx.shadowColor=col;
+  cx.fillRect(barX-3,barY+barH-fillH,6,3);
+  cx.shadowBlur=0;
 
+  cx.globalAlpha=1;
+  const emLbl=isAnom?'! EM ANOMALY  '+S.magTotal.toFixed(0)+' µT':'MAGNETIC FIELD  '+S.magTotal.toFixed(0)+' µT';
+  pill(cx,14,H*0.5-70,col,emLbl);
   cx.restore();
 }
 
-// ─── MOTION — force particle grid ───────────────────────────
-const particles = [];
+// ── MOTION: accelerometer particle flow field ──────────────────
+const particles=[];
 function initParticles() {
-  particles.length = 0;
-  const cols = 18, rows = 12;
+  particles.length=0;
+  const cols=18,rows=12;
   for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
     particles.push({
-      bx: (c/(cols-1))*W*0.92 + W*0.04,
-      by: (r/(rows-1))*H*0.82 + H*0.09,
-      x:0, y:0, vx:0, vy:0, life:Math.random()
+      bx:(c/(cols-1))*W*0.9+W*0.05,
+      by:(r/(rows-1))*H*0.8+H*0.1,
+      x:0,y:0,vx:0,vy:0,life:Math.random()
     });
   }
 }
 
 function drawMotion(t) {
-  const mag = Math.sqrt(S.ax*S.ax + S.ay*S.ay + S.az*S.az);
-  const nax = S.ax / (mag||1);
-  const nay = S.ay / (mag||1);
-  const force = Math.min(1, mag / 15);
+  const mag=Math.sqrt(S.ax*S.ax+S.ay*S.ay+S.az*S.az);
+  const nax=S.ax/(mag||1), nay=S.ay/(mag||1);
+  const force=Math.min(1,mag/15);
 
-  cx.save();
-  cx.globalAlpha = 0.65;
-
-  particles.forEach(p => {
-    p.life += 0.012 + force * 0.02;
-    if (p.life > 1) { p.life = 0; p.x = p.bx; p.y = p.by; }
-    if (p.life < 0.01) { p.x = p.bx; p.y = p.by; }
-
-    const trail = p.life;
-    p.vx = nax * force * 4 + Math.sin(t*0.5 + p.by*0.05) * 0.3;
-    p.vy = nay * force * 4 + Math.cos(t*0.5 + p.bx*0.05) * 0.3;
-    p.x += p.vx;
-    p.y += p.vy;
-
-    const alpha = trail * (0.4 + force*0.4) * Math.sin(Math.PI * trail);
+  cx.save(); cx.globalAlpha=0.6;
+  particles.forEach(p=>{
+    p.life+=0.011+force*0.022;
+    if(p.life>1){p.life=0;p.x=p.bx;p.y=p.by;}
+    if(p.life<0.01){p.x=p.bx;p.y=p.by;}
+    p.vx=nax*force*4.5+Math.sin(t*0.45+p.by*0.04)*0.4;
+    p.vy=nay*force*4.5+Math.cos(t*0.45+p.bx*0.04)*0.4;
+    p.x+=p.vx; p.y+=p.vy;
+    const alpha=p.life*(0.35+force*0.45)*Math.sin(Math.PI*p.life);
     cx.beginPath();
-    cx.arc(p.x, p.y, 1.5, 0, Math.PI*2);
-    cx.fillStyle = `rgba(34,211,238,${alpha})`;
+    cx.arc(p.x,p.y,1.4,0,Math.PI*2);
+    cx.fillStyle=`rgba(34,211,238,${alpha.toFixed(2)})`;
     cx.fill();
-
-    // tail
-    if (force > 0.1) {
+    if(force>0.08){
       cx.beginPath();
-      cx.moveTo(p.x, p.y);
-      cx.lineTo(p.x - p.vx * 4, p.y - p.vy * 4);
-      cx.strokeStyle = `rgba(34,211,238,${alpha*0.4})`;
-      cx.lineWidth = 0.8;
-      cx.stroke();
+      cx.moveTo(p.x,p.y);
+      cx.lineTo(p.x-p.vx*4,p.y-p.vy*4);
+      cx.strokeStyle=`rgba(34,211,238,${(alpha*0.35).toFixed(2)})`;
+      cx.lineWidth=0.7; cx.stroke();
     }
   });
-
-  // force vector arrow at center
-  if (force > 0.05) {
-    const aLen = force * 60;
-    const ax0 = W*0.5, ay0 = H*0.5;
-    const ax1 = ax0 + nax * aLen;
-    const ay1 = ay0 + nay * aLen;
+  // Force vector
+  if(force>0.04){
+    const aLen=force*65,aX=W*0.5,aY=H*0.5;
+    const eX=aX+nax*aLen,eY=aY+nay*aLen;
+    cx.globalAlpha=1;
+    cx.beginPath();cx.moveTo(aX,aY);cx.lineTo(eX,eY);
+    cx.strokeStyle=`rgba(34,211,238,${0.55+force*0.45})`;
+    cx.lineWidth=2.5;
+    cx.shadowBlur=12; cx.shadowColor='#22d3ee';
+    cx.stroke(); cx.shadowBlur=0;
+    const ang=Math.atan2(eY-aY,eX-aX);
     cx.beginPath();
-    cx.moveTo(ax0, ay0);
-    cx.lineTo(ax1, ay1);
-    cx.strokeStyle = `rgba(34,211,238,${0.6+force*0.4})`;
-    cx.lineWidth = 2;
-    cx.stroke();
-    // arrowhead
-    const angle = Math.atan2(ay1-ay0, ax1-ax0);
-    cx.beginPath();
-    cx.moveTo(ax1, ay1);
-    cx.lineTo(ax1-10*Math.cos(angle-0.4), ay1-10*Math.sin(angle-0.4));
-    cx.lineTo(ax1-10*Math.cos(angle+0.4), ay1-10*Math.sin(angle+0.4));
+    cx.moveTo(eX,eY);
+    cx.lineTo(eX-11*Math.cos(ang-0.4),eY-11*Math.sin(ang-0.4));
+    cx.lineTo(eX-11*Math.cos(ang+0.4),eY-11*Math.sin(ang+0.4));
     cx.closePath();
-    cx.fillStyle = `rgba(34,211,238,${0.8+force*0.2})`;
+    cx.fillStyle=`rgba(34,211,238,${0.8+force*0.2})`;
     cx.fill();
   }
-
-  pill(cx, 14, H - 115, '#22d3ee', 'MOTION  ' + mag.toFixed(1) + ' m/s²');
-
+  pill(cx,14,H-118,'#22d3ee','ACCEL  '+mag.toFixed(1)+' m/s²');
   cx.restore();
 }
 
-// ─── RF SIGNALS — layered frequency rings ───────────────────
-const rfBands = [
-  // { freq label, base Y %, ring speed, color, description }
-  { label:'GPS 1.57GHz',  y:0.15, spd:0.7,  col:'#34d399', always:true },
-  { label:'WiFi 2.4GHz',  y:0.25, spd:1.1,  col:'#f59e0b', always:true },
-  { label:'WiFi 5GHz',    y:0.33, spd:1.8,  col:'#fb923c', always:true },
-  { label:'CELL 700MHz',  y:0.42, spd:0.45, col:'#f87171', always:true },
-  { label:'BLE 2.4GHz',   y:0.50, spd:1.4,  col:'#c084fc', always:true },
-  { label:'5G 3.5GHz',    y:0.58, spd:2.2,  col:'#22d3ee', always:false },
+// ── GYRO: artificial horizon + orientation indicator ───────────
+function drawGyro(t) {
+  const beta  = (S.orBeta  ||0)*Math.PI/180;
+  const gamma = (S.orGamma ||0)*Math.PI/180;
+  const roll  = -gamma; // device rolls right → horizon tilts left
+  const pitch = Math.sin(beta);
+
+  cx.save();
+  cx.globalAlpha=0.6;
+
+  const cX=W*0.5, cY=H*0.5;
+  const r=Math.min(W,H)*0.38;
+  const pitchOff=pitch*r*0.55;
+
+  // Clipping circle for the artificial horizon
+  cx.save();
+  cx.beginPath();
+  cx.arc(cX,cY,r,0,Math.PI*2);
+  cx.clip();
+
+  // Sky / ground fill tilted by roll
+  cx.save();
+  cx.translate(cX,cY);
+  cx.rotate(roll);
+
+  // Sky half (above horizon)
+  cx.fillStyle='rgba(30,100,200,0.06)';
+  cx.fillRect(-W,-H,W*2,H+pitchOff);
+  // Ground half (below horizon)
+  cx.fillStyle='rgba(120,60,0,0.06)';
+  cx.fillRect(-W,pitchOff,W*2,H);
+
+  // Horizon line
+  cx.beginPath();
+  cx.moveTo(-W*2,pitchOff);
+  cx.lineTo( W*2,pitchOff);
+  cx.strokeStyle='rgba(96,165,250,0.7)';
+  cx.lineWidth=2;
+  cx.shadowBlur=10; cx.shadowColor='#60a5fa';
+  cx.stroke(); cx.shadowBlur=0;
+
+  // Pitch ladder lines
+  for (let i=-4;i<=4;i++) {
+    if(i===0)continue;
+    const ly=pitchOff+i*22;
+    const lw=Math.abs(i)%2===0?45:25;
+    cx.beginPath();
+    cx.moveTo(-lw,ly); cx.lineTo(lw,ly);
+    cx.strokeStyle=`rgba(96,165,250,${Math.abs(i)%2===0?0.4:0.2})`;
+    cx.lineWidth=1; cx.stroke();
+    if(Math.abs(i)%2===0){
+      cx.fillStyle='rgba(96,165,250,0.4)';
+      cx.font='8px monospace';
+      cx.textAlign='left';
+      cx.fillText((i*5)+'°',lw+5,ly+3);
+    }
+  }
+  cx.restore(); // undo roll transform
+  cx.restore(); // undo clip
+
+  // Fixed aircraft reticle (does not rotate)
+  cx.globalAlpha=0.85;
+  cx.strokeStyle='rgba(255,255,255,0.8)';
+  cx.lineWidth=2.5;
+  // Left bar
+  cx.beginPath();cx.moveTo(cX-65,cY);cx.lineTo(cX-18,cY);cx.stroke();
+  // Right bar
+  cx.beginPath();cx.moveTo(cX+18,cY);cx.lineTo(cX+65,cY);cx.stroke();
+  // Down tick
+  cx.beginPath();cx.moveTo(cX,cY+8);cx.lineTo(cX,cY+18);cx.stroke();
+  // Center dot
+  cx.beginPath();cx.arc(cX,cY,3,0,Math.PI*2);cx.fillStyle='rgba(255,255,255,0.9)';cx.fill();
+
+  // Roll arc indicator
+  const arcR=r+14;
+  cx.beginPath();
+  cx.arc(cX,cY,arcR,Math.PI*1.15,Math.PI*1.85);
+  cx.strokeStyle='rgba(96,165,250,0.2)'; cx.lineWidth=2; cx.stroke();
+  // Roll needle
+  const needleA=Math.PI*1.5+roll;
+  cx.beginPath();
+  cx.moveTo(cX+Math.cos(needleA)*(arcR-10),cY+Math.sin(needleA)*(arcR-10));
+  cx.lineTo(cX+Math.cos(needleA)*(arcR+10),cY+Math.sin(needleA)*(arcR+10));
+  cx.strokeStyle='#60a5fa'; cx.lineWidth=3;
+  cx.shadowBlur=12; cx.shadowColor='#60a5fa';
+  cx.stroke(); cx.shadowBlur=0;
+
+  cx.globalAlpha=1;
+  const gyrTot=Math.sqrt(S.gyrX*S.gyrX+S.gyrY*S.gyrY+S.gyrZ*S.gyrZ);
+  pill(cx,14,cY-r-22,'#60a5fa',
+    'GYRO  β'+Math.round(S.orBeta||0)+'° γ'+Math.round(S.orGamma||0)+'° '+gyrTot.toFixed(1)+' r/s');
+  cx.restore();
+}
+
+// ── RF SIGNALS: Gaussian envelope waves per band ──────────────
+const rfBands=[
+  {label:'GPS 1.57GHz',  y:0.13, spd:0.7,  col:'#34d399'},
+  {label:'WiFi 2.4GHz',  y:0.22, spd:1.1,  col:'#f59e0b'},
+  {label:'WiFi 5GHz',    y:0.30, spd:1.8,  col:'#fb923c'},
+  {label:'CELL 700MHz',  y:0.40, spd:0.45, col:'#f87171'},
+  {label:'BLE 2.4GHz',   y:0.50, spd:1.4,  col:'#c084fc'},
+  {label:'5G 3.5GHz',    y:0.58, spd:2.2,  col:'#22d3ee'},
 ];
 function drawRF(t) {
   cx.save();
-
-  // RTT drives WiFi wave agitation (real data)
-  const rttAgit = S.netRtt ? Math.min(2.5, S.netRtt / 40) : 1;
-
-  rfBands.forEach((band) => {
-    const active = band.always || (band.label.startsWith('5G') && S.netType === '5g');
-    if (!active) return;
-
-    const y = H * band.y;
-    const isWifi = band.label.startsWith('WiFi');
-    const spd = isWifi ? band.spd * rttAgit : band.spd;
-    const pulse = 0.5 + Math.sin(t * spd * Math.PI * 2) * 0.3;
-    const waveAmp = isWifi ? 10 + rttAgit * 4 : 11;
-
-    const waveLen = W * 0.48;
-    const offset = ((t * spd * 0.45) % 1) * (W + waveLen);
-
-    for (let p = 0; p < 4; p++) {
-      const ox = offset - p * waveLen * 0.34;
-      if (ox < -waveLen || ox > W + waveLen) continue;
+  const rttAgit=S.netRtt?Math.min(2.5,S.netRtt/40):1;
+  rfBands.forEach(band=>{
+    const y=H*band.y;
+    const isWifi=band.label.startsWith('WiFi');
+    const spd=isWifi?band.spd*rttAgit:band.spd;
+    const pulse=0.5+Math.sin(t*spd*Math.PI*2)*0.3;
+    const wAmp=isWifi?10+rttAgit*4:11;
+    const wLen=W*0.48;
+    const off=((t*spd*0.45)%1)*(W+wLen);
+    for (let p=0;p<4;p++) {
+      const ox=off-p*wLen*0.34;
+      if(ox<-wLen||ox>W+wLen)continue;
       cx.beginPath();
-      for (let x = Math.max(0, ox - waveLen); x <= Math.min(W, ox + waveLen); x += 2) {
-        const d = (x - ox) / waveLen;
-        const env = Math.exp(-d * d * 3);
-        const wy = y + Math.sin(d * Math.PI * 9 + t * spd * 6) * waveAmp * env;
-        x === Math.max(0, ox - waveLen) ? cx.moveTo(x, wy) : cx.lineTo(x, wy);
+      for (let x=Math.max(0,ox-wLen);x<=Math.min(W,ox+wLen);x+=2) {
+        const d=(x-ox)/wLen;
+        const env=Math.exp(-d*d*3);
+        const wy=y+Math.sin(d*Math.PI*9+t*spd*6)*wAmp*env;
+        x===Math.max(0,ox-wLen)?cx.moveTo(x,wy):cx.lineTo(x,wy);
       }
-      const alpha = Math.round((0.22 + pulse * 0.42 * (1 - p * 0.22)) * 255).toString(16).padStart(2, '0');
-      cx.strokeStyle = band.col + alpha;
-      cx.lineWidth = p === 0 ? 2.2 : 1.2;
-      if (p === 0) { cx.shadowBlur = 12; cx.shadowColor = band.col; }
-      cx.stroke(); cx.shadowBlur = 0;
+      const aHex=Math.round((0.18+pulse*0.45*(1-p*0.22))*255).toString(16).padStart(2,'0');
+      cx.strokeStyle=band.col+aHex;
+      cx.lineWidth=p===0?2.2:1.2;
+      if(p===0){cx.shadowBlur=14;cx.shadowColor=band.col;}
+      cx.stroke(); cx.shadowBlur=0;
     }
-
-    // pill label — right side, offset from right edge
-    pill(cx, W - 140, y + 4, band.col, band.label);
+    pill(cx,W-145,y+4,band.col,band.label);
   });
-
-  pill(cx, 14, H * 0.20, '#f59e0b', 'RF SIGNALS  always here');
+  pill(cx,14,H*0.18,'#f59e0b','RF SIGNALS  always here');
   cx.restore();
 }
 
-// ─── HUD — telemetry corners ─────────────────────────────────
+// ── ALTITUDE: barometric pressure + floor ─────────────────────
+function drawAltitude(t) {
+  if (!S.pressure && S.pressure!==0) {
+    // No barometer — show a minimal placeholder
+    cx.save();
+    pill(cx,14,H*0.65,'#8b5cf6','PRESSURE  no barometer');
+    cx.restore();
+    return;
+  }
+  cx.save();
+  cx.globalAlpha=0.7;
+  const p=S.pressure;
+  const floor=S.pressureBaseline
+    ? Math.round(-(p-S.pressureBaseline)*8.5/3.3)+1
+    : '?';
+
+  // Vertical bar
+  const bX=W-26, bH=H*0.45, bY=H*0.27;
+  const pct=Math.max(0,Math.min(1,(p-950)/120));
+  cx.strokeStyle='rgba(139,92,246,0.3)'; cx.lineWidth=1;
+  cx.strokeRect(bX-5,bY,10,bH);
+  const fillH=bH*pct;
+  const grd=cx.createLinearGradient(0,bY+bH,0,bY+bH-fillH);
+  grd.addColorStop(0,'#8b5cf6'); grd.addColorStop(1,'#c4b5fd');
+  cx.fillStyle=grd;
+  cx.fillRect(bX-4,bY+bH-fillH,8,fillH);
+  cx.shadowBlur=10; cx.shadowColor='#8b5cf6';
+  cx.fillRect(bX-4,bY+bH-fillH,8,3);
+  cx.shadowBlur=0;
+
+  // Labels
+  cx.fillStyle='rgba(196,181,253,0.5)'; cx.font='8px monospace'; cx.textAlign='center';
+  cx.fillText('1070',bX,bY-2);
+  cx.fillText('950',bX,bY+bH+11);
+  cx.textAlign='left';
+
+  cx.globalAlpha=1;
+  const pLabel='ALTITUDE  '+p.toFixed(1)+' hPa  floor '+floor;
+  pill(cx,14,H*0.67,'#8b5cf6',pLabel);
+  cx.restore();
+}
+
+// ── HUD TELEMETRY: corner overlays ────────────────────────────
 function drawHUD(t) {
   cx.save();
-  cx.shadowBlur = 3; cx.shadowColor = 'rgba(0,0,0,0.9)'; // text shadow for readability
-  const pulse = 0.7 + Math.sin(t*1.5)*0.3;
+  cx.shadowBlur=3; cx.shadowColor='rgba(0,0,0,0.95)';
+  const pulse=0.7+Math.sin(t*1.5)*0.3;
 
   // ── Top-left: GPS ──
-  cx.fillStyle = `rgba(34,211,238,${pulse*0.9})`;
-  cx.font = '9px monospace';
-  cx.fillText('GPS', 16, 64);
-  cx.fillStyle = 'rgba(255,255,255,0.55)';
-  if (S.lat !== null) {
-    cx.fillText(S.lat.toFixed(5) + 'N', 16, 78);
-    cx.fillText(S.lon.toFixed(5) + 'E', 16, 91);
-    cx.fillText('±' + Math.round(S.locAcc) + 'm', 16, 104);
+  cx.fillStyle=`rgba(34,211,238,${pulse*0.9})`;
+  cx.font='9px monospace'; cx.textAlign='left';
+  cx.fillText('GPS',16,64);
+  if (S.lat!==null) {
+    cx.fillStyle='rgba(255,255,255,0.5)';
+    cx.fillText(S.lat.toFixed(5)+'N',16,78);
+    cx.fillText(S.lon.toFixed(5)+'E',16,91);
+    cx.fillText('±'+Math.round(S.locAcc)+'m',16,104);
   } else {
-    cx.fillStyle = 'rgba(255,255,255,0.2)';
-    cx.fillText('acquiring...', 16, 78);
+    cx.fillStyle='rgba(255,255,255,0.18)';
+    cx.fillText('acquiring...',16,78);
   }
 
-  // ── Top-right: network ──
-  const netColor = {wifi:'#a78bfa','4g':'#22d3ee','5g':'#00ff41','3g':'#f59e0b','2g':'#f87171'}[S.netType.toLowerCase()]||'#64748b';
-  cx.textAlign = 'right';
-  cx.fillStyle = netColor;
-  cx.font = 'bold 11px monospace';
-  cx.fillText(S.netType.toUpperCase(), W-16, 64);
-  cx.font = '9px monospace';
-  cx.fillStyle = 'rgba(255,255,255,0.45)';
-  if (S.netRtt!=null) cx.fillText('rtt '+S.netRtt+'ms', W-16, 78);
-  if (S.netDown!=null) cx.fillText(S.netDown+' Mbps', W-16, 91);
+  // ── Top-right: network + screen ──
+  const netCol={wifi:'#a78bfa','4g':'#22d3ee','5g':'#00ff41','3g':'#f59e0b','2g':'#f87171'}[S.netType.toLowerCase()]||'#64748b';
+  cx.textAlign='right';
+  cx.fillStyle=netCol; cx.font='bold 11px monospace';
+  cx.fillText(S.netType.toUpperCase(),W-16,64);
+  cx.font='9px monospace'; cx.fillStyle='rgba(255,255,255,0.4)';
+  if(S.netRtt!=null)cx.fillText('rtt '+S.netRtt+'ms',W-16,78);
+  if(S.netDown!=null)cx.fillText(S.netDown+' Mbps',W-16,91);
+  cx.fillText(S.screenRes+'@'+DPR+'x',W-16,105);
+  cx.fillText(S.hw+' cores',W-16,118);
 
-  // ── Bottom-left: motion summary ──
-  cx.textAlign = 'left';
-  const g = Math.sqrt(S.ax*S.ax+S.ay*S.ay+S.az*S.az);
-  cx.fillStyle = 'rgba(34,211,238,0.5)';
-  cx.font = '9px monospace';
-  cx.fillText('X:'+S.ax.toFixed(1)+' Y:'+S.ay.toFixed(1)+' Z:'+S.az.toFixed(1), 16, H-130);
+  // ── Bottom-left: accel + gyro angles ──
+  const gv=Math.sqrt(S.ax*S.ax+S.ay*S.ay+S.az*S.az);
+  cx.textAlign='left'; cx.fillStyle='rgba(34,211,238,0.45)'; cx.font='9px monospace';
+  cx.fillText('X:'+S.ax.toFixed(1)+' Y:'+S.ay.toFixed(1)+' Z:'+S.az.toFixed(1),16,H-148);
+  cx.fillStyle='rgba(96,165,250,0.45)';
+  cx.fillText('α:'+Math.round(S.orAlpha||0)+'° β:'+Math.round(S.orBeta||0)+'° γ:'+Math.round(S.orGamma||0)+'°',16,H-134);
+  if(S.lux!==null){
+    cx.fillStyle='rgba(250,204,21,0.5)';
+    cx.fillText('light: '+S.lux.toFixed(0)+' lux',16,H-120);
+  }
 
   // ── Bottom-right: battery ──
-  if (S.battLevel !== null) {
-    const pct = Math.round(S.battLevel*100);
-    const bc = pct>60?'#00ff41':pct>20?'#f59e0b':'#f87171';
-    cx.textAlign = 'right';
-    cx.fillStyle = bc;
-    cx.font = 'bold 12px monospace';
-    cx.fillText(pct+'%', W-16, H-132);
-    cx.font = '9px monospace';
-    cx.fillStyle = 'rgba(255,255,255,0.35)';
-    cx.fillText(S.battCharging?'charging':'battery', W-16, H-119);
-
-    // battery icon
-    const bx=W-40, by=H-146, bw=20, bh=10;
-    cx.strokeStyle = bc; cx.lineWidth=1.5;
+  if(S.battLevel!==null){
+    const pct=Math.round(S.battLevel*100);
+    const bc=pct>60?'#00ff41':pct>20?'#f59e0b':'#f87171';
+    cx.textAlign='right';
+    cx.fillStyle=bc; cx.font='bold 12px monospace';
+    cx.fillText(pct+'%',W-16,H-150);
+    cx.font='9px monospace'; cx.fillStyle='rgba(255,255,255,0.3)';
+    cx.fillText(S.battCharging?'charging':'battery',W-16,H-137);
+    // Battery icon
+    const bx=W-40,by=H-168,bw=20,bh=10;
+    cx.strokeStyle=bc; cx.lineWidth=1.5;
     cx.strokeRect(bx,by,bw,bh);
     cx.fillStyle=bc; cx.fillRect(bx+bw,by+3,2,4);
     cx.fillRect(bx+1,by+1,(bw-2)*S.battLevel,bh-2);
   }
 
-  // ── Center bottom: EM field ──
-  const anomColor = (S.magBaseline&&Math.abs(S.magTotal-S.magBaseline)>50)?'#f87171':'rgba(167,139,250,0.6)';
-  cx.textAlign = 'center';
-  cx.fillStyle = anomColor;
-  cx.font = '9px monospace';
-  cx.fillText(S.magTotal.toFixed(0)+' µT', W*0.5, H-100);
+  // ── Center: EM field strength ──
+  const anomCol=(S.magBaseline&&Math.abs(S.magTotal-S.magBaseline)>60)?'#f87171':'rgba(167,139,250,0.55)';
+  cx.textAlign='center'; cx.fillStyle=anomCol;
+  cx.font='9px monospace';
+  cx.fillText(S.magTotal.toFixed(0)+' µT',W*0.5,H-105);
 
-  cx.textAlign = 'left';
+  cx.textAlign='left';
   cx.restore();
 }
 
-// ─── SPECTRUM BAR ────────────────────────────────────────────
-const specBands = [
-  {label:'ELF/SLF', col:'#7c3aed', lo:0, hi:0.04, note:'submarine comms'},
+// ── SPECTRUM BAR: EM spectrum from ELF to EHF ─────────────────
+const specBands=[
+  {label:'ELF/SLF', col:'#7c3aed', lo:0,    hi:0.04, note:'submarine'},
   {label:'VLF/LF',  col:'#6366f1', lo:0.04, hi:0.09, note:'nav beacons'},
   {label:'MF',      col:'#3b82f6', lo:0.09, hi:0.14, note:'AM radio'},
   {label:'HF',      col:'#06b6d4', lo:0.14, hi:0.21, note:'shortwave'},
-  {label:'VHF',     col:'#10b981', lo:0.21, hi:0.34, note:'FM/TV'},
+  {label:'VHF',     col:'#10b981', lo:0.21, hi:0.34, note:'FM / TV'},
   {label:'UHF',     col:'#f59e0b', lo:0.34, hi:0.72, note:'WiFi·GPS·Cell·BLE'},
   {label:'SHF/EHF', col:'#ef4444', lo:0.72, hi:1.00, note:'satellite·5G'},
 ];
-const audioActive = [0.14, 0.21]; // HF range visually maps to audio frequencies
-
 function drawSpectrumBar(t) {
-  const BW = W, BH = 32; // CSS pixels — DPR scale applied via setTransform
+  const BW=W, BH=36;
   sc.clearRect(0,0,BW,BH);
-
-  // background
-  const bg = sc.createLinearGradient(0,0,BW,0);
+  const bg=sc.createLinearGradient(0,0,BW,0);
   specBands.forEach(b=>{
-    bg.addColorStop(b.lo, b.col+'22');
-    bg.addColorStop((b.lo+b.hi)/2, b.col+'44');
-    bg.addColorStop(b.hi, b.col+'22');
+    bg.addColorStop(b.lo,b.col+'18');
+    bg.addColorStop((b.lo+b.hi)/2,b.col+'44');
+    bg.addColorStop(b.hi,b.col+'18');
   });
-  sc.fillStyle = bg;
-  sc.fillRect(0,0,BW,BH);
-
-  // active signals pulsing
-  // UHF always active
-  const uhf = specBands[5];
-  const ub = BW * uhf.lo, uw = BW * (uhf.hi - uhf.lo);
-  const upulse = 0.15 + Math.sin(t*2.5)*0.1;
-  sc.fillStyle = `rgba(245,158,11,${upulse})`;
-  sc.fillRect(ub, 0, uw, BH);
-
-  // audio band — driven by actual level
-  const hfB = specBands[3];
-  const afPulse = S.audioLevel * 0.5;
-  sc.fillStyle = `rgba(6,182,212,${afPulse})`;
-  sc.fillRect(BW*hfB.lo, 0, BW*(hfB.hi-hfB.lo), BH);
-
-  // band boundary lines
+  sc.fillStyle=bg; sc.fillRect(0,0,BW,BH);
+  // UHF activity pulse
+  const uhf=specBands[5];
+  const up=0.12+Math.sin(t*2.4)*0.08;
+  sc.fillStyle=`rgba(245,158,11,${up})`; sc.fillRect(BW*uhf.lo,0,BW*(uhf.hi-uhf.lo),BH);
+  // Audio band driven by mic
+  const hf=specBands[3];
+  sc.fillStyle=`rgba(6,182,212,${S.audioLevel*0.55})`; sc.fillRect(BW*hf.lo,0,BW*(hf.hi-hf.lo),BH);
+  // Band dividers
   specBands.forEach(b=>{
-    sc.strokeStyle = b.col + '55';
-    sc.lineWidth = 1;
-    sc.beginPath();
-    sc.moveTo(BW*b.lo, 0);
-    sc.lineTo(BW*b.lo, BH);
-    sc.stroke();
+    sc.strokeStyle=b.col+'55'; sc.lineWidth=1;
+    sc.beginPath(); sc.moveTo(BW*b.lo,0); sc.lineTo(BW*b.lo,BH); sc.stroke();
   });
-
-  // labels
-  sc.font = '7px monospace';
+  // Labels
+  sc.font='7px monospace'; sc.textAlign='center';
   specBands.forEach(b=>{
-    const mx = BW*(b.lo + (b.hi-b.lo)*0.5);
-    sc.fillStyle = b.col + 'cc';
-    sc.textAlign = 'center';
-    sc.fillText(b.label, mx, 10);
-    sc.fillStyle = 'rgba(255,255,255,0.3)';
-    sc.fillText(b.note, mx, 23);
+    const mx=BW*(b.lo+(b.hi-b.lo)*0.5);
+    sc.fillStyle=b.col+'cc'; sc.fillText(b.label,mx,11);
+    sc.fillStyle='rgba(255,255,255,0.28)'; sc.fillText(b.note,mx,24);
   });
-  sc.textAlign = 'left';
-
-  // "ALL PRESENT NOW" note
-  sc.fillStyle = 'rgba(255,255,255,0.15)';
-  sc.font = '7px monospace';
-  sc.textAlign = 'right';
-  sc.fillText('all of this is hitting you right now', BW-4, BH-3);
-  sc.textAlign = 'left';
+  sc.textAlign='right'; sc.fillStyle='rgba(255,255,255,0.12)';
+  sc.font='7px monospace';
+  sc.fillText('all of this is passing through you right now',BW-4,BH-3);
+  sc.textAlign='left';
 }
 
-// ─── Utils ───────────────────────────────────────────────────
-// Dark pill label — always readable on any background
-function pill(ctx, x, y, color, text) {
+// ── Utilities ─────────────────────────────────────────────────
+function pill(ctx,x,y,color,text) {
   ctx.save();
-  ctx.font = 'bold 10px monospace';
-  const tw = ctx.measureText(text).width;
-  const ph = 17, pr = 4, px2 = x + tw + 14;
-  const py = y - 13;
-  ctx.fillStyle = 'rgba(0,0,0,0.72)';
+  ctx.font='bold 10px monospace';
+  const tw=ctx.measureText(text).width;
+  const ph=17,pr=4,py=y-13;
+  ctx.fillStyle='rgba(0,0,0,0.8)';
   ctx.beginPath();
-  if (ctx.roundRect) {
-    ctx.roundRect(x - 2, py, tw + 16, ph, pr);
-  } else {
-    ctx.rect(x - 2, py, tw + 16, ph);
-  }
+  if(ctx.roundRect){ctx.roundRect(x-2,py,tw+16,ph,pr);}
+  else{ctx.rect(x-2,py,tw+16,ph);}
   ctx.fill();
-  ctx.fillStyle = color;
-  ctx.shadowBlur = 4; ctx.shadowColor = color;
-  ctx.fillText(text, x + 5, y);
-  ctx.shadowBlur = 0;
+  ctx.fillStyle=color;
+  ctx.shadowBlur=5; ctx.shadowColor=color;
+  ctx.fillText(text,x+5,y);
+  ctx.shadowBlur=0;
   ctx.restore();
 }
-
-function hexagon(ctx, x, y, r) {
+function hexagon(ctx,x,y,r) {
   ctx.beginPath();
   for (let i=0;i<6;i++) {
-    const a = i/6 * Math.PI*2 - Math.PI/6;
-    i===0 ? ctx.moveTo(x+r*Math.cos(a), y+r*Math.sin(a)) : ctx.lineTo(x+r*Math.cos(a), y+r*Math.sin(a));
+    const a=i/6*Math.PI*2-Math.PI/6;
+    i===0?ctx.moveTo(x+r*Math.cos(a),y+r*Math.sin(a)):ctx.lineTo(x+r*Math.cos(a),y+r*Math.sin(a));
   }
   ctx.closePath();
 }
