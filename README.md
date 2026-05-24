@@ -1,7 +1,5 @@
 # invisible layer
 
-[![open on your phone](https://img.shields.io/badge/open_on_your_phone_%E2%86%92-rfi--irfos.github.io%2Finvisible--layer-8b5cf6?style=for-the-badge&labelColor=0f172a&color=8b5cf6&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMSAxSDVhMSAxIDAgMCAwLTEgMXYxMmExIDEgMCAwIDAgMSAxaDZhMSAxIDAgMCAwIDEtMVYyYTEgMSAwIDAgMC0xLTF6TTggMTRhMSAxIDAgMSAxIDAtMiAxIDEgMCAwIDEgMCAyeiIvPjwvc3ZnPg==&logoColor=white)](https://rfi-irfos.github.io/invisible-layer/)
-
 ![experiments](https://img.shields.io/badge/experiments-25-22d3ee?style=flat&labelColor=0f172a)
 ![sensors](https://img.shields.io/badge/sensors-25%2B-a78bfa?style=flat&labelColor=0f172a)
 ![fingerprints](https://img.shields.io/badge/fingerprints_exposed-yours-ef4444?style=flat&labelColor=0f172a)
@@ -49,6 +47,15 @@ No app install. No account. No server. Everything runs locally in your browser.
 Each experiment answers one question: *what is your phone already measuring that you didn't know about?*
 
 The profile page answers a different question: *what do they already know about you?*
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/assets/screenshots/meta-layer-ar.png" width="200" alt="meta layer AR overlay"/></td>
+    <td align="center"><img src="docs/assets/screenshots/home-screen-de.png" width="200" alt="home screen DE"/></td>
+    <td align="center"><img src="docs/assets/screenshots/experiments-de.png" width="200" alt="experiments list DE"/></td>
+    <td align="center"><img src="docs/assets/screenshots/deletion-linktree.png" width="200" alt="deletion linktree"/></td>
+  </tr>
+</table>
 
 ## experiments
 
