@@ -145,6 +145,73 @@ MIT — use it, fork it, teach with it. The only thing we ask is that you keep p
 
 ---
 
+## WARNING — we are showing you a fraction
+
+**invisible layer covers ~8 of the sensors in your pocket. Your phone has dozens more.**
+
+This is not the full picture. This is the tip.
+
+Every sensor listed below can be read — by apps, by browsers (with or without asking), by the OS itself, and by data brokers whose entire business model is stitching these streams together into a behavioral model with your name on it.
+
+### what your phone can actually sense
+
+**motion & position**
+- Accelerometer — 3-axis, 100–800 Hz sampling, detects typing rhythm, heartbeat, sleep position, transport mode
+- Gyroscope — 3-axis rotation, used for gait signature, identity from walk pattern alone
+- Magnetometer — compass + EM field, maps your indoor position to specific rooms
+- Barometer — floor-level altitude, knows which floor of which building you are on
+- GPS — sub-3m outdoor, combined with cell/WiFi → sub-1m indoor triangulation
+- Step counter / pedometer — continuous, no permission needed on Android
+- Gravity sensor, linear acceleration, rotation vector — all derived, all logged
+- Significant motion detector — wakes apps when you start moving without your knowledge
+
+**radio & proximity**
+- WiFi scanner — sees every access point in range, maps your physical location to a building, room, crowd density; probe requests broadcast your device's movement history
+- Bluetooth LE — passive scanner sees every BLE beacon in range; your own BLE broadcasts are heard by every receiver you walk past
+- Cell tower — carrier, tower ID, signal strength; triangulates without GPS, works indoors, works with airplane mode off
+- NFC — contactless payment logs, transit card reads, location inference from NFC tags
+- UWB (Ultra-Wideband) — iPhone 11+, Pixel 6+: centimeter-precision ranging between devices
+
+**optical & environmental**
+- Camera (rear + front) — full resolution, video, IR on some devices; background access possible with certain permissions
+- LiDAR — iPhone 12 Pro+, iPad Pro: full 3D point-cloud scan of every room you enter
+- Ambient light sensor — reads your screen content indirectly; detects TV programs you watch, monitors you face
+- Proximity sensor — knows when phone is at your ear, infers calls without microphone
+- Thermometer — CPU/battery temperature leaks ambient temperature and physical activity
+- Humidity sensor (select models) — present in Samsung flagships, some Xiaomi
+
+**biometric & audio**
+- Microphone — continuous background access possible; ultrasonic beacons (17–22 kHz, inaudible) are broadcast in retail stores, airports, stadiums to track your movement between zones silently
+- Fingerprint scanner — biometric template stored on-device, but authentication events are logged
+- Face ID / depth camera — TrueDepth maps 30,000 infrared dots onto your face 30× per second
+- Heart rate sensor (select models) — Samsung Galaxy Watch, Pixel Watch: continuous
+
+**software-layer sensors (no hardware permission needed)**
+- Touch pressure, touch area, touch coordinates — continuous, sampled at input rate
+- Screen orientation, screen state, screen brightness
+- Battery level, voltage, temperature, charge current, charging source
+- Clipboard contents — accessible to any app in focus (and in the background on older OS versions)
+- Keyboard timing patterns — latency between keystrokes is a biometric; identifies you without reading the content
+- App usage patterns — foreground/background events; which apps, how long, in what sequence
+- Network request timing — SSL/TLS fingerprint, HTTP/2 stream patterns; identifies you at the network layer even with VPN
+- Canvas fingerprint — GPU renders a scene; the sub-pixel result is unique per device
+- WebGL fingerprint — GPU model, driver version, shader precision; device identity without cookies
+- AudioContext fingerprint — DAC characteristics, speaker resonance; unique per hardware unit
+- Font enumeration — what fonts are installed narrows your OS, region, corporate profile
+- Speech synthesis voices — installed voices reveal locale, accessibility settings, enterprise config
+- Installed codecs — media format support list is a partial device fingerprint
+- Storage quota — available disk space correlates with device model and usage patterns
+
+**what invisible layer covers: accelerometer · gyroscope · magnetometer · barometer · microphone · camera · BLE · GPS accuracy · navigator fingerprint**
+
+That is 9 streams out of the above list.
+
+**To see the full sensor stack on your own device:** download [Phyphox](https://phyphox.org) (open source, RWTH Aachen University). It exposes every hardware sensor your phone physically has, with live graphs, raw data export, and no data collection. It is the honest version of what every data broker does silently.
+
+> The difference between Phyphox and a data broker is one thing: Phyphox shows you the data. The broker sells it.
+
+---
+
 *built by [rfi-irfos](https://ternlang.com) · no VC funding · no data collected · no regrets*
 
 *The data brokers have a 450-million-point behavioral model on you.*
