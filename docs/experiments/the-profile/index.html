@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>your digital profile — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:#000;color:#c8c8c8;font-family:'JetBrains Mono','Courier New',monospace;font-size:12px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+
+/* top nav */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid rgba(220,38,38,0.15);position:sticky;top:0;background:rgba(0,0,0,0.95);backdrop-filter:blur(10px);z-index:100;}
+.nav-brand{font-size:0.6rem;letter-spacing:0.16em;color:rgba(255,255,255,0.25);text-transform:uppercase}
+.nav-brand span{color:#ef4444}
+.nav-back{font-size:0.55rem;letter-spacing:0.1em;color:rgba(255,255,255,0.2);text-decoration:none;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px 10px;transition:all 0.15s}
+.nav-back:hover{color:#fff;border-color:rgba(255,255,255,0.3)}
+
+/* page shell */
+.page{max-width:680px;margin:0 auto;padding:28px 20px 80px}
+
+/* scan intro */
+#scan-intro{margin-bottom:36px;min-height:60px}
+.scan-line{color:rgba(239,68,68,0.6);font-size:0.7rem;letter-spacing:0.06em}
+.scan-line.done{color:rgba(100,100,100,0.5)}
+#cursor{display:inline-block;width:8px;height:13px;background:#ef4444;vertical-align:middle;animation:blink 0.8s step-end infinite;margin-left:2px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* section blocks */
+.block{margin-bottom:28px;opacity:0;transform:translateY(6px);transition:opacity 0.4s ease,transform 0.4s ease}
+.block.visible{opacity:1;transform:none}
+.block-head{font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:#ef4444;border-bottom:1px dashed rgba(220,38,38,0.3);padding-bottom:6px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.block-head::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#ef4444;flex-shrink:0;box-shadow:0 0 6px #ef4444}
+
+/* rows */
+.row{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.row:last-child{border-bottom:none}
+.row-key{color:rgba(255,255,255,0.3);flex:0 0 160px;font-size:0.65rem;letter-spacing:0.03em}
+.row-val{color:#fff;font-size:0.7rem;word-break:break-all}
+.row-val.ok{color:#22c55e}
+.row-val.warn{color:#f59e0b}
+.row-val.danger{color:#ef4444}
+.row-val.muted{color:rgba(255,255,255,0.3)}
+
+/* permission badges */
+.perm-granted{color:#22c55e;font-size:0.6rem;letter-spacing:0.08em;border:1px solid rgba(34,197,94,0.3);border-radius:3px;padding:1px 6px;display:inline-block}
+.perm-denied{color:rgba(100,100,100,0.6);font-size:0.6rem;letter-spacing:0.08em;border:1px solid rgba(100,100,100,0.2);border-radius:3px;padding:1px 6px;display:inline-block}
+.perm-prompt{color:#f59e0b;font-size:0.6rem;letter-spacing:0.08em;border:1px solid rgba(245,158,11,0.3);border-radius:3px;padding:1px 6px;display:inline-block}
+
+/* inferred tags */
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.tag{font-size:0.58rem;letter-spacing:0.05em;padding:3px 9px;border:1px solid rgba(239,68,68,0.25);border-radius:100px;color:rgba(239,68,68,0.7);background:rgba(239,68,68,0.04)}
+.tag.high{border-color:rgba(239,68,68,0.5);color:rgba(239,68,68,1);background:rgba(239,68,68,0.08)}
+
+/* battery drain */
+.battery-wrap{margin:8px 0 18px}
+.battery-label{font-size:0.58rem;letter-spacing:0.1em;color:rgba(255,255,255,0.25);text-transform:uppercase;margin-bottom:8px}
+.battery-outer{position:relative;height:24px;border:1px solid rgba(239,68,68,0.4);border-radius:4px;background:rgba(239,68,68,0.04);overflow:hidden}
+.battery-fill{height:100%;background:linear-gradient(90deg,rgba(239,68,68,0.8),rgba(248,113,113,0.6));border-radius:3px;transition:width 1.5s ease;animation:battdrain 8s ease-in-out infinite alternate}
+@keyframes battdrain{0%{opacity:1}50%{opacity:0.7}100%{opacity:1}}
+.battery-tip{position:absolute;right:-6px;top:6px;width:5px;height:12px;background:rgba(239,68,68,0.4);border-radius:0 2px 2px 0}
+.battery-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.6rem;letter-spacing:0.08em;color:rgba(255,255,255,0.7)}
+
+/* broker list */
+.broker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:10px}
+.broker-card{border:1px solid rgba(239,68,68,0.15);border-radius:5px;padding:7px 10px;background:rgba(239,68,68,0.03);opacity:0;transform:scale(0.95);transition:opacity 0.3s,transform 0.3s}
+.broker-card.show{opacity:1;transform:none}
+.broker-name{font-size:0.62rem;color:rgba(255,255,255,0.7);letter-spacing:0.03em;margin-bottom:2px}
+.broker-type{font-size:0.52rem;color:rgba(239,68,68,0.5);letter-spacing:0.04em}
+.broker-drain{font-size:0.52rem;color:rgba(255,255,255,0.2);margin-top:4px}
+.broker-bar{height:2px;background:rgba(239,68,68,0.12);border-radius:1px;margin-top:3px;overflow:hidden}
+.broker-bar-fill{height:100%;background:rgba(239,68,68,0.5);border-radius:1px;width:0;transition:width 1.2s ease}
+
+/* verdict */
+.verdict{margin:36px 0 28px;padding:24px;border:1px solid rgba(239,68,68,0.3);border-radius:8px;background:rgba(239,68,68,0.04);text-align:center}
+.verdict-main{font-size:clamp(1rem,4vw,1.35rem);color:#fff;letter-spacing:-0.01em;line-height:1.4;margin-bottom:10px}
+.verdict-sub{font-size:0.65rem;color:rgba(255,255,255,0.3);line-height:1.8}
+.verdict-sub a{color:rgba(239,68,68,0.7);text-decoration:none}
+.verdict-sub a:hover{color:#ef4444}
+
+/* resources */
+.resources{margin-top:24px}
+.res-item{padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:3px}
+.res-item:last-child{border-bottom:none}
+.res-name{font-size:0.68rem;color:rgba(255,255,255,0.65)}
+.res-url{font-size:0.58rem;color:rgba(239,68,68,0.5);letter-spacing:0.03em}
+
+/* fingerprint hash */
+.fp-hash{font-size:0.85rem;color:#ef4444;letter-spacing:0.12em;word-break:break-all}
+.fp-sub{font-size:0.55rem;color:rgba(255,255,255,0.2);margin-top:3px;letter-spacing:0.04em}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#000}
+::-webkit-scrollbar-thumb{background:rgba(239,68,68,0.3);border-radius:2px}
+
+@media(max-width:480px){
+  .row-key{flex:0 0 120px}
+  .broker-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-brand"><span>invisible layer</span> / your digital profile</div>
+  <a class="nav-back" href="../../../">&#x2190; back</a>
+</div>
+
+<div class="page">
+
+  <div id="scan-intro">
+    <div id="scan-lines"></div>
+    <span id="cursor"></span>
+  </div>
+
+  <div class="block" id="b-id">
+    <div class="block-head">subject identification</div>
+    <div class="row"><span class="row-key">subject id</span><span class="row-val fp-hash" id="v-fp">—</span></div>
+    <div class="row"><span class="row-key"></span><span class="row-val fp-sub">canvas rendering fingerprint · unique to this device + browser</span></div>
+    <div class="row"><span class="row-key">platform</span><span class="row-val" id="v-platform">—</span></div>
+    <div class="row"><span class="row-key">user agent</span><span class="row-val muted" id="v-ua">—</span></div>
+    <div class="row"><span class="row-key">locale / timezone</span><span class="row-val" id="v-tz">—</span></div>
+    <div class="row"><span class="row-key">do not track</span><span class="row-val" id="v-dnt">—</span></div>
+  </div>
+
+  <div class="block" id="b-hw">
+    <div class="block-head">hardware profile</div>
+    <div class="row"><span class="row-key">device type</span><span class="row-val" id="v-device">—</span></div>
+    <div class="row"><span class="row-key">screen</span><span class="row-val" id="v-screen">—</span></div>
+    <div class="row"><span class="row-key">cpu cores</span><span class="row-val" id="v-cores">—</span></div>
+    <div class="row"><span class="row-key">device memory</span><span class="row-val" id="v-mem">—</span></div>
+    <div class="row"><span class="row-key">gpu renderer</span><span class="row-val muted" id="v-gpu">—</span></div>
+    <div class="row"><span class="row-key">device tier</span><span class="row-val" id="v-tier">—</span></div>
+    <div class="row"><span class="row-key">connection</span><span class="row-val" id="v-conn">—</span></div>
+    <div class="row"><span class="row-key">battery</span><span class="row-val" id="v-batt">—</span></div>
+  </div>
+
+  <div class="block" id="b-perms">
+    <div class="block-head">data access granted to this page</div>
+    <div class="row"><span class="row-key">camera</span><span class="row-val" id="v-cam">—</span></div>
+    <div class="row"><span class="row-key">microphone</span><span class="row-val" id="v-mic">—</span></div>
+    <div class="row"><span class="row-key">location</span><span class="row-val" id="v-geo">—</span></div>
+    <div class="row"><span class="row-key">notifications</span><span class="row-val" id="v-notif">—</span></div>
+    <div class="row"><span class="row-key">motion sensors</span><span class="row-val" id="v-motion">—</span></div>
+    <div class="row"><span class="row-key">persistent storage</span><span class="row-val" id="v-storage">—</span></div>
+    <div class="row"><span class="row-key">cookies</span><span class="row-val" id="v-cookies">—</span></div>
+    <div style="margin-top:10px;font-size:0.58rem;color:rgba(239,68,68,0.45);line-height:1.7">
+      Green = they have access. This page is not recording you. The <em>system</em> already did — the moment you installed any app that asked.
+    </div>
+  </div>
+
+  <div class="block" id="b-profile">
+    <div class="block-head">inferred advertiser profile</div>
+    <div class="row"><span class="row-key">device segment</span><span class="row-val" id="v-segment">—</span></div>
+    <div class="row"><span class="row-key">estimated region</span><span class="row-val" id="v-region">—</span></div>
+    <div class="row"><span class="row-key">browsing context</span><span class="row-val" id="v-ctx">—</span></div>
+    <div class="row"><span class="row-key">privacy signal</span><span class="row-val" id="v-privacy">—</span></div>
+    <div style="margin-top:12px">
+      <div style="font-size:0.58rem;color:rgba(255,255,255,0.25);margin-bottom:8px;letter-spacing:0.06em;text-transform:uppercase">audience categories you are currently sold into</div>
+      <div class="tags" id="v-tags"></div>
+    </div>
+  </div>
+
+  <div class="block" id="b-drain">
+    <div class="block-head">human cattle battery</div>
+    <div class="battery-label">your data reserve — being drained in real time</div>
+    <div class="battery-wrap">
+      <div class="battery-outer">
+        <div class="battery-fill" id="batt-fill" style="width:73%"></div>
+        <div class="battery-tip"></div>
+        <div class="battery-pct">73% DRAINED</div>
+      </div>
+    </div>
+    <div style="font-size:0.6rem;color:rgba(255,255,255,0.2);margin-bottom:14px;line-height:1.7">
+      Every sensor reading, every tap, every scroll, every background process.<br>
+      Packaged. Sold. Re-sold. 24 hours a day.
+    </div>
+    <div class="broker-grid" id="broker-grid"></div>
+  </div>
+
+  <div class="block" id="b-verdict">
+    <div class="verdict">
+      <div class="verdict-main">This is how Mr. Zuckerberg sees you.</div>
+      <div class="verdict-sub">
+        A device. A profile. A revenue event.<br>
+        Not a person — a data point with a purchase history.<br><br>
+        You do not have to accept this.<br>
+        <a href="mailto:contact@ternlang.com">contact@ternlang.com</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="block" id="b-resources">
+    <div class="block-head">take back your data</div>
+    <div class="resources">
+      <div class="res-item">
+        <span class="res-name">optout.aboutads.info — opt out of 100+ ad networks at once</span>
+        <span class="res-url">optout.aboutads.info</span>
+      </div>
+      <div class="res-item">
+        <span class="res-name">deleteme.com — remove your profile from data broker databases</span>
+        <span class="res-url">deleteme.com</span>
+      </div>
+      <div class="res-item">
+        <span class="res-name">EFF — surveillance self-defense guide</span>
+        <span class="res-url">ssd.eff.org</span>
+      </div>
+      <div class="res-item">
+        <span class="res-name">yourdigitalrights.org — GDPR/CCPA deletion requests (EU+CA)</span>
+        <span class="res-url">yourdigitalrights.org</span>
+      </div>
+      <div class="res-item">
+        <span class="res-name">simpleoptout.com — opt-out guides for 50+ platforms</span>
+        <span class="res-url">simpleoptout.com</span>
+      </div>
+      <div class="res-item">
+        <span class="res-name">Proton — encrypted email, VPN, calendar, storage</span>
+        <span class="res-url">proton.me</span>
+      </div>
+    </div>
+    <div style="margin-top:28px;padding-top:18px;border-top:1px dashed rgba(239,68,68,0.2);font-size:0.6rem;color:rgba(255,255,255,0.15);line-height:1.8;text-align:center">
+      invisible layer is an open research project by <a href="https://ternlang.com" style="color:rgba(239,68,68,0.4);text-decoration:none">ternlang.com</a><br>
+      we collect nothing. we sell nothing. we build the mirror.<br>
+      <a href="mailto:contact@ternlang.com" style="color:rgba(239,68,68,0.5);text-decoration:none">contact@ternlang.com</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Fingerprint ──────────────────────────────────────────────────
+function canvasFP(){
+  try{
+    var c=document.createElement('canvas');c.width=300;c.height=60;
+    var ctx=c.getContext('2d');
+    ctx.textBaseline='top';ctx.font='14px Arial';
+    ctx.fillStyle='#f60';ctx.fillRect(120,1,62,20);
+    ctx.fillStyle='#069';ctx.fillText('invisible layer',2,15);
+    ctx.fillStyle='rgba(102,204,0,0.7)';ctx.font='18px Arial';
+    ctx.fillText('invisible layer',4,30);
+    var d=c.toDataURL();
+    var h=5381;
+    for(var i=0;i<d.length;i++){h=((h<<5)+h)+d.charCodeAt(i);h=h&0xffffffff;}
+    return Math.abs(h).toString(16).toUpperCase().padStart(8,'0');
+  }catch(e){return 'BLOCKED';}
+}
+
+function getGPU(){
+  try{
+    var c=document.createElement('canvas');
+    var gl=c.getContext('webgl')||c.getContext('experimental-webgl');
+    if(!gl)return 'unavailable';
+    var ext=gl.getExtension('WEBGL_debug_renderer_info');
+    return ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
+  }catch(e){return 'blocked';}
+}
+
+function deviceTier(mem,cores,dpr){
+  if((mem||0)>=8&&(cores||0)>=8&&(dpr||1)>=2)return{label:'PREMIUM',cls:'ok'};
+  if((mem||0)>=4&&(cores||0)>=4)return{label:'MID-RANGE',cls:'warn'};
+  return{label:'BUDGET',cls:'muted'};
+}
+
+function permBadge(state){
+  if(state==='granted')return'<span class="perm-granted">GRANTED</span>';
+  if(state==='denied')return'<span class="perm-denied">DENIED</span>';
+  if(state==='prompt')return'<span class="perm-prompt">NOT ASKED</span>';
+  return'<span class="perm-denied">UNKNOWN</span>';
+}
+
+function tzToRegion(tz){
+  tz=(tz||'').toLowerCase();
+  if(tz.includes('europe'))return'Europe';
+  if(tz.includes('america/new_york')||tz.includes('america/chicago')||tz.includes('america/los_angeles'))return'North America';
+  if(tz.includes('america'))return'Americas';
+  if(tz.includes('asia/tokyo')||tz.includes('asia/seoul'))return'East Asia';
+  if(tz.includes('asia/kolkata')||tz.includes('asia/mumbai'))return'South Asia';
+  if(tz.includes('asia'))return'Asia-Pacific';
+  if(tz.includes('australia'))return'Australia / Oceania';
+  if(tz.includes('africa'))return'Africa';
+  return tz;
+}
+
+// ── Typewriter scan intro ────────────────────────────────────────
+var SCAN_MSGS=[
+  'INITIALIZING SUBJECT SCAN...',
+  'PROBING DEVICE HARDWARE...',
+  'QUERYING PERMISSION STATES...',
+  'COMPUTING CANVAS FINGERPRINT...',
+  'CROSS-REFERENCING ADVERTISER DATABASES...',
+  'PROFILE GENERATION COMPLETE.',
+];
+var scanIdx=0,charIdx=0,scanDone=false;
+var scanEl=document.getElementById('scan-lines');
+var cursorEl=document.getElementById('cursor');
+var currentLine=null;
+
+function typeTick(){
+  if(scanIdx>=SCAN_MSGS.length){
+    scanDone=true;
+    cursorEl.style.display='none';
+    revealBlocks();
+    return;
+  }
+  var msg=SCAN_MSGS[scanIdx];
+  if(charIdx===0){
+    currentLine=document.createElement('div');
+    currentLine.className='scan-line';
+    scanEl.appendChild(currentLine);
+  }
+  currentLine.textContent=msg.slice(0,charIdx+1);
+  charIdx++;
+  if(charIdx>=msg.length){
+    currentLine.classList.add('done');
+    scanIdx++;charIdx=0;
+    setTimeout(typeTick,scanIdx<SCAN_MSGS.length?120:400);
+  } else {
+    setTimeout(typeTick,charIdx===1?40:18+Math.random()*14);
+  }
+}
+
+// ── Reveal blocks sequentially ───────────────────────────────────
+var BLOCKS=['b-id','b-hw','b-perms','b-profile','b-drain','b-verdict','b-resources'];
+function revealBlocks(){
+  BLOCKS.forEach(function(id,i){
+    setTimeout(function(){
+      var el=document.getElementById(id);
+      if(el)el.classList.add('visible');
+      if(id==='b-drain')setTimeout(animateBrokers,400);
+    },i*180);
+  });
+}
+
+// ── Broker cards ─────────────────────────────────────────────────
+var BROKERS=[
+  {name:'Meta / Facebook',type:'Social Behavior',drain:94},
+  {name:'Google',type:'Search Intent',drain:97},
+  {name:'Amazon',type:'Purchase History',drain:88},
+  {name:'Apple',type:'Device Ecosystem',drain:82},
+  {name:'TikTok / ByteDance',type:'Engagement Profile',drain:85},
+  {name:'Acxiom',type:'Demographic Data',drain:91},
+  {name:'Oracle Data Cloud',type:'Enterprise Profile',drain:87},
+  {name:'LiveRamp',type:'Identity Graph',drain:83},
+  {name:'The Trade Desk',type:'Programmatic Ads',drain:79},
+  {name:'Salesforce DMP',type:'Marketing Data',drain:76},
+  {name:'Adobe Audience Mgr',type:'Behavior Analytics',drain:74},
+  {name:'Criteo',type:'Retargeting',drain:81},
+  {name:'Experian',type:'Credit + Behavior',drain:88},
+  {name:'Equifax',type:'Financial Profile',drain:85},
+  {name:'Epsilon',type:'Consumer Intel',drain:77},
+  {name:'Nielsen',type:'Market Research',drain:69},
+  {name:'Neustar',type:'Identity / Telco',drain:71},
+  {name:'Lotame',type:'Audience Data',drain:67},
+  {name:'Xandr / AppNexus',type:'Programmatic',drain:72},
+  {name:'Zeta Global',type:'AI Marketing',drain:68},
+];
+
+function buildBrokerGrid(){
+  var grid=document.getElementById('broker-grid');
+  BROKERS.forEach(function(b){
+    var card=document.createElement('div');
+    card.className='broker-card';
+    card.innerHTML='<div class="broker-name">'+b.name+'</div>'
+      +'<div class="broker-type">'+b.type+'</div>'
+      +'<div class="broker-drain">'+b.drain+'% profile match</div>'
+      +'<div class="broker-bar"><div class="broker-bar-fill" style="width:0%" data-drain="'+b.drain+'"></div></div>';
+    grid.appendChild(card);
+  });
+}
+
+function animateBrokers(){
+  var cards=document.querySelectorAll('.broker-card');
+  cards.forEach(function(card,i){
+    setTimeout(function(){
+      card.classList.add('show');
+      var fill=card.querySelector('.broker-bar-fill');
+      if(fill)setTimeout(function(){fill.style.width=fill.dataset.drain+'%';},100);
+    },i*60);
+  });
+}
+
+// ── Battery drain animation ──────────────────────────────────────
+function animateBattery(level){
+  var fill=document.getElementById('batt-fill');
+  var pctEl=fill&&fill.parentElement.querySelector('.battery-pct');
+  var pct=level!==null?Math.round((1-level)*100):73;
+  if(fill)fill.style.width=pct+'%';
+  if(pctEl)pctEl.textContent=pct+'% DRAINED';
+}
+
+// ── Permission check ─────────────────────────────────────────────
+async function checkPerms(){
+  var results={camera:'unknown',microphone:'unknown',geolocation:'unknown',notifications:'unknown'};
+  if(navigator.permissions){
+    for(var name of['camera','microphone','geolocation','notifications']){
+      try{var r=await navigator.permissions.query({name});results[name]=r.state;}catch(e){}
+    }
+  }
+  return results;
+}
+
+// ── Main profile build ───────────────────────────────────────────
+async function buildProfile(){
+  var fp=canvasFP();
+  var gpu=getGPU();
+  var ua=navigator.userAgent;
+  var platform=navigator.platform||'unknown';
+  var cores=navigator.hardwareConcurrency||null;
+  var mem=navigator.deviceMemory||null;
+  var dpr=window.devicePixelRatio||1;
+  var touch=navigator.maxTouchPoints||0;
+  var dnt=navigator.doNotTrack;
+  var tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  var lang=navigator.language;
+  var isMobile=/iPhone|iPad|iPod|Android/i.test(ua)||touch>0;
+  var isIOS=/iPhone|iPad|iPod/i.test(ua);
+  var isAndroid=/Android/i.test(ua);
+  var isMac=/Mac/i.test(platform)&&!isMobile;
+  var isWin=/Win/i.test(platform);
+  var screenW=screen.width,screenH=screen.height;
+  var conn=navigator.connection||{};
+  var tier=deviceTier(mem,cores,dpr);
+  var region=tzToRegion(tz);
+
+  // battery
+  var battLevel=null,battCharging=null;
+  try{var batt=await navigator.getBattery();battLevel=batt.level;battCharging=batt.charging;}catch(e){}
+
+  var perms=await checkPerms();
+
+  // ── Fill DOM ──────────────────────────────────────────────────
+  document.getElementById('v-fp').textContent=fp;
+  document.getElementById('v-platform').textContent=
+    (isIOS?'iOS':isAndroid?'Android':isMac?'macOS':isWin?'Windows':platform)+
+    (dpr>=2?' · retina display':'');
+  document.getElementById('v-ua').textContent=ua.slice(0,90)+(ua.length>90?'…':'');
+  document.getElementById('v-tz').textContent=lang+' · '+tz;
+
+  var dntEl=document.getElementById('v-dnt');
+  if(dnt==='1'){dntEl.innerHTML='ENABLED <span style="font-size:0.55rem;color:rgba(239,68,68,0.6)">(paradox: privacy-conscious users are a premium segment)</span>';}
+  else if(dnt==='0'){dntEl.innerHTML='<span class="row-val muted">DISABLED — you are fully trackable</span>';}
+  else{dntEl.innerHTML='<span class="row-val muted">NOT SET</span>';}
+
+  document.getElementById('v-device').innerHTML=
+    '<span class="row-val '+(isMobile?'warn':'ok')+'">'+
+    (isMobile?(isIOS?'iPhone / iPad':'Android Mobile'):(isMac?'Mac desktop':'Desktop'))+
+    '</span> · '+touch+' touch point'+(touch!==1?'s':'');
+  document.getElementById('v-screen').textContent=
+    screenW+'×'+screenH+' @ '+dpr+'x pixel ratio';
+  document.getElementById('v-cores').innerHTML=
+    '<span class="row-val '+(cores>=8?'ok':cores>=4?'warn':'muted')+'">'+
+    (cores||'unknown')+' logical cores</span>';
+  document.getElementById('v-mem').innerHTML=
+    '<span class="row-val '+(mem>=8?'ok':mem>=4?'warn':'muted')+'">'+
+    (mem?mem+' GB (reported)':'not disclosed');
+  document.getElementById('v-gpu').textContent=gpu;
+  document.getElementById('v-tier').innerHTML=
+    '<span class="row-val '+tier.cls+'">'+tier.label+'</span>'+
+    (tier.label==='PREMIUM'?' · high-value advertising demographic':'');
+  document.getElementById('v-conn').textContent=
+    (conn.effectiveType||'unknown').toUpperCase()+
+    (conn.downlink?' · '+conn.downlink+' Mbps':'')+
+    (conn.rtt?' · rtt '+conn.rtt+'ms':'');
+
+  if(battLevel!==null){
+    var pct=Math.round(battLevel*100);
+    var bc=pct>60?'ok':pct>20?'warn':'danger';
+    document.getElementById('v-batt').innerHTML=
+      '<span class="row-val '+bc+'">'+pct+'%</span>'+
+      (battCharging?' · charging':'· discharging');
+    animateBattery(battLevel);
+  } else {
+    document.getElementById('v-batt').textContent='not disclosed';
+  }
+
+  // permissions
+  document.getElementById('v-cam').innerHTML=permBadge(perms.camera);
+  document.getElementById('v-mic').innerHTML=permBadge(perms.microphone);
+  document.getElementById('v-geo').innerHTML=permBadge(perms.geolocation);
+  document.getElementById('v-notif').innerHTML=permBadge(perms.notifications);
+  document.getElementById('v-motion').innerHTML=
+    (typeof DeviceMotionEvent!=='undefined')?
+    '<span class="perm-granted">AVAILABLE</span>':
+    '<span class="perm-denied">NOT AVAILABLE</span>';
+  document.getElementById('v-storage').innerHTML=
+    (navigator.storage)?
+    '<span class="perm-granted">AVAILABLE</span>':
+    '<span class="perm-denied">NOT AVAILABLE</span>';
+  document.getElementById('v-cookies').innerHTML=
+    navigator.cookieEnabled?
+    '<span class="perm-granted">ENABLED</span>':
+    '<span class="perm-denied">DISABLED</span>';
+
+  // inferred profile
+  var segments=[];
+  if(tier.label==='PREMIUM')segments.push('Premium Consumer');
+  else if(tier.label==='MID-RANGE')segments.push('Mid-Market Consumer');
+  else segments.push('Value Consumer');
+  if(isIOS)segments.push('Apple Ecosystem');
+  if(isAndroid)segments.push('Google Ecosystem');
+  document.getElementById('v-segment').textContent=segments.join(' · ');
+  document.getElementById('v-region').textContent=region+' ('+tz+')';
+  document.getElementById('v-ctx').textContent=
+    isMobile?'Mobile · on-the-go browsing session':'Desktop · seated session';
+
+  var privEl=document.getElementById('v-privacy');
+  if(dnt==='1'){
+    privEl.innerHTML='<span class="danger">Do Not Track: ON · paradox: you\'re in a high-CPM audience category</span>';
+  } else {
+    privEl.textContent='No privacy controls active · default tracking permitted';
+  }
+
+  // audience tags
+  var tags=[];
+  if(tier.label==='PREMIUM')tags.push({t:'High Income Bracket',h:true});
+  if(isIOS)tags.push({t:'iPhone User',h:true});
+  if(isAndroid)tags.push({t:'Android User',h:false});
+  if(isMobile)tags.push({t:'Mobile Commerce',h:true});
+  if(perms.camera==='granted')tags.push({t:'Camera Access',h:true});
+  if(perms.microphone==='granted')tags.push({t:'Voice Data',h:true});
+  if(perms.geolocation==='granted')tags.push({t:'Location Verified',h:true});
+  if(perms.notifications==='granted')tags.push({t:'Push Marketing',h:false});
+  if(cores>=8)tags.push({t:'Power User',h:false});
+  if(dnt==='1')tags.push({t:'Privacy-Conscious (High CPM)',h:true});
+  tags.push({t:region+' Consumer',h:false});
+  if(lang.startsWith('de'))tags.push({t:'German-Speaking',h:false});
+  if(lang.startsWith('en'))tags.push({t:'English-Speaking',h:false});
+  var h=new Date().getHours();
+  if(h>=22||h<6)tags.push({t:'Late-Night Shopper',h:false});
+  else if(h>=8&&h<=18)tags.push({t:'Business Hours',h:false});
+  tags.push({t:'Cross-Device Profile',h:true});
+  tags.push({t:'3rd-Party Remarketing',h:true});
+
+  var tagsEl=document.getElementById('v-tags');
+  tags.forEach(function(tag){
+    var s=document.createElement('span');
+    s.className='tag'+(tag.h?' high':'');
+    s.textContent=tag.t;
+    tagsEl.appendChild(s);
+  });
+}
+
+// ── Boot ──────────────────────────────────────────────────────────
+buildBrokerGrid();
+buildProfile(); // runs async in background while typewriter plays
+typeTick();     // start scan animation
+</script>
+</body>
+</html>

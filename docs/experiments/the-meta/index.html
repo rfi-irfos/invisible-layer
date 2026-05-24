@@ -51,6 +51,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:
     <div class="ar-brand-main">meta layer</div>
     <div class="ar-brand-sub">invisible layer · palantir mode</div>
   </div>
+  <a href="../../the-profile/" style="font-size:0.5rem;letter-spacing:0.12em;color:rgba(239,68,68,0.7);text-decoration:none;border:1px solid rgba(239,68,68,0.3);border-radius:4px;padding:4px 8px;white-space:nowrap;margin-right:8px;" title="your digital profile">YOUR PROFILE &#x2192;</a>
   <a class="ar-close" href="../../../" title="close">&#10005;</a>
 </div>
 
@@ -65,6 +66,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:
   <div class="chip on" style="--c:#8b5cf6"  data-l="altitude" onclick="tog(this)"><div class="chip-dot"></div>altitude</div>
   <div class="chip on" style="--c:#f87171"  data-l="hud"      onclick="tog(this)"><div class="chip-dot"></div>telemetry</div>
   <div class="chip on" style="--c:#34d399"  data-l="spectrum" onclick="tog(this)"><div class="chip-dot"></div>spectrum</div>
+  <div class="chip on" style="--c:#ef4444"  data-l="bitstream" onclick="tog(this)"><div class="chip-dot"></div>bitstream</div>
 </div>
 
 <div class="start" id="start">
@@ -401,6 +403,7 @@ function loop() {
   if(L.altitude){try{drawAltitude(t);}catch(e){log('alt:'+e.message);}}
   if(L.hud)     {try{drawHUD(t);}catch(e){log('hud:'+e.message);}}
   if(L.spectrum){try{drawSpectrumBar(t);}catch(e){}}
+  if(L.bitstream){try{drawBitstream(t,now);}catch(e){}}
 
   // HUD frame always on top
   try{drawFrame(t);}catch(e){}
@@ -971,6 +974,132 @@ function hexagon(ctx,x,y,r){
     i===0?ctx.moveTo(x+r*Math.cos(a),y+r*Math.sin(a)):ctx.lineTo(x+r*Math.cos(a),y+r*Math.sin(a));
   }
   ctx.closePath();
+}
+
+// ── Bitstream layer — live data packets flying off to brokers ────
+var _bsPkts=[];      // {x,y,vx,vy,label,col,alpha,life}
+var _bsBrok=[];      // {name,x,y,alpha,life,dir}
+var _bsFrame=0;
+var _bsSentCount=0;
+var _bsSentMs=0;
+var _BS_BROKERS=['META PIXEL','GOOGLE ADS','DOUBLECLICK','AMAZON DSP',
+  'TIKTOK PIXEL','ORACLE DATA','ACXIOM','LIVERAMP',
+  'TRADE DESK','SALESFORCE','ADOBE AUDIENCE','CRITEO',
+  'EXPERIAN','EPSILON','NEUSTAR'];
+
+function _bsLabel(){
+  var r=Math.random();
+  if(r<0.13)return 'mic:'+(S.audioLevel*100).toFixed(0)+'%';
+  if(r<0.24)return 'ax:'+S.ax.toFixed(1)+' ay:'+S.ay.toFixed(1);
+  if(r<0.34)return 'mag:'+S.magTotal.toFixed(0)+'µT';
+  if(r<0.43)return 'net:'+S.netType.toLowerCase();
+  if(r<0.51)return 'gps:'+(S.lat!==null?S.lat.toFixed(3)+' N':'pending');
+  if(r<0.58)return 'batt:'+(S.battLevel!==null?(S.battLevel*100).toFixed(0)+'%':'—');
+  if(r<0.65)return 'rtt:'+(S.netRtt||'—')+'ms';
+  if(r<0.71)return 'α:'+Math.round(S.orAlpha)+'° γ:'+Math.round(S.orGamma)+'°';
+  if(r<0.77)return 'screen:'+S.screenRes;
+  if(r<0.82)return 'cpu:'+S.hw+'c';
+  if(r<0.87)return 'ts:'+Date.now().toString(36);
+  if(r<0.92)return 'uid:'+Math.random().toString(36).slice(2,10);
+  return 'fp:'+Math.abs(((Date.now()>>4)^(S.hw||4))*0x9e3779b9&0xffffff).toString(16);
+}
+
+function drawBitstream(t,now){
+  _bsFrame++;
+  var TRAY=90;
+
+  // spawn packets every 3 frames
+  if(_bsFrame%3===0){
+    var fromLeft=Math.random()<0.5;
+    var px,py,vx;
+    // spawn from left or right quarter, drift toward that edge
+    if(fromLeft){px=W*0.05+Math.random()*W*0.3;vx=-(0.4+Math.random()*0.9);}
+    else{px=W*0.65+Math.random()*W*0.3;vx=(0.4+Math.random()*0.9);}
+    py=H*0.12+Math.random()*(H-TRAY-H*0.22);
+    var vy=-(0.15+Math.random()*0.4);
+    var cols=['239,68,68','248,113,113','252,165,165','254,202,202'];
+    var ci=Math.floor(Math.random()*cols.length);
+    _bsPkts.push({x:px,y:py,vx:vx,vy:vy,label:_bsLabel(),col:cols[ci],alpha:0.0,life:1.0,fromLeft:fromLeft});
+  }
+
+  // spawn broker name every ~3s
+  if(_bsFrame%90===0){
+    var bname=_BS_BROKERS[Math.floor(Math.random()*_BS_BROKERS.length)];
+    var onLeft=Math.random()<0.5;
+    var bx=onLeft?12:W-12;
+    var by=H*0.18+Math.random()*(H*0.55);
+    _bsBrok.push({name:bname,x:bx,y:by,alpha:0.0,life:1.0,dir:onLeft?1:-1});
+    _bsSentCount++;
+  }
+
+  cx.save();
+
+  // data packet trails
+  for(var i=_bsPkts.length-1;i>=0;i--){
+    var p=_bsPkts[i];
+    p.life-=0.011;
+    if(p.life<=0||p.x<-80||p.x>W+80){_bsPkts.splice(i,1);continue;}
+    p.x+=p.vx; p.y+=p.vy;
+    // fade in fast, then stay, then fade out
+    if(p.life>0.85)p.alpha=Math.min(0.78,(1-p.life)*5);
+    else if(p.life<0.25)p.alpha=p.life/0.25*0.78;
+    else p.alpha=0.78;
+
+    cx.globalAlpha=p.alpha;
+    cx.font='bold 7px monospace';
+    var tw=cx.measureText(p.label).width;
+    // pill background
+    cx.fillStyle='rgba(0,0,0,0.65)';
+    cx.beginPath();if(cx.roundRect)cx.roundRect(p.x-3,p.y-9,tw+10,13,3);
+    else cx.rect(p.x-3,p.y-9,tw+10,13);
+    cx.fill();
+    // border pulse
+    cx.strokeStyle='rgba('+p.col+',0.55)';cx.lineWidth=0.5;
+    cx.beginPath();if(cx.roundRect)cx.roundRect(p.x-3,p.y-9,tw+10,13,3);
+    else cx.rect(p.x-3,p.y-9,tw+10,13);
+    cx.stroke();
+    // label
+    cx.fillStyle='rgba('+p.col+',0.95)';
+    cx.fillText(p.label,p.x+2,p.y);
+    // arrow direction indicator
+    cx.fillStyle='rgba('+p.col+',0.35)';cx.font='7px monospace';
+    if(p.fromLeft)cx.fillText('◂',p.x-10,p.y);
+    else cx.fillText('▸',p.x+tw+5,p.y);
+  }
+
+  // broker name flashes on edges
+  for(var j=_bsBrok.length-1;j>=0;j--){
+    var b=_bsBrok[j];
+    b.life-=0.004;
+    if(b.life<=0){_bsBrok.splice(j,1);continue;}
+    if(b.life>0.8)b.alpha=Math.min(0.7,(1-b.life)*3.5);
+    else if(b.life<0.2)b.alpha=b.life/0.2*0.7;
+    else b.alpha=0.7;
+
+    cx.globalAlpha=b.alpha;
+    cx.font='bold 8px monospace';
+    cx.textAlign=b.dir>0?'left':'right';
+    cx.fillStyle='rgba(239,68,68,0.9)';
+    cx.fillText((b.dir>0?'':'')+b.name,b.x,b.y);
+    cx.font='6px monospace';
+    cx.fillStyle='rgba(255,255,255,0.35)';
+    cx.fillText('receiving data',b.x,b.y+10);
+    // small animated arrow pointing inward
+    var arrowX=b.dir>0?b.x-8:b.x+8;
+    cx.fillStyle='rgba(239,68,68,0.5)';cx.font='8px monospace';
+    cx.fillText(b.dir>0?'◄':'►',arrowX,b.y);
+    cx.textAlign='left';
+  }
+
+  // sent counter bottom-right
+  if(now-_bsSentMs>1800){_bsSentMs=now;}
+  cx.globalAlpha=0.45;cx.font='7px monospace';cx.textAlign='right';
+  cx.fillStyle='#ef4444';
+  cx.fillText('DATA TRANSMITTED: '+(_bsSentCount*47+Math.floor(now/13)%47)+' KB',W-16,H-TRAY-16);
+  cx.fillText(_bsPkts.length+' active streams',W-16,H-TRAY-5);
+  cx.textAlign='left';cx.globalAlpha=1;
+
+  cx.restore();
 }
 </script>
 <script src="../../../assets/js/i18n.js"></script>
