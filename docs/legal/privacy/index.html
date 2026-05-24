@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Datenschutz — invisible layer</title>
+<meta name="theme-color" content="#0f172a" id="theme-color-meta"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+[data-theme="light"]{
+  --bg:#f1f5f9;--surface:#ffffff;--surface2:#f8fafc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#0f172a;--text2:#334155;--muted:#64748b;
+  --accent:#dc2626;--shadow:0 1px 3px rgba(0,0,0,0.08);
+  --nav-bg:rgba(241,245,249,0.96);
+}
+[data-theme="dark"]{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#162032;
+  --border:#2d3f57;--border2:#3d5068;
+  --text:#f1f5f9;--text2:#cbd5e1;--muted:#7a90a8;
+  --accent:#ef4444;--shadow:none;
+  --nav-bg:rgba(15,23,42,0.96);
+}
+[data-theme="hc"]{
+  --bg:#000;--surface:#000;--surface2:#000;
+  --border:#fff;--border2:#fff;
+  --text:#fff;--text2:#fff;--muted:#ccc;
+  --accent:#ff4040;--shadow:none;
+  --nav-bg:#000;
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-size:15px;line-height:1.7;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;
+  transition:background 0.2s,color 0.2s;
+}
+.nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;position:sticky;top:0;z-index:100;
+  background:var(--nav-bg);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.nav-brand{font-size:13px;color:var(--muted);letter-spacing:0.01em}
+.nav-brand b{color:var(--text);font-weight:600}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{
+  font-size:12px;padding:5px 11px;border-radius:6px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--border);color:var(--text2);
+  font-family:inherit;transition:all 0.12s;line-height:1;
+}
+.nav-btn:hover{border-color:var(--border2);color:var(--text)}
+.nav-back{
+  font-size:12px;color:var(--muted);text-decoration:none;
+  padding:5px 11px;border:1px solid var(--border);border-radius:6px;
+  transition:all 0.12s;
+}
+.nav-back:hover{color:var(--text);border-color:var(--border2)}
+
+.page{max-width:700px;margin:0 auto;padding:40px 20px 100px}
+.page-header{margin-bottom:36px}
+.page-label{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.page-title{font-size:26px;font-weight:700;color:var(--text);line-height:1.2}
+.page-sub{font-size:14px;color:var(--muted);margin-top:8px}
+
+.section{margin-bottom:32px}
+.section-title{font-size:12px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.section p{font-size:14px;color:var(--text2);margin-bottom:10px}
+.section p:last-child{margin-bottom:0}
+.section ul{list-style:none;padding:0}
+.section ul li{font-size:14px;color:var(--text2);padding:4px 0 4px 18px;position:relative}
+.section ul li::before{content:"";position:absolute;left:0;top:11px;width:6px;height:6px;border-radius:50%;background:var(--border2)}
+
+.highlight-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:16px 18px;margin:14px 0;font-size:14px;color:var(--text2);line-height:1.7;
+}
+.highlight-box.good{border-color:rgba(34,197,94,0.35);background:rgba(34,197,94,0.04)}
+.highlight-box.good b{color:#22c55e}
+[data-theme="hc"] .highlight-box.good{border-color:#00ff44}
+[data-theme="hc"] .highlight-box.good b{color:#00ff44}
+[data-theme="light"] .highlight-box.good{border-color:#86efac;background:#f0fdf4}
+[data-theme="light"] .highlight-box.good b{color:#15803d}
+
+.lang-toggle-wrap{display:flex;align-items:center;gap:6px}
+
+footer{
+  max-width:700px;margin:0 auto;padding:32px 20px 48px;
+  border-top:1px solid var(--border);
+  display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;
+}
+footer a{font-size:12px;color:var(--muted);text-decoration:none;transition:color 0.12s}
+footer a:hover{color:var(--text)}
+.footer-sep{color:var(--border2);font-size:12px}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="nav-back" href="../../">invisible layer</a>
+  <div class="nav-right">
+    <div class="lang-toggle-wrap">
+      <button class="nav-btn" id="langBtn" onclick="toggleLang()">EN</button>
+    </div>
+    <button class="nav-btn" id="themeBtn" onclick="cycleTheme()">dark</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div class="page-label" id="lbl-doc">Rechtliches</div>
+    <div class="page-title" id="lbl-title">Datenschutzerklärung</div>
+    <div class="page-sub" id="lbl-sub">Stand: Mai 2026</div>
+  </div>
+
+  <!-- Central point -->
+  <div class="highlight-box good" id="highlight-main">
+    <b>Kurzfassung:</b> Diese Website speichert keine Daten auf Servern. Alles, was du siehst, wird live in deinem Browser berechnet und verlässt dein Gerät nicht. Wir betreiben kein Tracking, keine Cookies, keine Nutzerdatenbank.
+  </div>
+
+  <!-- 1 -->
+  <div class="section">
+    <div class="section-title" id="s1-head">1. Verantwortliche Stelle</div>
+    <p id="s1-p1">Verantwortlich im Sinne der DSGVO ist: RFI-IRFOS, erreichbar unter <a href="mailto:contact@ternlang.com" style="color:var(--accent)">contact@ternlang.com</a>.</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="section">
+    <div class="section-title" id="s2-head">2. Welche Daten werden erhoben?</div>
+    <p id="s2-p1">Durch den Aufruf dieser Website können folgende technische Daten temporär auf unserer Serverinfrastruktur anfallen:</p>
+    <ul>
+      <li id="s2-l1">IP-Adresse (anonymisiert durch den Hosting-Anbieter)</li>
+      <li id="s2-l2">Datum und Uhrzeit des Zugriffs</li>
+      <li id="s2-l3">Aufgerufene URL</li>
+      <li id="s2-l4">Browser-Typ und Betriebssystem (User-Agent)</li>
+    </ul>
+    <p id="s2-p2" style="margin-top:10px">Diese Daten werden ausschliesslich für den technischen Betrieb der Website benötigt (Server-Logs) und nach spätestens 7 Tagen automatisch gelöscht. Sie werden nicht mit anderen Daten verknüpft oder zur Identifizierung von Personen verwendet.</p>
+  </div>
+
+  <!-- 3 -->
+  <div class="section">
+    <div class="section-title" id="s3-head">3. Was invisible layer nicht tut</div>
+    <p id="s3-p1">Wir setzen bewusst keine der folgenden Technologien ein:</p>
+    <ul>
+      <li id="s3-l1">Tracking-Cookies</li>
+      <li id="s3-l2">Werbenetzwerke oder Pixel (Google Ads, Meta Pixel, etc.)</li>
+      <li id="s3-l3">Analyse-Dienste (Google Analytics, Matomo, etc.)</li>
+      <li id="s3-l4">Fingerprinting-Dienste</li>
+      <li id="s3-l5">Social-Media-Einbindungen mit Tracking-Funktionen</li>
+      <li id="s3-l6">Nutzerkonten oder Login-Systeme</li>
+    </ul>
+  </div>
+
+  <!-- 4 -->
+  <div class="section">
+    <div class="section-title" id="s4-head">4. Lokale Verarbeitung im Browser</div>
+    <p id="s4-p1">Die "Digital Profile"-Seite und andere interaktive Experimente lesen Daten <b>lokal in deinem Browser</b> aus: Geräteparameter, Browser-API-Ergebnisse, Canvas-Fingerprint und ahnliches. Diese Daten verlassen dein Gerät zu keinem Zeitpunkt. Es findet keine Übertragung an unsere Server oder an Dritte statt.</p>
+    <p id="s4-p2">Der Zweck dieser lokalen Verarbeitung ist ausschliesslich Bildung: dir zu zeigen, welche Informationen ein Browser preisgibt. Wir speichern diese Daten nicht.</p>
+  </div>
+
+  <!-- 5 -->
+  <div class="section">
+    <div class="section-title" id="s5-head">5. localStorage und sessionStorage</div>
+    <p id="s5-p1">Diese Website speichert deine Präferenzen (Sprache, Farbschema) im localStorage deines Browsers. Diese Daten verlassen dein Gerät nicht und werden von uns nicht gelesen. Du kannst sie jederzeit über die Einstellungen deines Browsers löschen.</p>
+  </div>
+
+  <!-- 6 -->
+  <div class="section">
+    <div class="section-title" id="s6-head">6. Hosting</div>
+    <p id="s6-p1">Diese Website wird über GitHub Pages gehostet (GitHub, Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA). GitHub kann beim Seitenaufruf technische Zugriffsdaten protokollieren. Weitere Informationen findest du in der <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener" style="color:var(--accent)">Datenschutzerklärung von GitHub</a>.</p>
+  </div>
+
+  <!-- 7 -->
+  <div class="section">
+    <div class="section-title" id="s7-head">7. Externe Links</div>
+    <p id="s7-p1">Diese Website enthält Links zu externen Ressourcen (z. B. Datenschutz-Tools wie opt-out.networkadvertising.org, DSR-Formulare, etc.). Wenn du diese Links aufrufst, gelten die Datenschutzbestimmungen der jeweiligen Anbieter. Wir haben keinen Einfluss darauf, was diese Anbieter mit deinen Daten tun.</p>
+  </div>
+
+  <!-- 8 -->
+  <div class="section">
+    <div class="section-title" id="s8-head">8. Deine Rechte</div>
+    <p id="s8-p1">Da wir keine personenbezogenen Daten von dir speichern, gibt es nichts, was wir dir auskunftspflichtig machen oder löschen müssten. Solltest du dennoch der Meinung sein, dass wir Daten von dir verarbeiten, hast du das Recht auf Auskunft, Berichtigung, Löschung und Datenübertragbarkeit gemäss DSGVO.</p>
+    <p id="s8-p2">Bei Beschwerden kannst du dich an die zuständige Datenschutzaufsichtsbehörde wenden.</p>
+  </div>
+
+  <!-- 9 -->
+  <div class="section">
+    <div class="section-title" id="s9-head">9. Kontakt</div>
+    <p id="s9-p1">Bei datenschutzrelevanten Fragen wende dich an: <a href="mailto:contact@ternlang.com" style="color:var(--accent)">contact@ternlang.com</a></p>
+  </div>
+
+</div>
+
+<footer>
+  <a href="../../">invisible layer</a>
+  <span class="footer-sep">|</span>
+  <a href="../agb/">AGB</a>
+  <span class="footer-sep">|</span>
+  <a href="../../experiments/the-profile/">Dein digitales Profil</a>
+  <span class="footer-sep">|</span>
+  <a href="mailto:contact@ternlang.com">contact@ternlang.com</a>
+</footer>
+
+<script>
+// ── Theme ──
+const THEMES=['dark','light','hc'];
+let _theme=localStorage.getItem('il-theme')||'dark';
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('themeBtn').textContent=t==='hc'?'HC':t;
+  const mc={'dark':'#0f172a','light':'#f1f5f9','hc':'#000'};
+  document.getElementById('theme-color-meta').content=mc[t];
+  localStorage.setItem('il-theme',t);
+}
+function cycleTheme(){_theme=THEMES[(THEMES.indexOf(_theme)+1)%THEMES.length];applyTheme(_theme);}
+applyTheme(_theme);
+
+// ── Language ──
+const DE={
+  'lbl-doc':'Rechtliches','lbl-title':'Datenschutzerklärung','lbl-sub':'Stand: Mai 2026',
+  'highlight-main':'<b>Kurzfassung:</b> Diese Website speichert keine Daten auf Servern. Alles, was du siehst, wird live in deinem Browser berechnet und verlässt dein Gerät nicht. Wir betreiben kein Tracking, keine Cookies, keine Nutzerdatenbank.',
+  's1-head':'1. Verantwortliche Stelle',
+  's1-p1':'Verantwortlich im Sinne der DSGVO ist: RFI-IRFOS, erreichbar unter <a href="mailto:contact@ternlang.com" style="color:var(--accent)">contact@ternlang.com</a>.',
+  's2-head':'2. Welche Daten werden erhoben?',
+  's2-p1':'Durch den Aufruf dieser Website können folgende technische Daten temporär auf unserer Serverinfrastruktur anfallen:',
+  's2-l1':'IP-Adresse (anonymisiert durch den Hosting-Anbieter)',
+  's2-l2':'Datum und Uhrzeit des Zugriffs',
+  's2-l3':'Aufgerufene URL',
+  's2-l4':'Browser-Typ und Betriebssystem (User-Agent)',
+  's2-p2':'Diese Daten werden ausschliesslich für den technischen Betrieb der Website benötigt (Server-Logs) und nach spätestens 7 Tagen automatisch gelöscht. Sie werden nicht mit anderen Daten verknüpft oder zur Identifizierung von Personen verwendet.',
+  's3-head':'3. Was invisible layer nicht tut',
+  's3-p1':'Wir setzen bewusst keine der folgenden Technologien ein:',
+  's3-l1':'Tracking-Cookies',
+  's3-l2':'Werbenetzwerke oder Pixel (Google Ads, Meta Pixel, etc.)',
+  's3-l3':'Analyse-Dienste (Google Analytics, Matomo, etc.)',
+  's3-l4':'Fingerprinting-Dienste',
+  's3-l5':'Social-Media-Einbindungen mit Tracking-Funktionen',
+  's3-l6':'Nutzerkonten oder Login-Systeme',
+  's4-head':'4. Lokale Verarbeitung im Browser',
+  's4-p1':'Die "Digital Profile"-Seite und andere interaktive Experimente lesen Daten <b>lokal in deinem Browser</b> aus: Geräteparameter, Browser-API-Ergebnisse, Canvas-Fingerprint und ähnliches. Diese Daten verlassen dein Gerät zu keinem Zeitpunkt. Es findet keine Übertragung an unsere Server oder an Dritte statt.',
+  's4-p2':'Der Zweck dieser lokalen Verarbeitung ist ausschliesslich Bildung: dir zu zeigen, welche Informationen ein Browser preisgibt. Wir speichern diese Daten nicht.',
+  's5-head':'5. localStorage und sessionStorage',
+  's5-p1':'Diese Website speichert deine Präferenzen (Sprache, Farbschema) im localStorage deines Browsers. Diese Daten verlassen dein Gerät nicht und werden von uns nicht gelesen. Du kannst sie jederzeit über die Einstellungen deines Browsers löschen.',
+  's6-head':'6. Hosting',
+  's6-p1':'Diese Website wird über GitHub Pages gehostet (GitHub, Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA). GitHub kann beim Seitenaufruf technische Zugriffsdaten protokollieren. Weitere Informationen findest du in der <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener" style="color:var(--accent)">Datenschutzerklärung von GitHub</a>.',
+  's7-head':'7. Externe Links',
+  's7-p1':'Diese Website enthält Links zu externen Ressourcen (z. B. Datenschutz-Tools wie opt-out.networkadvertising.org, DSR-Formulare, etc.). Wenn du diese Links aufrufst, gelten die Datenschutzbestimmungen der jeweiligen Anbieter. Wir haben keinen Einfluss darauf, was diese Anbieter mit deinen Daten tun.',
+  's8-head':'8. Deine Rechte',
+  's8-p1':'Da wir keine personenbezogenen Daten von dir speichern, gibt es nichts, was wir dir auskunftspflichtig machen oder löschen müssten. Solltest du dennoch der Meinung sein, dass wir Daten von dir verarbeiten, hast du das Recht auf Auskunft, Berichtigung, Löschung und Datenübertragbarkeit gemäss DSGVO.',
+  's8-p2':'Bei Beschwerden kannst du dich an die zuständige Datenschutzaufsichtsbehörde wenden.',
+  's9-head':'9. Kontakt',
+  's9-p1':'Bei datenschutzrelevanten Fragen wende dich an: <a href="mailto:contact@ternlang.com" style="color:var(--accent)">contact@ternlang.com</a>'
+};
+const EN={
+  'lbl-doc':'Legal','lbl-title':'Privacy Policy','lbl-sub':'Last updated: May 2026',
+  'highlight-main':'<b>Short version:</b> This website stores no data on servers. Everything you see is computed live in your browser and never leaves your device. We run no tracking, no cookies, no user database.',
+  's1-head':'1. Controller',
+  's1-p1':'The controller within the meaning of the GDPR is: RFI-IRFOS, reachable at <a href="mailto:contact@ternlang.com" style="color:var(--accent)">contact@ternlang.com</a>.',
+  's2-head':'2. What data is collected?',
+  's2-p1':'When you access this website, the following technical data may be temporarily logged on our hosting infrastructure:',
+  's2-l1':'IP address (anonymized by the hosting provider)',
+  's2-l2':'Date and time of access',
+  's2-l3':'Requested URL',
+  's2-l4':'Browser type and operating system (User-Agent)',
+  's2-p2':'This data is used solely for technical operation (server logs) and is automatically deleted after at most 7 days. It is not linked to other data or used to identify individuals.',
+  's3-head':'3. What invisible layer does not do',
+  's3-p1':'We deliberately use none of the following technologies:',
+  's3-l1':'Tracking cookies',
+  's3-l2':'Ad networks or pixels (Google Ads, Meta Pixel, etc.)',
+  's3-l3':'Analytics services (Google Analytics, Matomo, etc.)',
+  's3-l4':'Fingerprinting services',
+  's3-l5':'Social media integrations with tracking capabilities',
+  's3-l6':'User accounts or login systems',
+  's4-head':'4. Local processing in the browser',
+  's4-p1':'The "Digital Profile" page and other interactive experiments read data <b>locally in your browser</b>: device parameters, browser API results, canvas fingerprint and similar. This data never leaves your device. No transmission to our servers or any third party takes place.',
+  's4-p2':'The purpose of this local processing is purely educational: to show you what information a browser exposes. We do not store this data.',
+  's5-head':'5. localStorage and sessionStorage',
+  's5-p1':'This website stores your preferences (language, colour scheme) in your browser\'s localStorage. This data does not leave your device and is not read by us. You can delete it at any time through your browser settings.',
+  's6-head':'6. Hosting',
+  's6-p1':'This website is hosted on GitHub Pages (GitHub, Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA). GitHub may log technical access data when you visit the site. For more information see the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener" style="color:var(--accent)">GitHub Privacy Statement</a>.',
+  's7-head':'7. External links',
+  's7-p1':'This website contains links to external resources (e.g. privacy tools such as opt-out.networkadvertising.org, DSR forms, etc.). When you follow these links, the privacy policies of the respective providers apply. We have no influence over what those providers do with your data.',
+  's8-head':'8. Your rights',
+  's8-p1':'Since we store no personal data about you, there is nothing we are obliged to disclose or delete. If you nonetheless believe we process data about you, you have the right to access, rectification, erasure and data portability under the GDPR.',
+  's8-p2':'For complaints you may contact the competent data protection supervisory authority.',
+  's9-head':'9. Contact',
+  's9-p1':'For privacy-related questions contact: <a href="mailto:contact@ternlang.com" style="color:var(--accent)">contact@ternlang.com</a>'
+};
+
+let _lang=localStorage.getItem('il-lang')||(navigator.language.startsWith('de')?'de':'en');
+function applyLang(l){
+  const T=l==='de'?DE:EN;
+  for(const[id,val]of Object.entries(T)){
+    const el=document.getElementById(id);
+    if(el)el.innerHTML=val;
+  }
+  document.getElementById('langBtn').textContent=l==='de'?'EN':'DE';
+  document.documentElement.lang=l;
+  localStorage.setItem('il-lang',l);
+}
+function toggleLang(){_lang=_lang==='de'?'en':'de';applyLang(_lang);}
+applyLang(_lang);
+</script>
+</body>
+</html>

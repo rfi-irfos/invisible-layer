@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AGB — invisible layer</title>
+<meta name="theme-color" content="#0f172a" id="theme-color-meta"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+[data-theme="light"]{
+  --bg:#f1f5f9;--surface:#ffffff;--surface2:#f8fafc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --text:#0f172a;--text2:#334155;--muted:#64748b;
+  --accent:#dc2626;--shadow:0 1px 3px rgba(0,0,0,0.08);
+  --nav-bg:rgba(241,245,249,0.96);
+}
+[data-theme="dark"]{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#162032;
+  --border:#2d3f57;--border2:#3d5068;
+  --text:#f1f5f9;--text2:#cbd5e1;--muted:#7a90a8;
+  --accent:#ef4444;--shadow:none;
+  --nav-bg:rgba(15,23,42,0.96);
+}
+[data-theme="hc"]{
+  --bg:#000;--surface:#000;--surface2:#000;
+  --border:#fff;--border2:#fff;
+  --text:#fff;--text2:#fff;--muted:#ccc;
+  --accent:#ff4040;--shadow:none;
+  --nav-bg:#000;
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-size:15px;line-height:1.7;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;
+  transition:background 0.2s,color 0.2s;
+}
+.nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;position:sticky;top:0;z-index:100;
+  background:var(--nav-bg);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.nav-brand{font-size:13px;color:var(--muted);letter-spacing:0.01em}
+.nav-brand b{color:var(--text);font-weight:600}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{
+  font-size:12px;padding:5px 11px;border-radius:6px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--border);color:var(--text2);
+  font-family:inherit;transition:all 0.12s;line-height:1;
+}
+.nav-btn:hover{border-color:var(--border2);color:var(--text)}
+.nav-back{
+  font-size:12px;color:var(--muted);text-decoration:none;
+  padding:5px 11px;border:1px solid var(--border);border-radius:6px;
+  transition:all 0.12s;
+}
+.nav-back:hover{color:var(--text);border-color:var(--border2)}
+
+.page{max-width:700px;margin:0 auto;padding:40px 20px 100px}
+.page-header{margin-bottom:36px}
+.page-label{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.page-title{font-size:26px;font-weight:700;color:var(--text);line-height:1.2}
+.page-sub{font-size:14px;color:var(--muted);margin-top:8px}
+
+.section{margin-bottom:32px}
+.section-title{font-size:12px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.section p{font-size:14px;color:var(--text2);margin-bottom:10px}
+.section p:last-child{margin-bottom:0}
+.section ul{list-style:none;padding:0}
+.section ul li{font-size:14px;color:var(--text2);padding:4px 0 4px 18px;position:relative}
+.section ul li::before{content:"";position:absolute;left:0;top:11px;width:6px;height:6px;border-radius:50%;background:var(--border2)}
+
+.note-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:16px 18px;margin:14px 0;font-size:13px;color:var(--muted);line-height:1.65;
+}
+.note-box b{color:var(--text2)}
+
+.lang-toggle-wrap{display:flex;align-items:center;gap:6px}
+
+footer{
+  max-width:700px;margin:0 auto;padding:32px 20px 48px;
+  border-top:1px solid var(--border);
+  display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;
+}
+footer a{font-size:12px;color:var(--muted);text-decoration:none;transition:color 0.12s}
+footer a:hover{color:var(--text)}
+.footer-sep{color:var(--border2);font-size:12px}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="nav-back" href="../../">invisible layer</a>
+  <div class="nav-right">
+    <div class="lang-toggle-wrap">
+      <button class="nav-btn" id="langBtn" onclick="toggleLang()">EN</button>
+    </div>
+    <button class="nav-btn" id="themeBtn" onclick="cycleTheme()">dark</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div class="page-label" id="lbl-doc">Rechtliches</div>
+    <div class="page-title" id="lbl-title">Allgemeine Geschäftsbedingungen</div>
+    <div class="page-sub" id="lbl-sub">Stand: Mai 2026</div>
+  </div>
+
+  <!-- 1 -->
+  <div class="section">
+    <div class="section-title" id="s1-head">1. Anbieter und Geltungsbereich</div>
+    <p id="s1-p1">Diese Nutzungsbedingungen gelten für die Verwendung von <b>invisible layer</b>, einem kostenlosen, browserbasierten Bildungsprojekt von RFI-IRFOS (nachfolgend "wir" oder "Anbieter"). Das Projekt umfasst diese Website sowie alle verlinkten Unterseiten und Experimente.</p>
+    <p id="s1-p2">Mit der Nutzung dieser Website erklärst du dich mit diesen Bedingungen einverstanden. Wer nicht einverstanden ist, sollte die Nutzung unterlassen.</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="section">
+    <div class="section-title" id="s2-head">2. Zweck und Bildungscharakter</div>
+    <p id="s2-p1">invisible layer ist ein Bildungsprojekt. Unser Ziel ist es, Menschen auf verständliche Weise zu zeigen, was moderne Datenverfolgung im Netz bedeutet und welche Spuren man im digitalen Raum hinterlässt.</p>
+    <p id="s2-p2">Alle auf dieser Website gezeigten Daten werden ausschliesslich lokal in deinem Browser berechnet und angezeigt. Es werden keine Daten an uns oder Dritte übermittelt.</p>
+  </div>
+
+  <!-- 3 -->
+  <div class="section">
+    <div class="section-title" id="s3-head">3. Kostenlosigkeit und keine Garantien</div>
+    <p id="s3-p1">invisible layer ist kostenlos. Es besteht kein Anspruch auf dauerhafte Verfügbarkeit, Aktualität oder Vollständigkeit der Inhalte. Wir behalten uns vor, das Projekt jederzeit zu ändern, einzuschränken oder einzustellen.</p>
+    <p id="s3-p2">Die Informationen auf dieser Website dienen ausschliesslich allgemeinen Bildungszwecken und stellen keine Rechts-, Steuer- oder IT-Sicherheitsberatung dar.</p>
+  </div>
+
+  <!-- 4 -->
+  <div class="section">
+    <div class="section-title" id="s4-head">4. Haftungsausschluss</div>
+    <p id="s4-p1">Wir übernehmen keine Haftung für Schäden, die durch die Nutzung oder Nichtnutzung dieser Website entstehen, soweit diese nicht auf Vorsatz oder grober Fahrlässigkeit unsererseits beruhen.</p>
+    <p id="s4-p2">Für externe Links übernehmen wir keine Verantwortung. Die verlinkten Seiten wurden zum Zeitpunkt der Verlinkung auf offensichtliche Rechtsverstösse geprüft; eine laufende Kontrolle ist ohne konkrete Hinweise auf Rechtsverletzungen nicht zumutbar.</p>
+  </div>
+
+  <!-- 5 -->
+  <div class="section">
+    <div class="section-title" id="s5-head">5. Urheberrecht</div>
+    <p id="s5-p1">Alle selbst erstellten Inhalte dieser Website unterliegen dem deutschen Urheberrecht. Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung ausserhalb der Grenzen des Urheberrechts bedürfen unserer schriftlichen Zustimmung, sofern nicht ausdrücklich anders angegeben.</p>
+    <p id="s5-p2">Open-Source-Komponenten unterliegen ihren jeweiligen Lizenzbedingungen.</p>
+  </div>
+
+  <!-- 6 -->
+  <div class="section">
+    <div class="section-title" id="s6-head">6. Änderungen</div>
+    <p id="s6-p1">Wir behalten uns vor, diese Bedingungen jederzeit zu ändern. Die jeweils aktuelle Fassung gilt ab dem Zeitpunkt der Veröffentlichung auf dieser Seite.</p>
+  </div>
+
+  <!-- 7 -->
+  <div class="section">
+    <div class="section-title" id="s7-head">7. Kontakt</div>
+    <p id="s7-p1">Bei Fragen oder Anmerkungen erreichst du uns unter: <a href="mailto:contact@ternlang.com" style="color:var(--accent)">contact@ternlang.com</a></p>
+    <div class="note-box" id="s7-note">
+      <b>Hinweis:</b> Dieses Projekt befindet sich in aktiver Entwicklung. Wenn du Fehler entdeckst oder inhaltliche Kritik hast, freuen wir uns über eine Nachricht.
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <a href="../../">invisible layer</a>
+  <span class="footer-sep">|</span>
+  <a href="../privacy/">Datenschutz</a>
+  <span class="footer-sep">|</span>
+  <a href="../../experiments/the-profile/">Dein digitales Profil</a>
+  <span class="footer-sep">|</span>
+  <a href="mailto:contact@ternlang.com">contact@ternlang.com</a>
+</footer>
+
+<script>
+// ── Theme ──
+const THEMES=['dark','light','hc'];
+let _theme=localStorage.getItem('il-theme')||'dark';
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('themeBtn').textContent=t==='hc'?'HC':t;
+  const mc={'dark':'#0f172a','light':'#f1f5f9','hc':'#000'};
+  document.getElementById('theme-color-meta').content=mc[t];
+  localStorage.setItem('il-theme',t);
+}
+function cycleTheme(){_theme=THEMES[(THEMES.indexOf(_theme)+1)%THEMES.length];applyTheme(_theme);}
+applyTheme(_theme);
+
+// ── Language ──
+const DE={
+  'lbl-doc':'Rechtliches','lbl-title':'Allgemeine Geschäftsbedingungen','lbl-sub':'Stand: Mai 2026',
+  's1-head':'1. Anbieter und Geltungsbereich',
+  's1-p1':'Diese Nutzungsbedingungen gelten für die Verwendung von <b>invisible layer</b>, einem kostenlosen, browserbasierten Bildungsprojekt von RFI-IRFOS (nachfolgend "wir" oder "Anbieter"). Das Projekt umfasst diese Website sowie alle verlinkten Unterseiten und Experimente.',
+  's1-p2':'Mit der Nutzung dieser Website erklärst du dich mit diesen Bedingungen einverstanden. Wer nicht einverstanden ist, sollte die Nutzung unterlassen.',
+  's2-head':'2. Zweck und Bildungscharakter',
+  's2-p1':'invisible layer ist ein Bildungsprojekt. Unser Ziel ist es, Menschen auf verständliche Weise zu zeigen, was moderne Datenverfolgung im Netz bedeutet und welche Spuren man im digitalen Raum hinterlässt.',
+  's2-p2':'Alle auf dieser Website gezeigten Daten werden ausschliesslich lokal in deinem Browser berechnet und angezeigt. Es werden keine Daten an uns oder Dritte übermittelt.',
+  's3-head':'3. Kostenlosigkeit und keine Garantien',
+  's3-p1':'invisible layer ist kostenlos. Es besteht kein Anspruch auf dauerhafte Verfügbarkeit, Aktualität oder Vollständigkeit der Inhalte. Wir behalten uns vor, das Projekt jederzeit zu ändern, einzuschränken oder einzustellen.',
+  's3-p2':'Die Informationen auf dieser Website dienen ausschliesslich allgemeinen Bildungszwecken und stellen keine Rechts-, Steuer- oder IT-Sicherheitsberatung dar.',
+  's4-head':'4. Haftungsausschluss',
+  's4-p1':'Wir übernehmen keine Haftung für Schäden, die durch die Nutzung oder Nichtnutzung dieser Website entstehen, soweit diese nicht auf Vorsatz oder grober Fahrlässigkeit unsererseits beruhen.',
+  's4-p2':'Für externe Links übernehmen wir keine Verantwortung. Die verlinkten Seiten wurden zum Zeitpunkt der Verlinkung auf offensichtliche Rechtsverstösse geprüft; eine laufende Kontrolle ist ohne konkrete Hinweise auf Rechtsverletzungen nicht zumutbar.',
+  's5-head':'5. Urheberrecht',
+  's5-p1':'Alle selbst erstellten Inhalte dieser Website unterliegen dem deutschen Urheberrecht. Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung ausserhalb der Grenzen des Urheberrechts bedürfen unserer schriftlichen Zustimmung, sofern nicht ausdrücklich anders angegeben.',
+  's5-p2':'Open-Source-Komponenten unterliegen ihren jeweiligen Lizenzbedingungen.',
+  's6-head':'6. Änderungen',
+  's6-p1':'Wir behalten uns vor, diese Bedingungen jederzeit zu ändern. Die jeweils aktuelle Fassung gilt ab dem Zeitpunkt der Veröffentlichung auf dieser Seite.',
+  's7-head':'7. Kontakt',
+  's7-p1':'Bei Fragen oder Anmerkungen erreichst du uns unter: <a href="mailto:contact@ternlang.com" style="color:var(--accent)">contact@ternlang.com</a>',
+  's7-note':'<b>Hinweis:</b> Dieses Projekt befindet sich in aktiver Entwicklung. Wenn du Fehler entdeckst oder inhaltliche Kritik hast, freuen wir uns über eine Nachricht.'
+};
+const EN={
+  'lbl-doc':'Legal','lbl-title':'Terms of Use','lbl-sub':'Last updated: May 2026',
+  's1-head':'1. Provider and Scope',
+  's1-p1':'These terms of use apply to the use of <b>invisible layer</b>, a free, browser-based educational project by RFI-IRFOS (hereinafter "we" or "provider"). The project includes this website and all linked subpages and experiments.',
+  's1-p2':'By using this website you agree to these terms. Anyone who disagrees should refrain from using it.',
+  's2-head':'2. Purpose and Educational Nature',
+  's2-p1':'invisible layer is an educational project. Our goal is to show people in plain terms what modern data tracking on the web means and what traces you leave in the digital space.',
+  's2-p2':'All data shown on this website is calculated and displayed exclusively in your browser. No data is transmitted to us or any third party.',
+  's3-head':'3. Free of Charge and No Guarantees',
+  's3-p1':'invisible layer is free. There is no entitlement to permanent availability, up-to-dateness or completeness of the content. We reserve the right to modify, restrict or discontinue the project at any time.',
+  's3-p2':'The information on this website serves solely general educational purposes and does not constitute legal, tax or IT security advice.',
+  's4-head':'4. Disclaimer of Liability',
+  's4-p1':'We accept no liability for damages arising from the use or non-use of this website, unless caused by our own intent or gross negligence.',
+  's4-p2':'We accept no responsibility for external links. Linked pages were checked for obvious legal violations at the time of linking; ongoing monitoring is not reasonable without concrete indications of violations.',
+  's5-head':'5. Copyright',
+  's5-p1':'All self-created content on this website is subject to copyright. Reproduction, editing, distribution and any other use beyond the limits of copyright law require our written consent unless expressly stated otherwise.',
+  's5-p2':'Open-source components are subject to their respective license terms.',
+  's6-head':'6. Changes',
+  's6-p1':'We reserve the right to change these terms at any time. The current version applies from the time it is published on this page.',
+  's7-head':'7. Contact',
+  's7-p1':'For questions or feedback, reach us at: <a href="mailto:contact@ternlang.com" style="color:var(--accent)">contact@ternlang.com</a>',
+  's7-note':'<b>Note:</b> This project is in active development. If you spot errors or have substantive feedback, we would love to hear from you.'
+};
+
+let _lang=localStorage.getItem('il-lang')||(navigator.language.startsWith('de')?'de':'en');
+function applyLang(l){
+  const T=l==='de'?DE:EN;
+  for(const[id,val]of Object.entries(T)){
+    const el=document.getElementById(id);
+    if(el)el.innerHTML=val;
+  }
+  document.getElementById('langBtn').textContent=l==='de'?'EN':'DE';
+  document.documentElement.lang=l;
+  localStorage.setItem('il-lang',l);
+}
+function toggleLang(){_lang=_lang==='de'?'en':'de';applyLang(_lang);}
+applyLang(_lang);
+</script>
+</body>
+</html>

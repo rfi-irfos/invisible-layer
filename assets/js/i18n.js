@@ -41,6 +41,11 @@
       'meta.btn': '⊙ open all sensors',
       'meta.warn': 'grants camera, microphone, and motion access. all processing stays on-device.',
 
+      // drawer links
+      'drawer.profile': 'your digital profile',
+      'drawer.agb': 'terms of use',
+      'drawer.privacy': 'privacy policy',
+
       // footer
       'footer.rights': '© 2025 rfi-irfos. open source.',
     },
@@ -85,6 +90,11 @@
       // exp header
       'exp.back': 'invisible layer',
       'exp.theme': 'Design wechseln',
+
+      // drawer links
+      'drawer.profile': 'Dein digitales Profil',
+      'drawer.agb': 'Nutzungsbedingungen',
+      'drawer.privacy': 'Datenschutz',
 
       // footer
       'footer.rights': '© 2025 rfi-irfos. Open Source.',
