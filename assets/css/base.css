@@ -113,4 +113,13 @@ code, kbd, samp, pre {
 }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.85)} }
 
+.value-update {
+  animation: flashUpdate 0.4s ease-out;
+}
+@keyframes flashUpdate {
+  0% { color: #fff; text-shadow: 0 0 8px var(--green); }
+  100% { color: var(--green); text-shadow: none; }
+}
+
 canvas { display: block; }
+

@@ -4,10 +4,15 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>invisible layer</title>
-<meta name="description" content="Your phone is a military-grade sensor array. 37 browser experiments that make the invisible visible."/>
+<meta name="description" content="Your phone is a military-grade sensor array. 38 browser experiments that make the invisible visible."/>
 <meta property="og:title" content="invisible layer — your phone is already watching"/>
-<meta property="og:description" content="25 experiments. No install. Open on your phone."/>
+<meta property="og:description" content="38 experiments. No install. Open on your phone."/>
+<meta property="og:image" content="https://rfi-irfos.github.io/invisible-layer/assets/img/og-preview.png"/>
+<meta property="og:type" content="website"/>
+<meta name="twitter:card" content="summary_large_image"/>
 <meta name="theme-color" content="#000000"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="assets/icons/icon-192x192.png"/>
 <link rel="stylesheet" href="assets/css/base.css"/>
 <style>
 /* ── site header ── */
@@ -293,31 +298,31 @@ body { display:flex; flex-direction:column; align-items:center; }
 
 <!-- ── SITE HEADER ── -->
 <header class="site-header">
-  <a class="site-brand" href="/invisible-layer/">invisible layer</a>
+  <a class="site-brand" href="/invisible-layer/" aria-label="Home">invisible layer</a>
   <div class="site-actions">
     <!-- GitHub icon -->
-    <a class="site-icon-btn" href="https://github.com/rfi-irfos/invisible-layer" target="_blank" rel="noopener" title="GitHub">
+    <a class="site-icon-btn" href="https://github.com/rfi-irfos/invisible-layer" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
     </a>
     <!-- Theme toggle -->
-    <button class="site-icon-btn" id="theme-toggle-btn" onclick="cycleTheme()" title="Change theme">
-      <svg id="theme-icon-dark" viewBox="0 0 16 16"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/></svg>
-      <svg id="theme-icon-light" viewBox="0 0 16 16" style="display:none"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/></svg>
-      <svg id="theme-icon-hc" viewBox="0 0 16 16" style="display:none"><path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/></svg>
+    <button class="site-icon-btn" id="theme-toggle-btn" onclick="cycleTheme()" title="Change theme" aria-label="Change theme">
+      <svg id="theme-icon-dark" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/></svg>
+      <svg id="theme-icon-light" viewBox="0 0 16 16" style="display:none" aria-hidden="true"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/></svg>
+      <svg id="theme-icon-hc" viewBox="0 0 16 16" style="display:none" aria-hidden="true"><path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/></svg>
     </button>
     <!-- Language toggle -->
-    <button class="site-icon-btn site-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()" title="Sprache / Language">DE</button>
+    <button class="site-icon-btn site-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()" title="Sprache / Language" aria-label="Toggle language">DE</button>
     <!-- Mobile menu -->
-    <button class="site-icon-btn" id="menu-btn" onclick="toggleMenu()" aria-label="Menu" title="Menu">
-      <svg id="menu-icon-open" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/></svg>
-      <svg id="menu-icon-close" viewBox="0 0 16 16" style="display:none"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+    <button class="site-icon-btn" id="menu-btn" onclick="toggleMenu()" aria-label="Menu" title="Menu" aria-expanded="false">
+      <svg id="menu-icon-open" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/></svg>
+      <svg id="menu-icon-close" viewBox="0 0 16 16" style="display:none" aria-hidden="true"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
     </button>
   </div>
 </header>
 
 <!-- ── MOBILE DRAWER ── -->
 <div class="mobile-drawer" id="mobile-drawer">
-  <div class="drawer-categories">
+  <div class="drawer-categories" role="navigation" aria-label="Experiment categories">
     <button class="drawer-filter-btn active" onclick="filter('all',this);closeMenu()" data-i18n="nav.filter.all">all experiments</button>
     <button class="drawer-filter-btn" onclick="filter('rf',this);closeMenu()" data-i18n="nav.filter.rf">rf &amp; radio</button>
     <button class="drawer-filter-btn" onclick="filter('acoustic',this);closeMenu()" data-i18n="nav.filter.acoustic">acoustic</button>
@@ -328,32 +333,33 @@ body { display:flex; flex-direction:column; align-items:center; }
   </div>
   <div class="drawer-divider"></div>
   <a class="drawer-link" href="docs/experiments/the-profile/" style="color:#ef4444;border:1px solid rgba(239,68,68,0.18);border-radius:8px;background:rgba(239,68,68,0.04);" onclick="closeMenu()" data-i18n="drawer.profile">
-    <svg viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm5 5a5 5 0 0 0-10 0h10z"/></svg>
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm5 5a5 5 0 0 0-10 0h10z"/></svg>
     your digital profile
   </a>
   <a class="drawer-link" href="docs/legal/agb/" onclick="closeMenu()" data-i18n="drawer.agb">
-    <svg viewBox="0 0 16 16"><path d="M3 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5.5L9.5 1H3zm6 0v4h4M4 8h8v1H4zm0 3h6v1H4z" fill-rule="evenodd"/></svg>
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5.5L9.5 1H3zm6 0v4h4M4 8h8v1H4zm0 3h6v1H4z" fill-rule="evenodd"/></svg>
     terms of use
   </a>
   <a class="drawer-link" href="docs/legal/privacy/" onclick="closeMenu()" data-i18n="drawer.privacy">
-    <svg viewBox="0 0 16 16"><path d="M8 0 2 3v5c0 3.9 2.6 7 6 7.9C11.4 15 14 11.9 14 8V3L8 0zm0 4.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm0 4.5c1.5 0 3 .7 3 2v.5H5V11c0-1.3 1.5-2 3-2z"/></svg>
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0 2 3v5c0 3.9 2.6 7 6 7.9C11.4 15 14 11.9 14 8V3L8 0zm0 4.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm0 4.5c1.5 0 3 .7 3 2v.5H5V11c0-1.3 1.5-2 3-2z"/></svg>
     privacy policy
   </a>
   <div class="drawer-divider"></div>
   <a class="drawer-link" href="https://github.com/rfi-irfos/invisible-layer" target="_blank" rel="noopener">
-    <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
     GitHub — view source
   </a>
   <div class="drawer-divider"></div>
-  <div class="drawer-themes">
-    <button class="drawer-theme-btn active" id="dt-dark" onclick="setTheme('dark')">dark</button>
-    <button class="drawer-theme-btn" id="dt-light" onclick="setTheme('light')">light</button>
-    <button class="drawer-theme-btn" id="dt-hc" onclick="setTheme('hc')">high contrast</button>
+  <div class="drawer-themes" role="group" aria-label="Theme selection">
+    <button class="drawer-theme-btn active" id="dt-dark" onclick="setTheme('dark')" aria-pressed="true">dark</button>
+    <button class="drawer-theme-btn" id="dt-light" onclick="setTheme('light')" aria-pressed="false">light</button>
+    <button class="drawer-theme-btn" id="dt-hc" onclick="setTheme('hc')" aria-pressed="false">high contrast</button>
   </div>
 </div>
 
 <!-- ── HERO ── -->
 <div class="hero">
+  <canvas id="hero-particles" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:0.6"></canvas>
   <div class="hero-eyebrow">
     <span class="pulse"></span>
     <span>sensor feed active</span>
@@ -734,6 +740,14 @@ body { display:flex; flex-direction:column; align-items:center; }
       </div>
       <div class="card-right"><span class="badge live">live</span><span class="card-sensor">battery api</span></div>
     </a>
+    <a class="card" data-cat="fp" href="docs/experiments/storage-quota/">
+      <div class="card-icon">⊜</div>
+      <div class="card-body">
+        <div class="card-title" data-i18n="exp.storage-quota.title">Storage Quota</div>
+        <div class="card-desc" data-i18n="exp.storage-quota.desc">Your exact free disk space can identify you across sites.</div>
+      </div>
+      <div class="card-right"><span class="badge danger">identity</span><span class="card-sensor">storage api</span></div>
+    </a>
   </div>
 
 </div>
@@ -749,169 +763,17 @@ body { display:flex; flex-direction:column; align-items:center; }
   </span>
 </footer>
 
+<script src="assets/js/main.js"></script>
 <script>
-// ── Theme ──
-const THEMES = ['dark', 'light', 'hc'];
-let themeIdx = 0;
-const THEME_ICONS = ['dark', 'light', 'hc'];
-
-function applyTheme(name) {
-  document.documentElement.dataset.theme = name;
-  localStorage.setItem('il-theme', name);
-  themeIdx = THEMES.indexOf(name);
-  // header icons
-  document.getElementById('theme-icon-dark').style.display  = name === 'dark'  ? '' : 'none';
-  document.getElementById('theme-icon-light').style.display = name === 'light' ? '' : 'none';
-  document.getElementById('theme-icon-hc').style.display    = name === 'hc'    ? '' : 'none';
-  // drawer buttons
-  ['dark','light','hc'].forEach(t => {
-    const el = document.getElementById('dt-' + t);
-    if (el) el.classList.toggle('active', t === name);
-  });
-}
-function cycleTheme() { applyTheme(THEMES[(themeIdx + 1) % THEMES.length]); }
-function setTheme(name) { applyTheme(name); }
-
-// Load saved theme on startup
-(function() {
-  const saved = localStorage.getItem('il-theme');
-  if (saved && THEMES.includes(saved)) applyTheme(saved);
-  else applyTheme('dark');
-})();
-
-// ── Mobile menu ──
-let menuOpen = false;
-function toggleMenu() {
-  menuOpen = !menuOpen;
-  document.getElementById('mobile-drawer').classList.toggle('open', menuOpen);
-  document.getElementById('menu-icon-open').style.display  = menuOpen ? 'none' : '';
-  document.getElementById('menu-icon-close').style.display = menuOpen ? '' : 'none';
-}
-function closeMenu() {
-  menuOpen = false;
-  document.getElementById('mobile-drawer').classList.remove('open');
-  document.getElementById('menu-icon-open').style.display  = '';
-  document.getElementById('menu-icon-close').style.display = 'none';
-}
-// Close drawer on outside click
-document.addEventListener('click', function(e) {
-  if (menuOpen && !document.getElementById('mobile-drawer').contains(e.target)
-                && !document.getElementById('menu-btn').contains(e.target)) {
-    closeMenu();
-  }
-});
-
-// ── Filter ──
-function filter(cat, btn) {
-  document.querySelectorAll('.filter-btn, .drawer-filter-btn').forEach(b => b.classList.remove('active'));
-  // mark both the top-bar and drawer buttons active
-  document.querySelectorAll('.filter-btn').forEach(b => {
-    if (b.textContent.trim().toLowerCase().startsWith(cat === 'all' ? 'all' : cat.split(' ')[0]))
-      b.classList.add('active');
-  });
-  btn.classList.add('active');
-  document.querySelectorAll('.experiments .section-label').forEach(el => {
-    el.style.display = cat === 'all' || el.dataset.cat === cat ? '' : 'none';
-  });
-  document.querySelectorAll('.card').forEach(el => {
-    el.style.display = cat === 'all' || el.dataset.cat === cat ? '' : 'none';
-  });
-  document.querySelectorAll('.grid').forEach(grid => {
-    const visible = [...grid.children].some(c => c.style.display !== 'none');
-    grid.style.display = visible ? '' : 'none';
-  });
-}
-
-// ── Live sensors ──
-(function() {
-  // Accelerometer
-  if (typeof DeviceMotionEvent !== 'undefined') {
-    if (typeof DeviceMotionEvent.requestPermission !== 'function') {
-      window.addEventListener('devicemotion', function(e) {
-        const a = e.accelerationIncludingGravity;
-        if (a && (a.x || a.y || a.z)) {
-          document.getElementById('sc-motion').textContent =
-            (a.x||0).toFixed(1) + ' / ' + (a.y||0).toFixed(1) + ' / ' + (a.z||0).toFixed(1);
-          document.getElementById('sc-motion').classList.remove('dim');
-        }
-      });
-    } else {
-      document.getElementById('sc-motion').textContent = 'tap to enable';
-    }
-  }
-
-  // Orientation (compass + gyro angles)
-  window.addEventListener('deviceorientation', function(e) {
-    if (e.alpha !== null) {
-      document.getElementById('sc-compass').textContent =
-        (e.alpha||0).toFixed(0) + '° / ' + (e.beta||0).toFixed(0) + '° / ' + (e.gamma||0).toFixed(0) + '°';
-      document.getElementById('sc-compass').classList.remove('dim');
-    }
-  });
-
-  // Network
-  const nc = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if (nc) {
-    document.getElementById('sc-net').textContent =
-      (nc.effectiveType || nc.type || '?') + (nc.downlink ? ' · ' + nc.downlink + 'Mb' : '');
-  } else {
-    document.getElementById('sc-net').textContent = 'hidden';
-    document.getElementById('sc-net').classList.add('dim');
-  }
-
-  // Battery
-  if (navigator.getBattery) {
-    navigator.getBattery().then(function(b) {
-      const upd = () => {
-        document.getElementById('sc-bat').textContent =
-          Math.round(b.level * 100) + '%' + (b.charging ? ' +' : '');
-      };
-      upd();
-      b.addEventListener('levelchange', upd);
-      b.addEventListener('chargingchange', upd);
-    }).catch(() => {
-      document.getElementById('sc-bat').textContent = 'hidden';
-      document.getElementById('sc-bat').classList.add('dim');
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('SW registered:', reg.scope);
+    }).catch(err => {
+      console.log('SW registration failed:', err);
     });
-  } else {
-    document.getElementById('sc-bat').textContent = 'hidden';
-    document.getElementById('sc-bat').classList.add('dim');
-  }
-
-  // Screen info
-  document.getElementById('sc-screen').textContent =
-    screen.width + 'x' + screen.height + '@' + (window.devicePixelRatio || 1).toFixed(1) + 'x';
-
-  // Platform (hardware concurrency, memory)
-  const cores = navigator.hardwareConcurrency || '?';
-  const mem   = navigator.deviceMemory      ? navigator.deviceMemory + 'GB' : null;
-  document.getElementById('sc-platform').textContent = cores + ' cores' + (mem ? ' / ' + mem : '');
-
-  // UA entropy
-  const tokens = navigator.userAgent.split(/[\s;()\/]/).filter(Boolean).length;
-  document.getElementById('sc-ua').textContent = tokens + ' tokens';
-
-  // BLE availability
-  document.getElementById('sc-ble').textContent = navigator.bluetooth ? 'available' : 'blocked';
-  document.getElementById('sc-ble').classList.toggle('dim', !navigator.bluetooth);
-
-  // Geolocation (passive check, don't request yet)
-  document.getElementById('sc-geo').textContent = navigator.geolocation ? 'available' : 'blocked';
-  document.getElementById('sc-geo').classList.toggle('dim', !navigator.geolocation);
-
-  // Show desktop prompt
-  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-  if (!isMobile) document.getElementById('mobile-prompt').style.display = 'block';
-
-  // Sensor count
-  let count = 2;
-  if (nc) count++;
-  if (navigator.getBattery) count++;
-  if (navigator.bluetooth) count++;
-  if (navigator.geolocation) count++;
-  if (navigator.hardwareConcurrency) count++;
-  document.getElementById('sensor-count-label').textContent = '— ' + count + '+ sensors readable now';
-})();
+  });
+}
 </script>
 <script src="assets/js/i18n.js"></script>
 </body>

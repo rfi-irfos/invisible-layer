@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Storage Quota — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.quota-vis {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 0;
+}
+.quota-row {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+.quota-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.quota-value {
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: var(--cyan);
+  font-family: monospace;
+}
+.quota-bytes {
+  font-size: 0.75rem;
+  color: var(--text);
+  font-family: monospace;
+  margin-top: 4px;
+}
+.disk-size {
+  color: var(--amber);
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>storage quota</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" title="toggle theme" data-i18n-title="exp.theme" aria-label="toggle theme"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.storage-quota.label">experiment · browser APIs</div>
+      <div class="exp-title" data-i18n="exp.storage-quota.title">your free disk space<br>is a fingerprint.</div>
+      <div class="exp-desc" data-i18n="exp.storage-quota.desc">
+        Browsers let websites know how much data they can store locally. But the formula used to calculate this "quota" is often based on a percentage of your total free disk space. This leaks the exact size of your hard drive and how much space is left — a highly unique identifier.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.storage-quota.shock">
+      <strong>Your exact disk capacity and free space can identify you across sites.</strong>
+      When you visit two different websites, they both see the exact same byte-for-byte storage quota. 
+      Because this number fluctuates as you download or delete files, it creates a continuously updating fingerprint that is unique to your physical device. No cookies required.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" data-i18n="exp.storage-quota.btn-start" onclick="measureQuota()">◉ measure disk</button>
+    </div>
+
+    <div class="quota-vis" id="results" style="display:none">
+      <div class="quota-row">
+        <div class="quota-label">Estimated Free Disk Space</div>
+        <div class="quota-value disk-size" id="quota-gb">...</div>
+        <div class="quota-bytes" id="quota-bytes">...</div>
+        <div style="font-size:0.68rem; color:var(--dim); margin-top:8px">
+          This precise byte count is broadcast to any website that asks.
+        </div>
+      </div>
+      
+      <div class="quota-row">
+        <div class="quota-label">Data Used by This Site</div>
+        <div class="quota-value" id="used-kb" style="color:var(--text)">...</div>
+        <div class="quota-bytes" id="used-bytes">...</div>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.storage-quota.summary">▶ how does this work?</summary>
+        <p>The <code>navigator.storage.estimate()</code> API is designed to let web applications know if they have enough space to save files for offline use.</p>
+        <p>However, different browsers calculate the <code>quota</code> differently. Chrome and Edge typically set the quota to a percentage (e.g., 60%) of the total available disk space on the volume where the browser profile is stored.</p>
+        <p>By simply doing the math backwards, a website can determine the exact free space on your computer's hard drive down to the byte. Since free space changes over time, tracking these changes across different websites allows third parties to correlate your browsing history.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<script>
+function formatBytes(bytes, decimals = 2) {
+    if (!+bytes) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
+
+async function measureQuota() {
+  const btn = document.getElementById('btn-start');
+  btn.textContent = 'measuring...';
+  
+  if (navigator.storage && navigator.storage.estimate) {
+    try {
+      const estimate = await navigator.storage.estimate();
+      
+      document.getElementById('results').style.display = 'flex';
+      
+      // Calculate quota
+      document.getElementById('quota-gb').textContent = formatBytes(estimate.quota);
+      document.getElementById('quota-bytes').textContent = estimate.quota.toLocaleString() + ' bytes';
+      
+      // Calculate used
+      document.getElementById('used-kb').textContent = formatBytes(estimate.usage);
+      document.getElementById('used-bytes').textContent = estimate.usage.toLocaleString() + ' bytes';
+      
+      btn.style.display = 'none';
+    } catch (e) {
+      btn.textContent = 'API Error';
+    }
+  } else {
+    btn.textContent = 'Not supported in this browser';
+  }
+}
+</script>
+<script src="../../../assets/js/i18n.js"></script>
+</body>
+</html>
