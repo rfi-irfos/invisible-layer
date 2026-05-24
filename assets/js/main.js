@@ -70,6 +70,53 @@ function filter(cat, btn) {
   });
 }
 
+// ── Language picker dropdown ──
+let langPickerOpen = false;
+
+function toggleLangPicker() {
+  langPickerOpen = !langPickerOpen;
+  const dropdown = document.getElementById('lang-dropdown');
+  const btn = document.getElementById('lang-btn');
+  dropdown.classList.toggle('open', langPickerOpen);
+  btn.setAttribute('aria-expanded', langPickerOpen);
+}
+
+function closeLangPicker() {
+  langPickerOpen = false;
+  const dropdown = document.getElementById('lang-dropdown');
+  const btn = document.getElementById('lang-btn');
+  if (dropdown) dropdown.classList.remove('open');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+function pickLang(lang) {
+  IL_I18N.apply(lang);
+  // update button label
+  document.getElementById('lang-btn').textContent = lang.toUpperCase();
+  // mark active option
+  document.querySelectorAll('.lang-option').forEach(o => {
+    o.classList.toggle('active', o.dataset.lang === lang);
+    o.setAttribute('aria-selected', o.dataset.lang === lang);
+  });
+  closeLangPicker();
+}
+
+// Close on outside click
+document.addEventListener('click', function(e) {
+  const picker = document.getElementById('lang-picker');
+  if (langPickerOpen && picker && !picker.contains(e.target)) closeLangPicker();
+});
+
+// Sync active option when i18n auto-applies on load
+document.addEventListener('DOMContentLoaded', function() {
+  const cur = localStorage.getItem('il-lang') || 'en';
+  const btn = document.getElementById('lang-btn');
+  if (btn) btn.textContent = cur.toUpperCase();
+  document.querySelectorAll('.lang-option').forEach(o => {
+    o.classList.toggle('active', o.dataset.lang === cur);
+  });
+});
+
 // ── Micro-animations ──
 function triggerUpdate(id) {
   const el = document.getElementById(id);

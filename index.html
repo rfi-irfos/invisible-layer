@@ -310,8 +310,15 @@ body { display:flex; flex-direction:column; align-items:center; }
       <svg id="theme-icon-light" viewBox="0 0 16 16" style="display:none" aria-hidden="true"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/></svg>
       <svg id="theme-icon-hc" viewBox="0 0 16 16" style="display:none" aria-hidden="true"><path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/></svg>
     </button>
-    <!-- Language toggle -->
-    <button class="site-icon-btn site-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()" title="Sprache / Language" aria-label="Toggle language">DE</button>
+    <!-- Language picker -->
+    <div class="lang-picker" id="lang-picker">
+      <button class="site-icon-btn site-lang-btn" id="lang-btn" onclick="toggleLangPicker()" aria-haspopup="listbox" aria-expanded="false" title="Language / Sprache / Langue">EN</button>
+      <div class="lang-dropdown" id="lang-dropdown" role="listbox" aria-label="Select language">
+        <button class="lang-option" role="option" data-lang="en" onclick="pickLang('en')">EN — English</button>
+        <button class="lang-option" role="option" data-lang="de" onclick="pickLang('de')">DE — Deutsch</button>
+        <button class="lang-option" role="option" data-lang="fr" onclick="pickLang('fr')">FR — Français</button>
+      </div>
+    </div>
     <!-- Mobile menu -->
     <button class="site-icon-btn" id="menu-btn" onclick="toggleMenu()" aria-label="Menu" title="Menu" aria-expanded="false">
       <svg id="menu-icon-open" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/></svg>
@@ -369,24 +376,26 @@ body { display:flex; flex-direction:column; align-items:center; }
   <p class="hero-sub" data-i18n="hero.sub">
     Right now, your device is reading a dozen physical layers of reality simultaneously —
     electromagnetic fields, acoustic signatures, motion, radio broadcasts from every device around you.
-    Most people have no idea. 25 experiments that change that.
+    Most people have no idea. 38 experiments that change that.
   </p>
 
-  <div class="sensor-strip" id="sensor-strip">
-    <div class="sensor-cell"><div class="sc-label">accel x/y/z</div><div class="sc-val dim" id="sc-motion">tap an experiment</div></div>
-    <div class="sensor-cell"><div class="sc-label">orientation</div><div class="sc-val dim" id="sc-compass">—</div></div>
-    <div class="sensor-cell"><div class="sc-label">network</div><div class="sc-val" id="sc-net">—</div></div>
-    <div class="sensor-cell"><div class="sc-label">battery</div><div class="sc-val" id="sc-bat">—</div></div>
-    <div class="sensor-cell"><div class="sc-label">screen</div><div class="sc-val" id="sc-screen">—</div></div>
-    <div class="sensor-cell"><div class="sc-label">platform</div><div class="sc-val" id="sc-platform">—</div></div>
-    <div class="sensor-cell"><div class="sc-label">ua tokens</div><div class="sc-val" id="sc-ua">—</div></div>
-    <div class="sensor-cell"><div class="sc-label">bluetooth</div><div class="sc-val" id="sc-ble">—</div></div>
-    <div class="sensor-cell"><div class="sc-label">geolocation</div><div class="sc-val dim" id="sc-geo">not requested</div></div>
+  <div class="sensor-strip-wrap">
+    <div class="sensor-strip-label">what this page already knows about your device — no permission asked</div>
+    <div class="sensor-strip" id="sensor-strip">
+      <div class="sensor-cell"><div class="sc-label">accel x/y/z</div><div class="sc-val dim" id="sc-motion">tap an experiment</div></div>
+      <div class="sensor-cell"><div class="sc-label">orientation</div><div class="sc-val dim" id="sc-compass">—</div></div>
+      <div class="sensor-cell"><div class="sc-label">network</div><div class="sc-val" id="sc-net">—</div></div>
+      <div class="sensor-cell"><div class="sc-label">battery</div><div class="sc-val" id="sc-bat">—</div></div>
+      <div class="sensor-cell"><div class="sc-label">screen</div><div class="sc-val" id="sc-screen">—</div></div>
+      <div class="sensor-cell"><div class="sc-label">platform</div><div class="sc-val" id="sc-platform">—</div></div>
+      <div class="sensor-cell"><div class="sc-label">ua tokens</div><div class="sc-val" id="sc-ua">—</div></div>
+      <div class="sensor-cell"><div class="sc-label">bluetooth</div><div class="sc-val" id="sc-ble">—</div></div>
+      <div class="sensor-cell"><div class="sc-label">geolocation</div><div class="sc-val dim" id="sc-geo">not requested</div></div>
+    </div>
   </div>
 
   <div class="cta-row">
     <a class="cta-primary" href="docs/experiments/the-meta/" data-i18n="hero.cta.meta">&#9711; open meta layer</a>
-    <a class="cta-primary" style="background:none;border:1px solid var(--green);color:var(--green);" href="docs/experiments/ble/">BLE scanner</a>
   </div>
 </div>
 
