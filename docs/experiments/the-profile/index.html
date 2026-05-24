@@ -286,9 +286,31 @@ body{
       <span class="card-title" data-i18n="s.id">Identification</span>
     </div>
     <div class="row"><span class="row-key" data-i18n="l.fp">Fingerprint</span><div class="row-val"><div class="fp-hash" id="v-fp">...</div><div class="small" data-i18n="l.fp.sub">Canvas rendering fingerprint. Unique to this device and browser. No login required.</div></div></div>
+    <div class="row"><span class="row-key" data-i18n="l.audio-fp">Audio fingerprint</span><div class="row-val"><div class="fp-hash" id="v-audio-fp">...</div><div class="small" data-i18n="l.audio-fp.sub">AudioContext oscillator rendering. Independent second fingerprint dimension.</div></div></div>
     <div class="row"><span class="row-key" data-i18n="l.platform">Platform</span><span class="row-val" id="v-platform">...</span></div>
     <div class="row"><span class="row-key" data-i18n="l.tz">Language / Region</span><span class="row-val" id="v-tz">...</span></div>
     <div class="row"><span class="row-key" data-i18n="l.dnt">Do Not Track</span><span class="row-val" id="v-dnt">...</span></div>
+  </div>
+
+  <!-- Deep fingerprint card -->
+  <div class="card" id="c-deep">
+    <div class="card-head">
+      <div class="card-icon">
+        <svg viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM2.04 4.326c.325 1.329 2.532 2.54 3.717 3.19.48.263.793.434.743.484-.08.08-.162.158-.242.234-.416.396-.787.749-.758 1.266.035.634.618.824 1.214 1.017.577.188 1.168.38 1.286.983.082.417-.075.988-.22 1.52-.215.782-.406 1.48.22 1.48 1.5-1.5 2.261-3.57 2.261-5.5 0-3.314-2.686-6-6-6-.538 0-1.06.068-1.557.196a6 6 0 0 0-.665 1.109z"/></svg>
+      </div>
+      <span class="card-title" data-i18n="s.deep">Deep browser fingerprint</span>
+    </div>
+    <div class="row"><span class="row-key" data-i18n="l.localip">Local IP address</span><div class="row-val"><span id="v-localip">...</span><div class="small" data-i18n="l.localip.sub">Leaked via WebRTC even through a VPN. Reveals your real local network.</div></div></div>
+    <div class="row"><span class="row-key" data-i18n="l.fonts">Installed fonts</span><div class="row-val"><span id="v-fonts">...</span><div class="small" id="v-fonts-list" style="word-break:break-word"></div></div></div>
+    <div class="row"><span class="row-key" data-i18n="l.adblocker">Ad blocker</span><span class="row-val" id="v-adblocker">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.incognito">Private browsing</span><div class="row-val"><span id="v-incognito">...</span><div class="small" id="v-incognito-sub"></div></div></div>
+    <div class="row"><span class="row-key" data-i18n="l.storage-quota">Storage quota</span><span class="row-val" id="v-storage-quota">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.voices">Speech voices</span><span class="row-val" id="v-voices">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.codecs">Media codecs</span><span class="row-val" id="v-codecs">...</span></div>
+    <div class="row"><span class="row-key" data-i18n="l.prefs">System preferences</span><span class="row-val" id="v-prefs">...</span></div>
+    <div style="margin-top:12px;padding:12px;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:8px;">
+      <div style="font-size:13px;color:var(--text2);line-height:1.7" data-i18n="deep.note">None of this required a login, a form, or any interaction. Every value above is available to any website you visit, passively, in milliseconds.</div>
+    </div>
   </div>
 
   <!-- Device -->
@@ -506,6 +528,21 @@ en:{
   'dnt.on':'Enabled. Ironic note: privacy-conscious users are a high-value advertising segment because they are harder to reach.',
   'dnt.off':'Disabled. You are fully trackable by default.',
   'dnt.unset':'Not set.',
+  's.deep':'Deep browser fingerprint',
+  'l.audio-fp':'Audio fingerprint',
+  'l.audio-fp.sub':'AudioContext oscillator rendering. Independent second fingerprint dimension.',
+  'l.localip':'Local IP address',
+  'l.localip.sub':'Leaked via WebRTC even through a VPN. Reveals your real local network.',
+  'l.fonts':'Installed fonts',
+  'l.adblocker':'Ad blocker',
+  'l.incognito':'Private browsing',
+  'deep.note':'None of this required a login, a form, or any interaction. Every value above is available to any website you visit — passively, in milliseconds.',
+  'quota.avail':'available',
+  'quota.na':'not available',
+  'l.storage-quota':'Storage quota',
+  'l.voices':'Speech voices',
+  'l.codecs':'Media codecs',
+  'l.prefs':'System preferences',
   'drain.pct':' drained'
 },
 de:{
@@ -552,6 +589,21 @@ de:{
   'dnt.on':'Aktiviert. Hinweis: Datenschutzbewusste Nutzer sind ein besonders wertvolles Werbesegment, weil sie schwerer erreichbar sind.',
   'dnt.off':'Deaktiviert. Du bist standardmassig vollstandig verfolgbar.',
   'dnt.unset':'Nicht gesetzt.',
+  's.deep':'Tiefer Browser-Fingerabdruck',
+  'l.audio-fp':'Audio-Fingerabdruck',
+  'l.audio-fp.sub':'AudioContext-Oszillator-Rendering. Unabhangige zweite Fingerabdruck-Dimension.',
+  'l.localip':'Lokale IP-Adresse',
+  'l.localip.sub':'Geleakt uber WebRTC, selbst durch ein VPN. Verrät dein echtes lokales Netzwerk.',
+  'l.fonts':'Installierte Schriften',
+  'l.adblocker':'Werbeblocker',
+  'l.incognito':'Privates Surfen',
+  'deep.note':'Nichts davon erforderte einen Login, ein Formular oder eine Interaktion. Jeder Wert oben ist fur jede Website zugänglich, die du besuchst — passiv, in Millisekunden.',
+  'quota.avail':'verfugbar',
+  'quota.na':'nicht verfugbar',
+  'l.storage-quota':'Speicherkontingent',
+  'l.voices':'Sprachausgabe-Stimmen',
+  'l.codecs':'Medien-Codecs',
+  'l.prefs':'Systemeinstellungen',
   'drain.pct':' verbraucht'
 }
 };
@@ -590,7 +642,136 @@ function cycleTheme(){
   document.getElementById('theme-color-meta').content=mc[THEME];
 }
 
-// ── Fingerprint ───────────────────────────────────────────────────
+// ── Audio fingerprint ─────────────────────────────────────────────
+function audioFP(){
+  try{
+    var AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return'N/A';
+    var ctx=new AC({sampleRate:44100});
+    var osc=ctx.createOscillator();
+    var analyser=ctx.createAnalyser();
+    var gain=ctx.createGain();
+    gain.gain.value=0;
+    osc.type='triangle';
+    osc.frequency.value=10000;
+    osc.connect(analyser);
+    analyser.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(0);
+    var buf=new Float32Array(analyser.frequencyBinCount);
+    analyser.getFloatFrequencyData(buf);
+    osc.stop(0);
+    ctx.close();
+    var h=0;
+    for(var i=0;i<Math.min(buf.length,100);i++){
+      if(buf[i]!==-Infinity)h=((h<<5)-h+Math.round(buf[i]*100))|0;
+    }
+    return Math.abs(h).toString(16).toUpperCase().padStart(8,'0');
+  }catch(e){return'BLOCKED';}
+}
+
+// ── Font detection ────────────────────────────────────────────────
+function detectFonts(){
+  var probe='mmmmmmmmmmlli';
+  var bases=['monospace','sans-serif','serif'];
+  var list=['Arial','Arial Black','Helvetica','Times New Roman','Courier New','Georgia','Verdana','Impact','Trebuchet MS','Comic Sans MS','Calibri','Segoe UI','Roboto','Ubuntu','Noto Sans','Fira Code','JetBrains Mono','Consolas','Lucida Console','Palatino','Garamond','Tahoma','Optima','Futura','Gill Sans'];
+  var c=document.createElement('canvas');
+  var cx=c.getContext('2d');
+  var base={};
+  bases.forEach(function(f){cx.font='72px '+f;base[f]=cx.measureText(probe).width;});
+  return list.filter(function(font){
+    for(var i=0;i<bases.length;i++){
+      cx.font="72px '"+font+"',"+bases[i];
+      if(cx.measureText(probe).width!==base[bases[i]])return true;
+    }
+    return false;
+  });
+}
+
+// ── WebRTC local IP ───────────────────────────────────────────────
+function getLocalIP(){
+  return new Promise(function(resolve){
+    try{
+      var pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+      pc.createDataChannel('');
+      var found=null;
+      pc.onicecandidate=function(e){
+        if(!e.candidate){if(!found)resolve(null);return;}
+        var m=e.candidate.candidate.match(/(\d{1,3}\.){3}\d{1,3}/);
+        if(m&&!found){found=m[0];resolve(found);pc.close();}
+      };
+      pc.createOffer().then(function(o){return pc.setLocalDescription(o);}).catch(function(){resolve(null);});
+      setTimeout(function(){if(!found){try{pc.close();}catch(e){}resolve(null);}},3000);
+    }catch(e){resolve(null);}
+  });
+}
+
+// ── Storage quota + incognito probe ──────────────────────────────
+async function getStorageInfo(){
+  try{
+    var est=await navigator.storage.estimate();
+    var gb=(est.quota/(1024*1024*1024)).toFixed(1);
+    var incognito=est.quota<250*1024*1024?true:false;
+    return{quota:gb,incognito:incognito};
+  }catch(e){return{quota:null,incognito:null};}
+}
+
+// ── Ad blocker detection ──────────────────────────────────────────
+function detectAdBlock(){
+  return new Promise(function(resolve){
+    var el=document.createElement('div');
+    el.className='pub_300x250 pub_300x250m pub_728x90 text-ad textAd text_ad text_ads text-ads ad-unit ad-zone';
+    el.style.cssText='height:1px;width:1px;position:absolute;left:-9999px;top:-9999px;';
+    document.body.appendChild(el);
+    setTimeout(function(){
+      var blocked=(el.offsetHeight===0||el.offsetParent===null||window.getComputedStyle(el).display==='none');
+      el.remove();
+      resolve(blocked);
+    },150);
+  });
+}
+
+// ── Speech voices ─────────────────────────────────────────────────
+function getSpeechVoices(){
+  try{
+    var v=window.speechSynthesis?window.speechSynthesis.getVoices():[];
+    if(v.length===0)return null;
+    var langs=[...new Set(v.map(function(x){return x.lang.split('-')[0];}))];
+    return{count:v.length,langs:langs.slice(0,6)};
+  }catch(e){return null;}
+}
+
+// ── Media codecs ──────────────────────────────────────────────────
+function getCodecs(){
+  var vid=document.createElement('video');
+  var aud=document.createElement('audio');
+  var checks=[
+    ['H.264',vid.canPlayType('video/mp4; codecs="avc1.42E01E"')],
+    ['H.265/HEVC',vid.canPlayType('video/mp4; codecs="hev1"')],
+    ['VP9',vid.canPlayType('video/webm; codecs="vp9"')],
+    ['AV1',vid.canPlayType('video/mp4; codecs="av01.0.00M.08"')],
+    ['WebM',vid.canPlayType('video/webm; codecs="vp8"')],
+    ['AAC',aud.canPlayType('audio/mp4; codecs="mp4a.40.2"')],
+    ['Opus',aud.canPlayType('audio/webm; codecs="opus"')],
+    ['FLAC',aud.canPlayType('audio/flac')],
+    ['MP3',aud.canPlayType('audio/mpeg')],
+  ];
+  return checks.filter(function(c){return c[1]==='probably'||c[1]==='maybe';}).map(function(c){return c[0];});
+}
+
+// ── User preferences ──────────────────────────────────────────────
+function getPrefs(){
+  return{
+    darkMode:window.matchMedia('(prefers-color-scheme: dark)').matches,
+    reducedMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    highContrast:window.matchMedia('(prefers-contrast: more)').matches,
+    p3Gamut:window.matchMedia('(color-gamut: p3)').matches,
+    hdr:window.matchMedia('(dynamic-range: high)').matches,
+    pointer:window.matchMedia('(pointer: coarse)').matches?'touch':'mouse',
+  };
+}
+
+// ── Canvas fingerprint ────────────────────────────────────────────
 function canvasFP(){
   try{
     var c=document.createElement('canvas');c.width=300;c.height=60;
@@ -715,6 +896,8 @@ var _dnt='';
 
 async function buildProfile(){
   var fp=canvasFP();
+  var afp=audioFP();
+  document.getElementById('v-audio-fp').textContent=afp;
   var gpu=getGPU();
   var ua=navigator.userAgent;
   var platform=navigator.platform||'';
@@ -803,6 +986,90 @@ async function buildProfile(){
   // Tags
   buildTags(tier2,_perms,_isIOS,_isAndroid,_isMobile,_dnt);
   _profileBuilt=true;
+
+  // ── Deep fingerprint (async, fills in after initial render) ──
+  buildDeepProfile();
+}
+
+async function buildDeepProfile(){
+  // Local IP via WebRTC
+  var ipEl=document.getElementById('v-localip');
+  getLocalIP().then(function(ip){
+    if(ip){
+      ipEl.innerHTML='<span class="danger" style="font-family:monospace;font-size:14px;font-weight:600;letter-spacing:0.06em">'+ip+'</span>';
+    } else {
+      ipEl.innerHTML='<span class="muted">'+(LANG==='de'?'blockiert / nicht verfugbar':'blocked / not available')+'</span>';
+    }
+  });
+
+  // Fonts
+  var fonts=detectFonts();
+  var fontsEl=document.getElementById('v-fonts');
+  var fontsListEl=document.getElementById('v-fonts-list');
+  fontsEl.innerHTML='<span class="'+(fonts.length>15?'danger':fonts.length>8?'warn':'success')+'" style="font-weight:600">'+fonts.length+'</span>'+(LANG==='de'?' erkannte Systemschriften':' system fonts detected');
+  if(fonts.length>0)fontsListEl.textContent=fonts.join(', ');
+
+  // Ad blocker
+  var adEl=document.getElementById('v-adblocker');
+  detectAdBlock().then(function(blocked){
+    if(blocked){
+      adEl.innerHTML='<span class="badge badge-granted"><span class="badge-dot"></span>'+(LANG==='de'?'aktiv — Werbung wird blockiert':'active — ads are being blocked')+'</span>';
+    } else {
+      adEl.innerHTML='<span class="badge badge-denied">'+(LANG==='de'?'nicht erkannt — voll trackbar':'not detected — fully trackable')+'</span>';
+    }
+  });
+
+  // Incognito / private browsing
+  var incEl=document.getElementById('v-incognito');
+  var incSubEl=document.getElementById('v-incognito-sub');
+  getStorageInfo().then(function(info){
+    if(info.quota){
+      document.getElementById('v-storage-quota').textContent=info.quota+' GB '+t('quota.avail');
+    } else {
+      document.getElementById('v-storage-quota').textContent=t('quota.na');
+    }
+    if(info.incognito===true){
+      incEl.innerHTML='<span class="warn" style="font-weight:600">'+(LANG==='de'?'Wahrscheinlich Privat-Modus':'Likely private / incognito')+'</span>';
+      incSubEl.textContent=LANG==='de'?'Speicherquota unter 250 MB erkannt. Viele Seiten erkennen das.':'Storage quota below 250 MB detected. Most sites can see this.';
+    } else {
+      incEl.innerHTML='<span class="muted">'+(LANG==='de'?'Normales Browsen':'Regular browsing')+'</span>';
+    }
+  });
+
+  // Speech voices
+  var voicesEl=document.getElementById('v-voices');
+  // Voices load asynchronously — try immediately then after short delay
+  function fillVoices(){
+    var v=getSpeechVoices();
+    if(v&&v.count>0){
+      voicesEl.textContent=v.count+(LANG==='de'?' Stimmen · Sprachen: ':' voices · languages: ')+v.langs.join(', ');
+      return true;
+    }
+    return false;
+  }
+  if(!fillVoices()){
+    if(window.speechSynthesis){
+      window.speechSynthesis.addEventListener('voiceschanged',function(){fillVoices();},{once:true});
+      setTimeout(fillVoices,1000);
+    } else {
+      voicesEl.innerHTML='<span class="muted">'+(LANG==='de'?'nicht verfugbar':'not available')+'</span>';
+    }
+  }
+
+  // Media codecs
+  var codecs=getCodecs();
+  document.getElementById('v-codecs').textContent=codecs.join(', ')||'none';
+
+  // Preferences
+  var prefs=getPrefs();
+  var prefParts=[];
+  if(prefs.darkMode)prefParts.push(LANG==='de'?'Dunkelmodus':'dark mode');
+  if(prefs.reducedMotion)prefParts.push(LANG==='de'?'reduzierte Bewegung':'reduced motion');
+  if(prefs.highContrast)prefParts.push(LANG==='de'?'hoher Kontrast':'high contrast');
+  if(prefs.p3Gamut)prefParts.push(LANG==='de'?'P3-Farbumfang':'P3 color gamut');
+  if(prefs.hdr)prefParts.push('HDR');
+  prefParts.push(LANG==='de'?(prefs.pointer==='touch'?'Touch-Gerät':'Maus/Stift'):(prefs.pointer==='touch'?'touch device':'mouse/stylus'));
+  document.getElementById('v-prefs').textContent=prefParts.join(' · ');
 }
 
 function buildTags(tier,perms,isIOS,isAndroid,isMobile,dnt){

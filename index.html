@@ -386,8 +386,8 @@ body { display:flex; flex-direction:column; align-items:center; }
 <div id="mobile-prompt" style="display:none;width:100%;max-width:680px;padding:0 16px 16px;">
   <div style="background:var(--surface);border:1px solid var(--green);border-left:3px solid var(--green);border-radius:8px;
     padding:14px 18px;font-size:0.82rem;font-family:var(--font-body);color:var(--dim);line-height:1.7;">
-    <strong style="color:var(--text);display:block;margin-bottom:4px">open on your phone for the full experience.</strong>
-    Desktop browsers block hardware sensor access. Your phone has 25+ sensors active right now.
+    <strong style="color:var(--text);display:block;margin-bottom:4px" data-i18n="mobile.prompt.title">open on your phone for the full experience.</strong>
+    <span data-i18n="mobile.prompt.body">Desktop browsers block hardware sensor access. Your phone has 25+ sensors active right now.</span>
     <br><span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--green)">rfi-irfos.github.io/invisible-layer</span>
   </div>
 </div>
@@ -413,32 +413,32 @@ body { display:flex; flex-direction:column; align-items:center; }
     <a class="card" data-cat="rf" href="docs/experiments/ble/">
       <div class="card-icon">◉</div>
       <div class="card-body">
-        <div class="card-title">BLE broadcast scanner</div>
-        <div class="card-desc">Every device within 10m is screaming its presence. Here's what's advertising right now.</div>
+        <div class="card-title" data-i18n="card.ble.title">BLE broadcast scanner</div>
+        <div class="card-desc" data-i18n="card.ble.desc">Every device within 10m is screaming its presence. Here's what's advertising right now.</div>
       </div>
       <div class="card-right"><span class="badge live">live</span><span class="card-sensor">bluetooth le</span></div>
     </a>
     <a class="card" data-cat="rf" href="docs/experiments/em-field/">
       <div class="card-icon">⌁</div>
       <div class="card-body">
-        <div class="card-title">EM field detector</div>
-        <div class="card-desc">Walk near a power line or appliance. Your magnetometer sees the field warp in real time.</div>
+        <div class="card-title" data-i18n="card.em-field.title">EM field detector</div>
+        <div class="card-desc" data-i18n="card.em-field.desc">Walk near a power line or appliance. Your magnetometer sees the field warp in real time.</div>
       </div>
       <div class="card-right"><span class="badge live">live</span><span class="card-sensor">magnetometer</span></div>
     </a>
     <a class="card" data-cat="rf" href="docs/experiments/compass-anomaly/">
       <div class="card-icon">⊕</div>
       <div class="card-body">
-        <div class="card-title">compass anomalies</div>
-        <div class="card-desc">Rebar, wiring, pipes — the hidden skeleton of every building you enter, revealed by your compass.</div>
+        <div class="card-title" data-i18n="card.compass-anomaly.title">compass anomalies</div>
+        <div class="card-desc" data-i18n="card.compass-anomaly.desc">Rebar, wiring, pipes — the hidden skeleton of every building you enter, revealed by your compass.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">magnetometer</span></div>
     </a>
     <a class="card" data-cat="rf" href="docs/experiments/wifi-density/">
       <div class="card-icon">⠿</div>
       <div class="card-body">
-        <div class="card-title">WiFi density map</div>
-        <div class="card-desc">Connection speed, RTT, and network congestion reveal how many devices are fighting for bandwidth around you.</div>
+        <div class="card-title" data-i18n="card.wifi-density.title">WiFi density map</div>
+        <div class="card-desc" data-i18n="card.wifi-density.desc">Connection speed, RTT, and network congestion reveal how many devices are fighting for bandwidth around you.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">network api</span></div>
     </a>
@@ -450,40 +450,40 @@ body { display:flex; flex-direction:column; align-items:center; }
     <a class="card" data-cat="acoustic" href="docs/experiments/acoustic/">
       <div class="card-icon">◈</div>
       <div class="card-body">
-        <div class="card-title">full spectrum FFT</div>
-        <div class="card-desc">Mains hum, HVAC resonance, ultrasonic devices — the acoustic fingerprint of your space.</div>
+        <div class="card-title" data-i18n="card.acoustic.title">full spectrum FFT</div>
+        <div class="card-desc" data-i18n="card.acoustic.desc">Mains hum, HVAC resonance, ultrasonic devices — the acoustic fingerprint of your space.</div>
       </div>
       <div class="card-right"><span class="badge live">live</span><span class="card-sensor">microphone</span></div>
     </a>
     <a class="card" data-cat="acoustic" href="docs/experiments/mains-hum/">
       <div class="card-icon">∿</div>
       <div class="card-body">
-        <div class="card-title">mains hum detector</div>
-        <div class="card-desc">50Hz or 60Hz — tell which country you're in acoustically. Find hidden electrical equipment.</div>
+        <div class="card-title" data-i18n="card.mains-hum.title">mains hum detector</div>
+        <div class="card-desc" data-i18n="card.mains-hum.desc">50Hz or 60Hz — tell which country you're in acoustically. Find hidden electrical equipment.</div>
       </div>
       <div class="card-right"><span class="badge live">live</span><span class="card-sensor">microphone · fft</span></div>
     </a>
     <a class="card" data-cat="acoustic" href="docs/experiments/ultrasonic/">
       <div class="card-icon">⊙</div>
       <div class="card-body">
-        <div class="card-title">ultrasonic detector</div>
-        <div class="card-desc">"Silent" pest repellers emit 20–40kHz. Your phone hears them. Find out who's running one nearby.</div>
+        <div class="card-title" data-i18n="card.ultrasonic.title">ultrasonic detector</div>
+        <div class="card-desc" data-i18n="card.ultrasonic.desc">"Silent" pest repellers emit 20–40kHz. Your phone hears them. Find out who's running one nearby.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">microphone · hi-freq</span></div>
     </a>
     <a class="card" data-cat="acoustic" href="docs/experiments/room-acoustics/">
       <div class="card-icon">◎</div>
       <div class="card-body">
-        <div class="card-title">room size from echo</div>
-        <div class="card-desc">A clap. The echo returns. Speed of sound + delay = wall distance. Measure a room with just your mic.</div>
+        <div class="card-title" data-i18n="card.room-acoustics.title">room size from echo</div>
+        <div class="card-desc" data-i18n="card.room-acoustics.desc">A clap. The echo returns. Speed of sound + delay = wall distance. Measure a room with just your mic.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">microphone</span></div>
     </a>
     <a class="card" data-cat="acoustic" href="docs/experiments/infrasound/">
       <div class="card-icon">⋯</div>
       <div class="card-body">
-        <div class="card-title">infrasound</div>
-        <div class="card-desc">Below 20Hz — trucks, trains, building resonance. You feel it but can't hear it. Your phone detects it.</div>
+        <div class="card-title" data-i18n="card.infrasound.title">infrasound</div>
+        <div class="card-desc" data-i18n="card.infrasound.desc">Below 20Hz — trucks, trains, building resonance. You feel it but can't hear it. Your phone detects it.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">microphone · lo-freq</span></div>
     </a>
@@ -495,40 +495,40 @@ body { display:flex; flex-direction:column; align-items:center; }
     <a class="card" data-cat="motion" href="docs/experiments/motion/">
       <div class="card-icon">⟁</div>
       <div class="card-body">
-        <div class="card-title">motion force field</div>
-        <div class="card-desc">Your acceleration rendered as a live force field. Watch the sensor react to every shake, step, and tilt.</div>
+        <div class="card-title" data-i18n="card.motion.title">motion force field</div>
+        <div class="card-desc" data-i18n="card.motion.desc">Your acceleration rendered as a live force field. Watch the sensor react to every shake, step, and tilt.</div>
       </div>
       <div class="card-right"><span class="badge live">live</span><span class="card-sensor">accelerometer</span></div>
     </a>
     <a class="card" data-cat="motion" href="docs/experiments/surface-resonance/">
       <div class="card-icon">⋰</div>
       <div class="card-body">
-        <div class="card-title">surface material ID</div>
-        <div class="card-desc">Tap any surface. The vibration ring-down frequency reveals whether it's concrete, wood, glass, or thin metal.</div>
+        <div class="card-title" data-i18n="card.surface-resonance.title">surface material ID</div>
+        <div class="card-desc" data-i18n="card.surface-resonance.desc">Tap any surface. The vibration ring-down frequency reveals whether it's concrete, wood, glass, or thin metal.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">accelerometer</span></div>
     </a>
     <a class="card" data-cat="motion" href="docs/experiments/gait/">
       <div class="card-icon">⤖</div>
       <div class="card-body">
-        <div class="card-title">gait biometric</div>
-        <div class="card-desc">How you walk is as unique as a fingerprint. Walk 10 steps and see your motion signature extracted.</div>
+        <div class="card-title" data-i18n="card.gait.title">gait biometric</div>
+        <div class="card-desc" data-i18n="card.gait.desc">How you walk is as unique as a fingerprint. Walk 10 steps and see your motion signature extracted.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">accel · gyro</span></div>
     </a>
     <a class="card" data-cat="motion" href="docs/experiments/seismic/">
       <div class="card-icon">⋈</div>
       <div class="card-body">
-        <div class="card-title">micro-seismic logger</div>
-        <div class="card-desc">Leave your phone on the floor overnight. See every footstep and vibration that occurred while you slept.</div>
+        <div class="card-title" data-i18n="card.seismic.title">micro-seismic logger</div>
+        <div class="card-desc" data-i18n="card.seismic.desc">Leave your phone on the floor overnight. See every footstep and vibration that occurred while you slept.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">accelerometer</span></div>
     </a>
     <a class="card" data-cat="motion" href="docs/experiments/barometer/">
       <div class="card-icon">⬡</div>
       <div class="card-body">
-        <div class="card-title">floor-by-floor altimeter</div>
-        <div class="card-desc">Your barometer is precise enough to detect each floor of a building. Your altitude is always known.</div>
+        <div class="card-title" data-i18n="card.barometer.title">floor-by-floor altimeter</div>
+        <div class="card-desc" data-i18n="card.barometer.desc">Your barometer is precise enough to detect each floor of a building. Your altitude is always known.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">barometer</span></div>
     </a>
@@ -540,40 +540,40 @@ body { display:flex; flex-direction:column; align-items:center; }
     <a class="card" data-cat="light" href="docs/experiments/light-flicker/">
       <div class="card-icon">⚡</div>
       <div class="card-body">
-        <div class="card-title">LED flicker detector</div>
-        <div class="card-desc">Most LEDs flicker at 100/120Hz. Your camera captures it. See which lights in your space are strobing.</div>
+        <div class="card-title" data-i18n="card.light-flicker.title">LED flicker detector</div>
+        <div class="card-desc" data-i18n="card.light-flicker.desc">Most LEDs flicker at 100/120Hz. Your camera captures it. See which lights in your space are strobing.</div>
       </div>
       <div class="card-right"><span class="badge live">live</span><span class="card-sensor">camera</span></div>
     </a>
     <a class="card" data-cat="light" href="docs/experiments/screen-pwm/">
       <div class="card-icon">▦</div>
       <div class="card-body">
-        <div class="card-title">screen PWM dimming</div>
-        <div class="card-desc">Your screen may be strobing to achieve dimming. Point one phone's camera at another to reveal it.</div>
+        <div class="card-title" data-i18n="card.screen-pwm.title">screen PWM dimming</div>
+        <div class="card-desc" data-i18n="card.screen-pwm.desc">Your screen may be strobing to achieve dimming. Point one phone's camera at another to reveal it.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">camera</span></div>
     </a>
     <a class="card" data-cat="light" href="docs/experiments/retroreflector/">
       <div class="card-icon">◆</div>
       <div class="card-body">
-        <div class="card-title">retroreflector finder</div>
-        <div class="card-desc">Cameras, road signs, cat eyes — all retroreflect. Use flash + camera to reveal them in a dark room.</div>
+        <div class="card-title" data-i18n="card.retroreflector.title">retroreflector finder</div>
+        <div class="card-desc" data-i18n="card.retroreflector.desc">Cameras, road signs, cat eyes — all retroreflect. Use flash + camera to reveal them in a dark room.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">camera · flash</span></div>
     </a>
     <a class="card" data-cat="light" href="docs/experiments/sky-polarization/">
       <div class="card-icon">◐</div>
       <div class="card-body">
-        <div class="card-title">sky polarization</div>
-        <div class="card-desc">The sky is polarized. Bees navigate by it. Your camera can estimate the sun's position even when it's hidden.</div>
+        <div class="card-title" data-i18n="card.sky-polarization.title">sky polarization</div>
+        <div class="card-desc" data-i18n="card.sky-polarization.desc">The sky is polarized. Bees navigate by it. Your camera can estimate the sun's position even when it's hidden.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">camera · compass</span></div>
     </a>
     <a class="card" data-cat="light" href="docs/experiments/led-quality/">
       <div class="card-icon">◑</div>
       <div class="card-body">
-        <div class="card-title">LED light quality</div>
-        <div class="card-desc">Point at a light source. Your camera extracts color temperature, CRI estimate, and blue spike hazard.</div>
+        <div class="card-title" data-i18n="card.led-quality.title">LED light quality</div>
+        <div class="card-desc" data-i18n="card.led-quality.desc">Point at a light source. Your camera extracts color temperature, CRI estimate, and blue spike hazard.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">camera</span></div>
     </a>
@@ -585,48 +585,48 @@ body { display:flex; flex-direction:column; align-items:center; }
     <a class="card" data-cat="meta" href="docs/experiments/passive-telemetry/">
       <div class="card-icon">◉</div>
       <div class="card-body">
-        <div class="card-title">your passive telemetry</div>
-        <div class="card-desc">~200 sensor readings per second, right now. Here's what can be inferred without you touching anything.</div>
+        <div class="card-title" data-i18n="card.passive-telemetry.title">your passive telemetry</div>
+        <div class="card-desc" data-i18n="card.passive-telemetry.desc">~200 sensor readings per second, right now. Here's what can be inferred without you touching anything.</div>
       </div>
       <div class="card-right"><span class="badge danger">surveillance</span><span class="card-sensor">all sensors</span></div>
     </a>
     <a class="card" data-cat="meta" href="docs/experiments/what-you-reveal/">
       <div class="card-icon">⊡</div>
       <div class="card-body">
-        <div class="card-title">what apps infer from motion</div>
-        <div class="card-desc">Walking, sleeping, driving, in an elevator. Your motion data tells a complete story. Here's how it's read.</div>
+        <div class="card-title" data-i18n="card.what-you-reveal.title">what apps infer from motion</div>
+        <div class="card-desc" data-i18n="card.what-you-reveal.desc">Walking, sleeping, driving, in an elevator. Your motion data tells a complete story. Here's how it's read.</div>
       </div>
       <div class="card-right"><span class="badge danger">tracking</span><span class="card-sensor">accel · gyro</span></div>
     </a>
     <a class="card" data-cat="meta" href="docs/experiments/network-fingerprint/">
       <div class="card-icon">⌖</div>
       <div class="card-body">
-        <div class="card-title">network fingerprint</div>
-        <div class="card-desc">Your connection metadata creates a fingerprint that follows you across sessions and sites.</div>
+        <div class="card-title" data-i18n="card.network-fingerprint.title">network fingerprint</div>
+        <div class="card-desc" data-i18n="card.network-fingerprint.desc">Your connection metadata creates a fingerprint that follows you across sessions and sites.</div>
       </div>
       <div class="card-right"><span class="badge danger">identity</span><span class="card-sensor">navigator api</span></div>
     </a>
     <a class="card" data-cat="meta" href="docs/experiments/urban-canyon/">
       <div class="card-icon">⊞</div>
       <div class="card-body">
-        <div class="card-title">urban canyon detector</div>
-        <div class="card-desc">GPS degrades in dense cities. The degradation pattern reveals building density. You're always locatable.</div>
+        <div class="card-title" data-i18n="card.urban-canyon.title">urban canyon detector</div>
+        <div class="card-desc" data-i18n="card.urban-canyon.desc">GPS degrades in dense cities. The degradation pattern reveals building density. You're always locatable.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">gps accuracy</span></div>
     </a>
     <a class="card" data-cat="meta" href="docs/experiments/human-density/">
       <div class="card-icon">⠿</div>
       <div class="card-body">
-        <div class="card-title">crowd density sensor</div>
-        <div class="card-desc">Audio RMS, network congestion, and BLE advertisement count combine to estimate how many people are around you.</div>
+        <div class="card-title" data-i18n="card.human-density.title">crowd density sensor</div>
+        <div class="card-desc" data-i18n="card.human-density.desc">Audio RMS, network congestion, and BLE advertisement count combine to estimate how many people are around you.</div>
       </div>
       <div class="card-right"><span class="badge partial">partial</span><span class="card-sensor">mic · network · ble</span></div>
     </a>
     <a class="card" data-cat="meta" href="docs/experiments/the-meta/">
       <div class="card-icon">∞</div>
       <div class="card-body">
-        <div class="card-title">the full picture</div>
-        <div class="card-desc">Everything running simultaneously. This is what your phone generates every second. This is what's collected.</div>
+        <div class="card-title" data-i18n="card.the-meta.title">the full picture</div>
+        <div class="card-desc" data-i18n="card.the-meta.desc">Everything running simultaneously. This is what your phone generates every second. This is what's collected.</div>
       </div>
       <div class="card-right"><span class="badge live">AR · live</span><span class="card-sensor">everything</span></div>
     </a>
