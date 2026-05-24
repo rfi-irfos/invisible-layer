@@ -1,9 +1,8 @@
-const CACHE_NAME = 'invisible-layer-v1';
+const CACHE_NAME = 'invisible-layer-v2';
 const ASSETS_TO_CACHE = [
-  '/invisible-layer/',
-  '/invisible-layer/index.html',
   '/invisible-layer/assets/css/base.css',
   '/invisible-layer/assets/css/experiment.css',
+  '/invisible-layer/assets/js/main.js',
   '/invisible-layer/assets/js/i18n.js',
   '/invisible-layer/manifest.json'
 ];
@@ -11,9 +10,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(ASSETS_TO_CACHE);
-      })
+      .then((cache) => cache.addAll(ASSETS_TO_CACHE))
       .then(() => self.skipWaiting())
   );
 });
@@ -34,17 +31,22 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Try network first, then fall back to cache
+  const url = new URL(event.request.url);
+
+  // Never intercept HTML navigation requests — always get fresh HTML from network
+  if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
+    return;
+  }
+
+  // Network-first for everything else: try network, fall back to cache
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // If valid response, clone and cache it
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
-        
-        // Don't cache extension or external requests
-        if (event.request.url.startsWith(self.location.origin)) {
+        // Cache static assets (not versioned query params — those are always fresh)
+        if (url.origin === self.location.origin && !url.search) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
@@ -52,8 +54,6 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => {
-        return caches.match(event.request);
-      })
+      .catch(() => caches.match(event.request))
   );
 });

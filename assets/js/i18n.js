@@ -413,11 +413,6 @@
       'exp.network-timing.btn-start': '◉ probe login state',
       'exp.network-timing.summary': '▶ how does timing reveal login state?',
 
-      // footer
-      'footer.rights': '© 2025 rfi-irfos. open source.',
-    },
-
-    
       // experiment strings — storage-quota
       'exp.storage-quota.label': 'experiment · browser APIs',
       'exp.storage-quota.title': 'your free disk space<br>is a fingerprint.',
@@ -426,6 +421,9 @@
       'exp.storage-quota.btn-start': '◉ measure disk',
       'exp.storage-quota.summary': '▶ how does this work?',
 
+      // footer
+      'footer.rights': '© 2025 rfi-irfos. open source.',
+    },
 
     de: {
       // nav / header
@@ -840,10 +838,6 @@
       'exp.network-timing.btn-start': '◉ Login-Status prüfen',
       'exp.network-timing.summary': '▶ wie verraten Antwortzeiten den Login-Status?',
 
-      // footer
-      'footer.rights': '© 2025 rfi-irfos. Open Source.',
-    },
-    
       // experiment strings — storage-quota
       'exp.storage-quota.label': 'Experiment · Browser-APIs',
       'exp.storage-quota.title': 'dein freier speicherplatz<br>ist ein fingerabdruck.',
@@ -851,6 +845,10 @@
       'exp.storage-quota.shock': '<strong>Deine genaue Festplattenkapazität und dein freier Speicherplatz können dich seitenübergreifend identifizieren.</strong> Wenn du zwei verschiedene Websites besuchst, sehen beide auf das Byte genau dieselbe Speicherquote. Da diese Zahl schwankt, wenn du Dateien herunterlädst oder löschst, entsteht ein sich kontinuierlich aktualisierender Fingerabdruck, der für dein physisches Gerät einzigartig ist. Keine Cookies erforderlich.',
       'exp.storage-quota.btn-start': '◉ speicher messen',
       'exp.storage-quota.summary': '▶ wie funktioniert das?',
+
+      // footer
+      'footer.rights': '© 2025 rfi-irfos. Open Source.',
+    },
 
     fr: {
       // nav / header
@@ -865,7 +863,7 @@
 
       // hero
       'hero.h1': 'votre téléphone<br>vous observe<br><em>déjà</em>.',
-      'hero.sub': 'En ce moment même, votre appareil lit simultanément une douzaine de couches physiques de la réalité — champs électromagnétiques, signatures acoustiques, mouvements, diffusions radio. La plupart des gens n\'en ont aucune idée. 37 expériences qui changent la donne.',
+      'hero.sub': 'En ce moment même, votre appareil lit simultanément une douzaine de couches physiques de la réalité — champs électromagnétiques, signatures acoustiques, mouvements, diffusions radio. La plupart des gens n\'en ont aucune idée. 38 expériences qui changent la donne.',
       'hero.cta.meta': '⊙ ouvrir la couche méta',
       'hero.cta.ble': 'Scanner BLE',
       'hero.mobile-prompt': 'Ce site fonctionne mieux sur un appareil mobile. Les expériences utilisent des capteurs que possède votre téléphone mais pas votre ordinateur portable — appareil photo, gyroscope, magnétomètre, baromètre.',
@@ -956,12 +954,38 @@
       'card.human-density.desc': 'Le RMS audio, la congestion du réseau et le nombre d\'annonces BLE se combinent pour estimer combien de personnes sont autour de vous.',
       'card.the-meta.desc': 'Tout fonctionne simultanément. C\'est ce que votre téléphone génère chaque seconde. C\'est ce qui est collecté.',
 
-      // shared experiment buttons / status
-      'btn.stop': '■ arrêter'
-    },
+      // nav filter — digital fingerprint
+      'nav.filter.fp': 'empreinte digitale',
+      'section.fp': 'empreinte digitale',
 
+      // card titles — digital fingerprint
+      'card.canvas-fingerprint.title': 'empreinte canvas',
+      'card.gpu-identity.title': 'identité GPU',
+      'card.audio-fingerprint.title': 'empreinte audio',
+      'card.webrtc-ip-leak.title': 'fuite IP WebRTC',
+      'card.device-identity.title': 'identité appareil',
+      'card.installed-voices.title': 'voix installées',
+      'card.codec-map.title': 'carte des codecs',
+      'card.battery-api.title': 'API batterie',
+      'card.keyboard-timing.title': 'rythme de frappe',
+      'card.touch-biometric.title': 'biométrie tactile',
+      'card.font-enumeration.title': 'énumération des polices',
+      'card.network-timing.title': 'timing réseau',
 
-  
+      // card descriptions — digital fingerprint
+      'card.canvas-fingerprint.desc': 'Votre GPU produit un résultat pixel unique. Un hash. Invisible. Permanent.',
+      'card.gpu-identity.desc': 'Le modèle GPU, le pilote et la précision des shaders sont exposés à chaque site web qui charge un canvas WebGL.',
+      'card.audio-fingerprint.desc': 'Votre DAC produit une signature mathématique unique. Fonctionne à volume zéro. Aucun microphone requis.',
+      'card.webrtc-ip-leak.desc': 'Votre adresse IP locale derrière un VPN. Chaque site web peut l\'extraire sans permission.',
+      'card.device-identity.desc': '8 lectures passives. Aucun clic. Aucune permission. Suffisant pour vous identifier parmi 300 000 utilisateurs.',
+      'card.installed-voices.desc': 'Vos voix TTS révèlent votre OS, votre région, vos packs de langue et si votre appareil est géré par une entreprise.',
+      'card.codec-map.desc': 'La matrice exacte des codecs que votre téléphone peut décoder identifie votre modèle parmi une poignée d\'appareils.',
+      'card.battery-api.desc': 'Firefox a supprimé cette API en 2016 car des chercheurs ont prouvé qu\'elle était utilisée pour suivre les utilisateurs après effacement des cookies.',
+      'card.keyboard-timing.desc': 'Votre rythme de frappe est une biométrie. Les chercheurs identifient les personnes par le timing seul avec plus de 95% de précision.',
+      'card.touch-biometric.desc': 'La taille et la pression de votre bout de doigt sur le verre sont biométriquement uniques. Votre toucher est une signature.',
+      'card.font-enumeration.desc': '80 mesures de polices. Aucune permission. Identifie votre OS, région et si vous utilisez Microsoft Office.',
+      'card.network-timing.desc': 'Les temps de réponse des indicateurs de connexion peuvent révéler à quels services vous êtes connecté — rien que par le timing.',
+
       // experiment strings — storage-quota
       'exp.storage-quota.label': 'expérience · APIs du navigateur',
       'exp.storage-quota.title': 'votre espace disque<br>est une empreinte.',
@@ -970,7 +994,12 @@
       'exp.storage-quota.btn-start': '◉ mesurer le disque',
       'exp.storage-quota.summary': '▶ comment ça marche ?',
 
+      // shared experiment buttons / status
+      'btn.stop': '■ arrêter',
 
+      // footer
+      'footer.rights': '© 2025 rfi-irfos. Open Source.',
+    },
 
   };
 
