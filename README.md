@@ -1,26 +1,47 @@
 # invisible layer
 
-**Your phone is a military-grade sensor array. Most people have no idea.**
+**"Is it too late?" — that is the wrong question. It has been past that since 2020.**
 
-[![try it live →](https://img.shields.io/badge/try_it_live_%E2%86%92-open_on_your_phone-00ff41?style=for-the-badge&labelColor=000000&color=00ff41)](https://rfi-irfos.github.io/invisible-layer/)
+The right question is: *now that you see it, what do you do?*
+
+[![try it live →](https://img.shields.io/badge/try_it_live_%E2%86%92-open_on_your_phone-22d3ee?style=for-the-badge&labelColor=000000&color=22d3ee)](https://rfi-irfos.github.io/invisible-layer/)
 [![experiments](https://img.shields.io/badge/experiments-25-22d3ee?style=flat-square&labelColor=000000)](https://rfi-irfos.github.io/invisible-layer/)
 [![no install](https://img.shields.io/badge/no_install-browser_only-475569?style=flat-square&labelColor=000000)]()
 [![license](https://img.shields.io/badge/license-MIT-475569?style=flat-square&labelColor=000000)]()
 
-> Right now, the device in your pocket is collecting data from a dozen sensors simultaneously.
-> Electromagnetic fields. Acoustic signatures. Motion. Light. Radio broadcasts from every device around you.
-> This is what it sees — and what others can infer from it.
+---
+
+> *"Wenn du siehst, dass ein Blinder auf einen Brunnen zugeht,*
+> *ist es eine Sünde, still zu bleiben."*
+>
+> — Saadi Shirazi, *Golestan* (Persia, 13th century)
+>
+> *"If you see a blind man walking toward a well — it is a sin to stay silent."*
+
+The same weight sits in scripture across traditions. Silence in the face of visible harm is not neutrality. It is complicity — and accountability for that silence does not disappear because the harm is digital.
+
+Data collection has reached dimensions that were not conceivable in 2015. Four hundred and fifty million data points per user per day. Behavioral models precise enough to predict your next purchase, your political lean, your emotional state — before you consciously form the thought. Digital twins updated in milliseconds. None of it required your signature. Just your attention.
+
+The entities doing this know exactly what they are building. The people it is being built on, mostly do not.
+
+**invisible layer is our answer to the question nobody is asking loud enough.**
+
+Not an app. Not a product. Not a company with a privacy policy nobody reads. A mirror. Open it on your phone, and for the first time you see what has been running silently this entire time.
 
 ## **[→ rfi-irfos.github.io/invisible-layer](https://rfi-irfos.github.io/invisible-layer/)**
-### open on your phone. no install. no account. just the truth.
+### open on your phone. no install. no account. no data collected. just the truth.
 
 ---
 
 ## what this is
 
-25 browser-based experiments that use your phone's built-in sensors to reveal hidden layers of physical reality. No app install. No account. No server. Just open the link on your phone.
+25 browser-based experiments that use your phone's built-in sensors to reveal the hidden layers of physical reality — and one profile page that shows you exactly how you look to the systems that are watching.
+
+No app install. No account. No server. Everything runs locally in your browser.
 
 Each experiment answers one question: *what is your phone already measuring that you didn't know about?*
+
+The profile page answers a different question: *what do they already know about you?*
 
 ## experiments
 
@@ -67,6 +88,8 @@ Each experiment answers one question: *what is your phone already measuring that
 | [human density from WiFi](docs/experiments/human-density/) | WiFi probes | soon |
 | [the full picture](docs/experiments/the-meta/) | everything | partial |
 
+---
+
 ## run locally
 
 ```bash
@@ -97,7 +120,6 @@ adb reverse tcp:8080 tcp:8080
 
 Each experiment is a single self-contained HTML file in `docs/experiments/<name>/index.html`. Add one, open a PR.
 
-Structure of an experiment:
 ```
 docs/experiments/your-experiment/
   index.html     ← everything in one file
@@ -105,8 +127,12 @@ docs/experiments/your-experiment/
 
 ## license
 
-MIT — use it, fork it, teach with it.
+MIT — use it, fork it, teach with it. The only thing we ask is that you keep pointing people toward the delete buttons.
 
 ---
 
-*made with [rfi-irfos](https://ternlang.com) · inspired by [phyphox](https://phyphox.org)*
+*built by [rfi-irfos](https://ternlang.com) · no VC funding · no data collected · no regrets*
+
+*The data brokers have a 450-million-point behavioral model on you.*
+*You now have one URL to start deleting it.*
+*Seems like a fair trade.*
