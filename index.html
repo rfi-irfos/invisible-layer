@@ -292,6 +292,12 @@ body { display:flex; flex-direction:column; align-items:center; }
 .site-footer a { color:var(--dim); }
 .site-footer a:hover { color:var(--cyan); }
 .site-footer svg { width:16px; height:16px; fill:currentColor; vertical-align:middle; }
+
+/* ── desktop: hide hamburger, show horizontal filter bar ── */
+@media (min-width: 641px) {
+  #menu-btn { display: none; }
+  .mobile-drawer { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -399,12 +405,19 @@ body { display:flex; flex-direction:column; align-items:center; }
   </div>
 </div>
 
-<!-- ── mobile prompt (desktop only) ── -->
+<!-- ── desktop prompt ── -->
 <div id="mobile-prompt" style="display:none;width:100%;max-width:680px;padding:0 16px 16px;">
-  <div style="background:var(--surface);border:1px solid var(--green);border-left:3px solid var(--green);border-radius:8px;
+  <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--cyan);border-radius:8px;
     padding:14px 18px;font-size:0.82rem;font-family:var(--font-body);color:var(--dim);line-height:1.7;">
-    <strong style="color:var(--text);display:block;margin-bottom:4px" data-i18n="mobile.prompt.title">open on your phone for the full experience.</strong>
-    <span data-i18n="mobile.prompt.body">Desktop browsers block hardware sensor access. Your phone has 25+ sensors active right now.</span>
+    <strong style="color:var(--text);display:block;margin-bottom:6px">you're on desktop — 11 experiments work here.</strong>
+    <span>No hardware sensors needed. Canvas, WebGL, AudioContext, WebRTC, and browser fingerprinting APIs all work in your browser right now.</span>
+    <br><br>
+    <button onclick="filter('fp', document.querySelector('.filter-btn[data-i18n=\'nav.filter.fp\']'))"
+      style="background:none;border:1px solid var(--cyan);color:var(--cyan);font-family:var(--font-mono);font-size:0.72rem;
+      padding:7px 14px;border-radius:4px;cursor:pointer;letter-spacing:0.05em;">
+      show desktop experiments &rarr;
+    </button>
+    <span style="display:inline-block;margin-left:12px;font-family:var(--font-mono);font-size:0.7rem;color:var(--dim)">or scan this on your phone for full sensor access</span>
     <br><span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--green)">rfi-irfos.github.io/invisible-layer</span>
   </div>
 </div>
