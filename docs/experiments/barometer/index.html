@@ -73,6 +73,7 @@
       </div>
     </div>
     <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" title="toggle theme" data-i18n-title="exp.theme" aria-label="toggle theme"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
     <a class="exp-close" href="../../../" title="close">✕</a>
   </header>
 
@@ -80,16 +81,16 @@
   <div class="exp-stage">
 
     <div class="exp-intro">
-      <div class="exp-label">experiment 09 · barometer</div>
-      <div class="exp-title">your phone knows<br>which floor you're on.</div>
-      <div class="exp-desc">
+      <div class="exp-label" data-i18n="exp.barometer.label">experiment 09 · barometer</div>
+      <div class="exp-title" data-i18n="exp.barometer.title">your phone knows<br>which floor you're on.</div>
+      <div class="exp-desc" data-i18n="exp.barometer.desc">
         Air pressure drops by about 1.2 hPa for every 10 metres of altitude.
         That's roughly 1 hPa per floor. Your phone's barometric sensor is sensitive
         enough to detect this — and sensitive enough to detect you walking up a flight of stairs.
       </div>
     </div>
 
-    <div class="shock">
+    <div class="shock" data-i18n="exp.barometer.shock">
       <strong>every ride-hailing app tracks which floor of a building you're on.</strong>
       Uber, Lyft, and Google Maps use the barometer to know whether you're in the lobby
       or on the 12th floor — so the car meets you at the right entrance.
@@ -98,9 +99,9 @@
     </div>
 
     <div class="action-row">
-      <button class="exp-btn" id="btn-start" onclick="startBaro()">◉ start sensor</button>
+      <button class="exp-btn" id="btn-start" data-i18n="exp.barometer.btn-start" onclick="startBaro()">◉ start sensor</button>
       <button class="exp-btn ghost" id="btn-zero" onclick="setBaseline()" style="display:none">⊙ set ground floor</button>
-      <button class="exp-btn stop" id="btn-stop" onclick="stopBaro()" style="display:none">■ stop</button>
+      <button class="exp-btn stop" id="btn-stop" data-i18n="btn.stop" onclick="stopBaro()" style="display:none">■ stop</button>
     </div>
 
     <div class="alt-display">
@@ -136,7 +137,7 @@
 
     <div class="exp-info">
       <details>
-        <summary>▶ how does this work?</summary>
+        <summary data-i18n="exp.barometer.summary">▶ how does this work?</summary>
         <p>Atmospheric pressure decreases predictably with altitude — the barometric formula.
         Near sea level, each 8.5 m of altitude corresponds to roughly 1 hPa of pressure drop.
         A typical floor is 3–4 m, so that's about 0.35–0.45 hPa per floor.</p>

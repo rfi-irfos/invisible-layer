@@ -78,6 +78,26 @@ html, body {
 }
 .exp-theme-btn:hover { color: var(--text); border-color: var(--dim); background: var(--surface2); }
 
+/* language toggle button — pill shape, sits between theme btn and close */
+.exp-lang-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px; padding: 0 10px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  color: var(--dim);
+  background: none;
+  cursor: pointer;
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.exp-lang-btn:hover { color: var(--text); border-color: var(--dim); background: var(--surface2); }
+
 /* scrollable body */
 .exp-body {
   flex: 1;

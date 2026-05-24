@@ -49,6 +49,7 @@
       </div>
     </div>
     <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" title="toggle theme" data-i18n-title="exp.theme" aria-label="toggle theme"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
     <a class="exp-close" href="../../../" title="close">✕</a>
   </header>
 
@@ -56,9 +57,9 @@
   <div class="exp-stage">
 
     <div class="exp-intro">
-      <div class="exp-label" id="exp-label">experiment 01 · bluetooth le</div>
-      <div class="exp-title">everything around you<br>is screaming.</div>
-      <div class="exp-desc">
+      <div class="exp-label" data-i18n="exp.ble.label" id="exp-label">experiment 01 · bluetooth le</div>
+      <div class="exp-title" data-i18n="exp.ble.title">everything around you<br>is screaming.</div>
+      <div class="exp-desc" data-i18n="exp.ble.desc">
         Every Bluetooth device within ~10 meters is continuously broadcasting its presence —
         phones, headphones, watches, trackers, medical devices.
         Each one sends packets into the air up to 10 times per second,
@@ -66,7 +67,7 @@
       </div>
     </div>
 
-    <div class="shock">
+    <div class="shock" data-i18n="exp.ble.shock">
       <strong>this is how retail stores track your path through the building.</strong>
       Fixed BLE scanners log your MAC address as you pass each aisle.
       Dwell time at each product is recorded. No app required on your end.
@@ -81,9 +82,9 @@
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
-      <button class="exp-btn" id="btn-scan" onclick="startScan()">◉ scan live</button>
+      <button class="exp-btn" id="btn-scan" data-i18n="exp.ble.btn-start" onclick="startScan()">◉ scan live</button>
       <button class="exp-btn ghost" id="btn-demo" onclick="startDemo()" style="display:none">▷ demo mode</button>
-      <button class="exp-btn stop" id="btn-stop" onclick="stopAll()" style="display:none">■ stop</button>
+      <button class="exp-btn stop" id="btn-stop" data-i18n="btn.stop" onclick="stopAll()" style="display:none">■ stop</button>
     </div>
 
     <div class="stat-row">
@@ -101,7 +102,7 @@
 
     <div class="exp-info">
       <details>
-        <summary>▶ how does this work?</summary>
+        <summary data-i18n="exp.ble.summary">▶ how does this work?</summary>
         <p>BLE devices advertise on channels 37, 38, 39 (2.402 / 2.426 / 2.480 GHz) up to 10× per second.
         Each packet contains MAC address, device name, signal strength (RSSI), and optional manufacturer data.</p>
         <p>RSSI is in dBm. <code>-40 dBm</code> = very close. <code>-90 dBm</code> = edge of range.

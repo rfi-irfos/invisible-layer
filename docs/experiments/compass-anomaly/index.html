@@ -74,6 +74,7 @@
       </div>
     </div>
     <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" title="toggle theme" data-i18n-title="exp.theme" aria-label="toggle theme"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
     <a class="exp-close" href="../../../" title="close">✕</a>
   </header>
 
@@ -81,9 +82,9 @@
   <div class="exp-stage">
 
     <div class="exp-intro">
-      <div class="exp-label">experiment 03 · magnetometer</div>
-      <div class="exp-title">the compass<br>knows what's hiding.</div>
-      <div class="exp-desc">
+      <div class="exp-label" data-i18n="exp.compass-anomaly.label">experiment 03 · magnetometer</div>
+      <div class="exp-title" data-i18n="exp.compass-anomaly.title">the compass<br>knows what's hiding.</div>
+      <div class="exp-desc" data-i18n="exp.compass-anomaly.desc">
         Walk slowly through a room while watching the compass heading.
         When you pass steel beams, rebar in the floor, electrical panels, or hidden pipes —
         the needle jumps. The magnetometer in your phone is sensitive enough to map
@@ -91,7 +92,7 @@
       </div>
     </div>
 
-    <div class="shock">
+    <div class="shock" data-i18n="exp.compass-anomaly.shock">
       <strong>the rebar grid inside every concrete building is magnetic.</strong>
       Construction companies use magnetometers to locate rebar and pipes before drilling.
       Security services use the same principle to map unknown buildings from the outside.
@@ -99,8 +100,8 @@
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
-      <button class="exp-btn" id="btn-start" onclick="startCompass()">◉ start compass</button>
-      <button class="exp-btn stop" id="btn-stop" onclick="stopCompass()" style="display:none">■ stop</button>
+      <button class="exp-btn" id="btn-start" data-i18n="exp.compass-anomaly.btn-start" onclick="startCompass()">◉ start compass</button>
+      <button class="exp-btn stop" id="btn-stop" data-i18n="btn.stop" onclick="stopCompass()" style="display:none">■ stop</button>
     </div>
 
     <div class="heading-display">
@@ -132,7 +133,7 @@
 
     <div class="exp-info">
       <details>
-        <summary>▶ how does this work?</summary>
+        <summary data-i18n="exp.compass-anomaly.summary">▶ how does this work?</summary>
         <p>Your phone contains a 3-axis magnetometer — the same sensor used by the compass app.
         It measures the total magnetic field in microtesla. Earth's field points toward magnetic north,
         but ferromagnetic materials (steel, iron, cast iron pipes) bend and amplify the field locally.</p>

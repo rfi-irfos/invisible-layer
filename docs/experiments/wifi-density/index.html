@@ -74,6 +74,7 @@
       </div>
     </div>
     <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" title="toggle theme" data-i18n-title="exp.theme" aria-label="toggle theme"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
     <a class="exp-close" href="../../../" title="close">✕</a>
   </header>
 
@@ -81,9 +82,9 @@
   <div class="exp-stage">
 
     <div class="exp-intro">
-      <div class="exp-label">experiment · WiFi scanning</div>
-      <div class="exp-title">every network you<br>can see is a data point.</div>
-      <div class="exp-desc">
+      <div class="exp-label" data-i18n="exp.wifi-density.label">experiment · WiFi scanning</div>
+      <div class="exp-title" data-i18n="exp.wifi-density.title">every network you<br>can see is a data point.</div>
+      <div class="exp-desc" data-i18n="exp.wifi-density.desc">
         Your phone can see dozens of WiFi networks at once — each one a little radio beacon broadcasting
         its name and signal strength from a fixed location. The number of networks, their signal strengths,
         and their names tell you a lot about where you are: residential suburb, dense apartment building,
@@ -91,7 +92,7 @@
       </div>
     </div>
 
-    <div class="shock">
+    <div class="shock" data-i18n="exp.wifi-density.shock">
       <strong>Google and Apple have mapped the location of every WiFi network on Earth using their users' phones.</strong>
       Every time a phone does a location lookup, it scans nearby WiFi networks and reports their
       signal strengths to a central server — along with your GPS coordinates. Apple has over 100 million
@@ -107,8 +108,8 @@
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;margin-top:4px">
-      <button class="exp-btn" id="btn-scan" onclick="startLive()">◉ start live scan</button>
-      <button class="exp-btn stop" id="btn-stop" onclick="stopLive()" style="display:none">■ stop</button>
+      <button class="exp-btn" id="btn-scan" data-i18n="exp.wifi-density.btn-start" onclick="startLive()">◉ start live scan</button>
+      <button class="exp-btn stop" id="btn-stop" data-i18n="btn.stop" onclick="stopLive()" style="display:none">■ stop</button>
     </div>
 
     <div class="density-display">
@@ -132,7 +133,7 @@
 
     <div class="exp-info">
       <details>
-        <summary>▶ what does WiFi density tell you?</summary>
+        <summary data-i18n="exp.wifi-density.summary">▶ what does WiFi density tell you?</summary>
         <p>Each WiFi access point covers roughly 10–50 metres indoors, or up to 100 metres outdoors.
         In a rural area, you might see 0–2 networks. In a dense urban area, 30–80+ networks are normal.
         Office buildings and airports can have hundreds of corporate SSIDs.</p>

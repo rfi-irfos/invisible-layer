@@ -135,6 +135,7 @@
       </div>
     </div>
     <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" title="toggle theme" data-i18n-title="exp.theme" aria-label="toggle theme"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
     <a class="exp-close" href="../../../" title="close">✕</a>
   </header>
 
@@ -142,16 +143,16 @@
   <div class="exp-stage">
 
     <div class="exp-intro">
-      <div class="exp-label">experiment 10 · browser APIs</div>
-      <div class="exp-title">you already<br>told them everything.</div>
-      <div class="exp-desc">
+      <div class="exp-label" data-i18n="exp.network-fingerprint.label">experiment 10 · browser APIs</div>
+      <div class="exp-title" data-i18n="exp.network-fingerprint.title">you already<br>told them everything.</div>
+      <div class="exp-desc" data-i18n="exp.network-fingerprint.desc">
         You haven't clicked anything. No login. No form. But your browser
         has already sent dozens of data points that, combined, identify you
         uniquely among billions of users. This is what you leak on every page load.
       </div>
     </div>
 
-    <div class="shock">
+    <div class="shock" data-i18n="exp.network-fingerprint.shock">
       <strong>77% of the web uses browser fingerprinting.</strong>
       Unlike cookies, it doesn't need storage — it can't be cleared.
       A VPN changes your IP. It doesn't change your GPU, your fonts,
@@ -177,7 +178,7 @@
 
     <div class="exp-info">
       <details>
-        <summary>▶ how does this work?</summary>
+        <summary data-i18n="exp.network-fingerprint.summary">▶ how does this work?</summary>
         <p>Browser fingerprinting works by reading dozens of passive signals — no permission required.
         Each signal contributes some number of "bits of entropy": the more unique a value,
         the more bits it adds. 33 bits = 1 in 8 billion — essentially globally unique.</p>
