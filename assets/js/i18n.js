@@ -317,6 +317,12 @@
       'card.font-enumeration.desc': '80 font probes. No permission. Identifies your OS, region, and whether you use Microsoft Office.',
       'card.network-timing.desc': 'Response times for login indicators can reveal which major services you are logged into — from timing alone.',
 
+      // card titles + descriptions — Phase 5
+      'card.clipboard-access.title': 'clipboard access',
+      'card.clipboard-access.desc': 'Any page can silently overwrite your clipboard. One permission dialog and a website can read everything you copy.',
+      'card.webrtc-turn.title': 'WebRTC TURN leak',
+      'card.webrtc-turn.desc': 'WebRTC exposes your full network topology — local IPs, public IP, and ISP routing — with no permission prompt.',
+
       // experiment strings — canvas-fingerprint
       'exp.canvas-fingerprint.label': 'digital fingerprint · canvas API · no permission needed',
       'exp.canvas-fingerprint.title': 'your GPU just<br>signed its name.',
@@ -417,6 +423,23 @@
       'exp.network-timing.stat.blocked': 'browser protected',
       'exp.network-timing.btn-probe': '◉ probe timing',
       'exp.network-timing.timeline-title': 'browser mitigations timeline',
+
+      // experiment strings — clipboard-access
+      'exp.clipboard-access.label': 'experiment · browser APIs · no sensors',
+      'exp.clipboard-access.title': 'your clipboard<br>is an open book.',
+      'exp.clipboard-access.desc': 'The Async Clipboard API lets websites read and write your clipboard with a single permission. Write access requires no permission at all on most browsers — any page can silently replace what you last copied.',
+      'exp.clipboard-access.shock': '<strong>In 2019, researchers found 250 of the Alexa top 1000 websites silently overwrote clipboard contents.</strong> Some retail sites injected coupon codes. Malicious pages substitute cryptocurrency wallet addresses at paste time — the victim copies a real address, pastes, and sends funds to the attacker.',
+      'exp.clipboard-access.btn-read': '◉ read clipboard',
+      'exp.clipboard-access.btn-write': '⚠ silent overwrite demo',
+      'exp.clipboard-access.summary': '▶ what can websites do with your clipboard?',
+
+      // experiment strings — webrtc-turn
+      'exp.webrtc-turn.label': 'experiment · WebRTC · no permission needed',
+      'exp.webrtc-turn.title': 'WebRTC shows your<br>entire network topology.',
+      'exp.webrtc-turn.desc': 'WebRTC\'s ICE protocol gathers every network address your device has — local LAN IP, router-assigned address, and your public IP seen by STUN servers. TURN relay candidates reveal your ISP\'s routing infrastructure. All silently, no permission prompt.',
+      'exp.webrtc-turn.shock': '<strong>VPN users are not protected.</strong> WebRTC queries your LAN interfaces directly — below the VPN tunnel. The ICE host candidate reveals your router\'s actual LAN address, and the srflx candidate reveals your real ISP\'s public IP before the VPN got involved. Ad networks use this to cross-reference VPN users with their real identities.',
+      'exp.webrtc-turn.btn-start': '◉ gather ICE candidates',
+      'exp.webrtc-turn.summary': '▶ what are ICE candidates and why do they leak?',
 
       // experiment strings — storage-quota
       'exp.storage-quota.label': 'experiment · browser APIs',
@@ -747,6 +770,12 @@
       'card.font-enumeration.desc': '80 Schrift-Probes. Keine Erlaubnis. Identifiziert dein OS, deine Region und ob du Microsoft Office nutzt.',
       'card.network-timing.desc': 'Antwortzeiten für Login-Indikatoren verraten, bei welchen Diensten du eingeloggt bist — allein durch Timing.',
 
+      // card titles + descriptions — Phase 5
+      'card.clipboard-access.title': 'Zwischenablage-Zugriff',
+      'card.clipboard-access.desc': 'Jede Seite kann deine Zwischenablage still überschreiben. Ein Erlaubnisdialog und eine Website kann alles lesen, was du kopierst.',
+      'card.webrtc-turn.title': 'WebRTC TURN-Leak',
+      'card.webrtc-turn.desc': 'WebRTC legt deine gesamte Netzwerktopologie offen — lokale IPs, öffentliche IP und ISP-Routing — ohne Erlaubnisabfrage.',
+
       // experiment strings — canvas-fingerprint
       'exp.canvas-fingerprint.label': 'Digitaler Fingerabdruck · Canvas API · keine Erlaubnis nötig',
       'exp.canvas-fingerprint.title': 'deine GPU hat gerade<br>ihren Namen unterschrieben.',
@@ -847,6 +876,23 @@
       'exp.network-timing.stat.blocked': 'Browser geschützt',
       'exp.network-timing.btn-probe': '◉ Timing prüfen',
       'exp.network-timing.timeline-title': 'Zeitleiste Browser-Schutzmaßnahmen',
+
+      // experiment strings — clipboard-access
+      'exp.clipboard-access.label': 'Experiment · Browser-APIs · kein Sensor',
+      'exp.clipboard-access.title': 'deine Zwischenablage<br>ist ein offenes Buch.',
+      'exp.clipboard-access.desc': 'Die Async Clipboard API erlaubt Websites, deine Zwischenablage mit einer einzigen Erlaubnis zu lesen und zu schreiben. Schreibzugriff benötigt auf den meisten Browsern gar keine Erlaubnis — jede Seite kann stillen, was du zuletzt kopiert hast.',
+      'exp.clipboard-access.shock': '<strong>2019 stellten Forscher fest, dass 250 der Alexa-Top-1000-Websites Zwischenspeicherinhalte stillen überschrieben.</strong> Manche Einzelhandelsseiten injizierten Gutscheincodes. Bösartige Seiten ersetzen Kryptowährungs-Wallet-Adressen beim Einfügen — das Opfer kopiert eine echte Adresse und sendet Geld an den Angreifer.',
+      'exp.clipboard-access.btn-read': '◉ Zwischenablage lesen',
+      'exp.clipboard-access.btn-write': '⚠ Stilles-Überschreiben-Demo',
+      'exp.clipboard-access.summary': '▶ was können Websites mit deiner Zwischenablage tun?',
+
+      // experiment strings — webrtc-turn
+      'exp.webrtc-turn.label': 'Experiment · WebRTC · keine Erlaubnis nötig',
+      'exp.webrtc-turn.title': 'WebRTC zeigt deine<br>gesamte Netzwerktopologie.',
+      'exp.webrtc-turn.desc': 'WebRTCs ICE-Protokoll sammelt jede Netzwerkadresse deines Geräts — lokale LAN-IP, router-zugewiesene Adresse und deine öffentliche IP. TURN-Relay-Kandidaten enthüllen die Routing-Infrastruktur deines ISP. Alles still, ohne Erlaubnisanfrage.',
+      'exp.webrtc-turn.shock': '<strong>VPN-Nutzer sind nicht geschützt.</strong> WebRTC fragt deine LAN-Interfaces direkt ab — unterhalb des VPN-Tunnels. Der ICE-Host-Kandidat enthüllt die echte LAN-Adresse deines Routers, der srflx-Kandidat deine reale öffentliche IP vor dem VPN. Werbenetzwerke nutzen dies, um VPN-Nutzer mit ihrer wahren Identität zu verknüpfen.',
+      'exp.webrtc-turn.btn-start': '◉ ICE-Kandidaten sammeln',
+      'exp.webrtc-turn.summary': '▶ was sind ICE-Kandidaten und warum leaken sie?',
 
       // experiment strings — storage-quota
       'exp.storage-quota.label': 'Experiment · Browser-APIs',
@@ -1105,6 +1151,12 @@
       'card.font-enumeration.desc': '80 mesures de polices. Aucune permission. Identifie votre OS, région et si vous utilisez Microsoft Office.',
       'card.network-timing.desc': 'Les temps de réponse des indicateurs de connexion peuvent révéler à quels services vous êtes connecté — rien que par le timing.',
 
+      // card titles + descriptions — Phase 5
+      'card.clipboard-access.title': 'accès presse-papiers',
+      'card.clipboard-access.desc': 'N\'importe quelle page peut écraser silencieusement votre presse-papiers. Un seul dialogue et un site peut lire tout ce que vous copiez.',
+      'card.webrtc-turn.title': 'fuite WebRTC TURN',
+      'card.webrtc-turn.desc': 'WebRTC expose toute votre topologie réseau — IPs locales, IP publique et routage ISP — sans aucune demande de permission.',
+
       // experiment strings — storage-quota
       'exp.storage-quota.label': 'expérience · APIs du navigateur',
       'exp.storage-quota.title': 'votre espace disque<br>est une empreinte.',
@@ -1112,6 +1164,23 @@
       'exp.storage-quota.shock': '<strong>La capacité exacte de votre disque et l\'espace libre peuvent vous identifier d\'un site à l\'autre.</strong> Lorsque vous visitez deux sites web différents, ils voient tous les deux le même quota de stockage à l\'octet près. Parce que ce nombre fluctue au fur et à mesure que vous téléchargez ou supprimez des fichiers, il crée une empreinte numérique continuellement mise à jour qui est unique à votre appareil physique. Aucun cookie requis.',
       'exp.storage-quota.btn-start': '◉ mesurer le disque',
       'exp.storage-quota.summary': '▶ comment ça marche ?',
+
+      // experiment strings — clipboard-access
+      'exp.clipboard-access.label': 'expérience · APIs du navigateur · aucun capteur',
+      'exp.clipboard-access.title': 'votre presse-papiers<br>est un livre ouvert.',
+      'exp.clipboard-access.desc': 'L\'API Async Clipboard permet aux sites web de lire et d\'écrire votre presse-papiers avec une seule permission. L\'accès en écriture ne nécessite aucune permission sur la plupart des navigateurs — n\'importe quelle page peut silencieusement remplacer ce que vous avez copié.',
+      'exp.clipboard-access.shock': '<strong>En 2019, des chercheurs ont découvert que 250 des 1000 meilleurs sites Alexa écrasaient silencieusement le contenu du presse-papiers.</strong> Certains sites injectaient des codes promo. Les pages malveillantes substituent les adresses de portefeuilles crypto au moment du collage — la victime colle et envoie des fonds à l\'attaquant.',
+      'exp.clipboard-access.btn-read': '◉ lire le presse-papiers',
+      'exp.clipboard-access.btn-write': '⚠ démo d\'écrasement silencieux',
+      'exp.clipboard-access.summary': '▶ que peuvent faire les sites avec votre presse-papiers ?',
+
+      // experiment strings — webrtc-turn
+      'exp.webrtc-turn.label': 'expérience · WebRTC · aucune permission requise',
+      'exp.webrtc-turn.title': 'WebRTC révèle toute<br>votre topologie réseau.',
+      'exp.webrtc-turn.desc': 'Le protocole ICE de WebRTC collecte chaque adresse réseau de votre appareil — IP LAN locale, adresse assignée par le routeur, et votre IP publique vue par les serveurs STUN. Les candidats relais TURN révèlent l\'infrastructure de routage de votre FAI. Tout cela silencieusement, sans aucune permission.',
+      'exp.webrtc-turn.shock': '<strong>Les utilisateurs de VPN ne sont pas protégés.</strong> WebRTC interroge directement vos interfaces LAN — sous le tunnel VPN. Le candidat hôte ICE révèle l\'adresse LAN réelle de votre routeur, et le candidat srflx révèle l\'IP publique de votre vrai FAI avant le VPN. Les réseaux publicitaires utilisent cela pour relier les utilisateurs VPN à leur identité réelle.',
+      'exp.webrtc-turn.btn-start': '◉ collecter les candidats ICE',
+      'exp.webrtc-turn.summary': '▶ que sont les candidats ICE et pourquoi fuient-ils ?',
 
       // shared experiment buttons / status
       'btn.stop': '■ arrêter',

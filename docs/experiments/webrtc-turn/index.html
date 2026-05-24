@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>WebRTC TURN leak — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+.candidate-row {
+  display: grid;
+  grid-template-columns: 70px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.3s, transform 0.3s, border-color 0.2s;
+}
+.candidate-row.visible { opacity: 1; transform: translateY(0); }
+.candidate-row.host   { border-color: var(--cyan); }
+.candidate-row.srflx  { border-color: var(--amber); }
+.candidate-row.relay  { border-color: var(--red); }
+
+.cand-type {
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+.host  .cand-type { border-color: var(--cyan);  color: var(--cyan); }
+.srflx .cand-type { border-color: var(--amber); color: var(--amber); }
+.relay .cand-type { border-color: var(--red);   color: var(--red); }
+
+.cand-ip   { color: var(--text); letter-spacing: 0.03em; }
+.cand-note { font-size: 0.58rem; color: var(--dim); text-align: right; }
+
+.vpn-banner {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  display: none;
+}
+.vpn-banner.mismatch {
+  display: block;
+  background: rgba(248,113,113,0.08);
+  border: 1px solid rgba(248,113,113,0.3);
+  color: var(--red);
+}
+.vpn-banner.match {
+  display: block;
+  background: rgba(0,255,65,0.06);
+  border: 1px solid rgba(0,255,65,0.2);
+  color: var(--green);
+}
+
+.topology-note {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--dim);
+  line-height: 1.8;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>WebRTC TURN leak</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" title="toggle theme" data-i18n-title="exp.theme" aria-label="toggle theme"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">EN</button>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.webrtc-turn.label">experiment · WebRTC · no permission needed</div>
+      <div class="exp-title" data-i18n="exp.webrtc-turn.title">WebRTC shows your<br>entire network topology.</div>
+      <div class="exp-desc" data-i18n="exp.webrtc-turn.desc">
+        WebRTC's ICE (Interactive Connectivity Establishment) protocol gathers every network address your
+        device has — local LAN IP, router-assigned address, and the public IP seen by STUN servers.
+        When TURN relay servers are involved, they reveal your ISP's routing infrastructure.
+        All of this happens silently, with no permission prompt.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.webrtc-turn.shock">
+      <strong>VPN users are not protected.</strong> WebRTC queries your LAN interfaces directly — below
+      the VPN tunnel. Even if your browsing traffic is encrypted and routed through a VPN exit node,
+      the ICE host candidate reveals your router's actual LAN address, and the srflx candidate reveals
+      your real ISP's public IP before the VPN got involved. Ad networks use this to cross-reference
+      VPN users with their real identities.
+    </div>
+
+    <div id="vpn-banner" class="vpn-banner"></div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-host">—</span><span class="stat-lbl">local IPs</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-srflx">—</span><span class="stat-lbl">public IPs</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-relay">—</span><span class="stat-lbl">relay routes</span></div>
+    </div>
+
+    <button class="exp-btn" id="btn-start" onclick="gatherCandidates()" data-i18n="exp.webrtc-turn.btn-start">◉ gather ICE candidates</button>
+
+    <div class="candidate-list" id="candidate-list">
+      <!-- populated by JS -->
+    </div>
+
+    <div class="topology-note" id="topology-note" style="display:none">
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.webrtc-turn.summary">▶ what are ICE candidates and why do they leak?</summary>
+        <p><strong style="color:var(--text)">host candidates</strong>: your device's actual LAN IP addresses — assigned by your router, or link-local IPv6. These are enumerated from your network interfaces directly. Reveals your local network topology, subnet, and what type of router you're behind.</p>
+        <p><strong style="color:var(--text)">srflx candidates</strong> (Server Reflexive): your public IP as seen by a STUN server. If you're using a VPN, this might show your VPN exit node — or it might show your real ISP IP if the VPN doesn't intercept UDP traffic (split tunneling, WebRTC leak).</p>
+        <p><strong style="color:var(--text)">relay candidates</strong>: your IP on a TURN relay server. TURN is used when direct connectivity fails. The relay address tells you which TURN server infrastructure your call is routing through — revealing your ISP's peering topology and geographic routing.</p>
+        <p>The fix: browsers can block WebRTC IP leaks with mDNS obfuscation (Chrome 75+, Firefox 65+) — host candidates become random UUIDs instead of real IPs. But many older browsers and mobile platforms still expose them. Firefox with <code>media.peerconnection.ice.default_address_only = true</code> in about:config prevents the leak.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+const STUN_SERVERS = [
+  'stun:stun.l.google.com:19302',
+  'stun:stun1.l.google.com:19302',
+  'stun:stun.cloudflare.com:3478'
+];
+
+let gathered = { host: [], srflx: [], relay: [] };
+
+function addCandidateRow(type, ip, port, note) {
+  const list = document.getElementById('candidate-list');
+  const row = document.createElement('div');
+  row.className = 'candidate-row ' + type;
+  row.innerHTML = `
+    <span class="cand-type">${type}</span>
+    <span class="cand-ip">${ip}${port ? ':' + port : ''}</span>
+    <span class="cand-note">${note}</span>`;
+  list.appendChild(row);
+  requestAnimationFrame(() => row.classList.add('visible'));
+}
+
+function classifyIP(ip) {
+  if (ip.startsWith('10.') || ip.startsWith('172.') || ip.startsWith('192.168.')) return 'LAN (private)';
+  if (ip.startsWith('169.254.')) return 'link-local';
+  if (ip.startsWith('fc') || ip.startsWith('fd')) return 'ULA IPv6';
+  if (ip.startsWith('fe80')) return 'link-local IPv6';
+  if (ip.includes(':') && !ip.startsWith('::1')) return 'public IPv6';
+  if (ip === '::1' || ip === '127.0.0.1') return 'loopback';
+  return 'public IPv4';
+}
+
+function analyzeVPN(hosts, srflxes) {
+  const banner = document.getElementById('vpn-banner');
+  if (!hosts.length || !srflxes.length) return;
+
+  const localOnly = hosts.every(ip => ['10.','172.','192.168.'].some(p => ip.startsWith(p)));
+  const hasVpnRange = hosts.some(ip => ip.startsWith('10.') && (ip.startsWith('10.8.') || ip.startsWith('10.6.') || ip.startsWith('10.0.')));
+  const multiplePublic = srflxes.length > 1;
+
+  if (multiplePublic) {
+    banner.className = 'vpn-banner mismatch';
+    banner.textContent = 'multiple public IPs detected — possible VPN or dual-WAN. The additional IP may reveal your real ISP address beneath the VPN tunnel.';
+  } else if (hasVpnRange) {
+    banner.className = 'vpn-banner mismatch';
+    banner.textContent = 'local IP suggests a VPN is active (10.x range). But WebRTC still exposed your LAN address — this is the leak.';
+  } else {
+    banner.className = 'vpn-banner match';
+    banner.textContent = 'single local IP, single public IP — no obvious VPN mismatch detected. mDNS obfuscation may be active (candidates appear as UUID hostnames).';
+  }
+}
+
+async function gatherCandidates() {
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-start').textContent = 'gathering…';
+  document.getElementById('candidate-list').innerHTML = '';
+  document.getElementById('topology-note').style.display = 'none';
+  gathered = { host: [], srflx: [], relay: [] };
+
+  const pc = new RTCPeerConnection({
+    iceServers: STUN_SERVERS.map(u => ({ urls: u }))
+  });
+
+  // Create a dummy data channel to trigger ICE
+  pc.createDataChannel('probe');
+
+  const seen = new Set();
+
+  pc.onicecandidate = (e) => {
+    if (!e.candidate) {
+      // Gathering complete
+      finalize();
+      return;
+    }
+    const c = e.candidate;
+    const parts = c.candidate.split(' ');
+    if (parts.length < 8) return;
+
+    const ip   = parts[4];
+    const port = parts[5];
+    const type = parts[7]; // host, srflx, relay
+
+    // Skip mDNS obfuscated candidates (UUIDs)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.local$/.test(ip);
+    const key = type + ':' + ip;
+    if (seen.has(key)) return;
+    seen.add(key);
+
+    const note = isUUID ? 'mDNS obfuscated (privacy mode)' : classifyIP(ip);
+    const displayIp = isUUID ? ip.slice(0, 8) + '…(mDNS)' : ip;
+
+    if (type === 'host')  gathered.host.push(ip);
+    if (type === 'srflx') gathered.srflx.push(ip);
+    if (type === 'relay') gathered.relay.push(ip);
+
+    addCandidateRow(type, displayIp, type === 'host' ? '' : port, note);
+    document.getElementById('stat-host').textContent  = gathered.host.length  || '—';
+    document.getElementById('stat-srflx').textContent = gathered.srflx.length || '—';
+    document.getElementById('stat-relay').textContent = gathered.relay.length  || '—';
+  };
+
+  pc.onicegatheringstatechange = () => {
+    if (pc.iceGatheringState === 'complete') finalize();
+  };
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  // Timeout failsafe
+  setTimeout(() => { if (pc.iceGatheringState !== 'complete') finalize(); }, 5000);
+
+  function finalize() {
+    pc.close();
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('btn-start').textContent = '◉ regather';
+
+    if (!document.getElementById('candidate-list').children.length) {
+      const row = document.createElement('div');
+      row.className = 'candidate-row visible';
+      row.style.color = 'var(--dim)';
+      row.innerHTML = '<span>no candidates gathered — WebRTC may be blocked or browser requires HTTPS</span>';
+      document.getElementById('candidate-list').appendChild(row);
+      return;
+    }
+
+    analyzeVPN(gathered.host, gathered.srflx);
+
+    const note = document.getElementById('topology-note');
+    note.style.display = 'block';
+    const lines = [];
+    if (gathered.host.length)  lines.push('local interfaces exposed: ' + gathered.host.join(', '));
+    if (gathered.srflx.length) lines.push('public IP via STUN: ' + gathered.srflx.join(', '));
+    if (gathered.relay.length) lines.push('TURN relay IPs: ' + gathered.relay.join(', '));
+    lines.push('gathered without any user permission or gesture');
+    note.innerHTML = lines.map(l => '· ' + l).join('<br>');
+  }
+}
+</script>
+<script src="../../../assets/js/i18n.js?v=3"></script>
+</body>
+</html>

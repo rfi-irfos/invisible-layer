@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>clipboard access — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.clip-display {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--text);
+  min-height: 80px;
+  word-break: break-all;
+  white-space: pre-wrap;
+  transition: border-color 0.2s;
+}
+.clip-display.revealed { border-color: var(--cyan); }
+.clip-display.empty { color: var(--dim); font-style: italic; }
+.clip-display.blocked { border-color: var(--amber); color: var(--amber); }
+
+.perm-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+.perm-icon {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.perm-icon.granted  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.perm-icon.prompt   { background: var(--amber); }
+.perm-icon.denied   { background: var(--red); }
+.perm-icon.unknown  { background: var(--dim); }
+
+.write-demo {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+.write-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+
+.clip-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--dim);
+  padding: 0 2px;
+}
+.clip-stat-row { display: flex; gap: 10px; }
+.clip-stat-key { width: 110px; flex-shrink: 0; }
+.clip-stat-val { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../" data-i18n="exp.back">invisible layer</a> / <strong>clipboard access</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" title="toggle theme" data-i18n-title="exp.theme" aria-label="toggle theme"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">EN</button>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label" data-i18n="exp.clipboard-access.label">experiment · browser APIs · no sensors</div>
+      <div class="exp-title" data-i18n="exp.clipboard-access.title">your clipboard<br>is an open book.</div>
+      <div class="exp-desc" data-i18n="exp.clipboard-access.desc">
+        The Async Clipboard API lets websites read and write your clipboard with a single permission.
+        On many browsers, the write direction requires no permission at all — any page can silently
+        replace whatever you last copied. The read direction asks once, then remembers.
+      </div>
+    </div>
+
+    <div class="shock" data-i18n="exp.clipboard-access.shock">
+      <strong>In 2019, researchers found that 250 of the Alexa top 1000 websites silently overwrote clipboard contents.</strong>
+      Some retail sites injected coupon codes so that users who pasted a product link into a price-comparison
+      tool got a modified URL instead. Malicious pages substitute cryptocurrency wallet addresses at paste time —
+      the victim copies a wallet address, pastes it, and sends funds to the attacker.
+    </div>
+
+    <!-- Permission status -->
+    <div id="perm-row" class="perm-row">
+      <div class="perm-icon unknown" id="perm-icon"></div>
+      <span id="perm-label" style="color:var(--dim)">checking clipboard permission…</span>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-len">—</span><span class="stat-lbl">characters</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-type">—</span><span class="stat-lbl">content type</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-writes">0</span><span class="stat-lbl">silent writes</span></div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button class="exp-btn" id="btn-read" onclick="readClip()" data-i18n="exp.clipboard-access.btn-read">◉ read clipboard</button>
+      <button class="exp-btn" id="btn-write" onclick="silentWrite()" style="border-color:var(--amber);color:var(--amber)" data-i18n="exp.clipboard-access.btn-write">⚠ silent overwrite demo</button>
+    </div>
+
+    <!-- Clipboard content display -->
+    <div id="clip-display" class="clip-display empty">tap "read clipboard" — you'll see what you last copied</div>
+
+    <!-- Silent write demo area -->
+    <div class="write-demo" id="write-demo" style="display:none">
+      <div class="write-label">overwritten content (paste anywhere to verify):</div>
+      <div id="write-content" style="font-family:var(--font-mono);font-size:0.8rem;color:var(--amber)"></div>
+    </div>
+
+    <!-- Detailed stats -->
+    <div class="clip-stats" id="clip-stats" style="display:none">
+      <div class="clip-stat-row"><span class="clip-stat-key">api available</span><span class="clip-stat-val" id="cs-api">—</span></div>
+      <div class="clip-stat-row"><span class="clip-stat-key">read permission</span><span class="clip-stat-val" id="cs-read-perm">—</span></div>
+      <div class="clip-stat-row"><span class="clip-stat-key">write permission</span><span class="clip-stat-val" id="cs-write-perm">—</span></div>
+      <div class="clip-stat-row"><span class="clip-stat-key">clipboard items</span><span class="clip-stat-val" id="cs-items">—</span></div>
+      <div class="clip-stat-row"><span class="clip-stat-key">last read length</span><span class="clip-stat-val" id="cs-len">—</span></div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary data-i18n="exp.clipboard-access.summary">▶ what can websites do with your clipboard?</summary>
+        <p><strong style="color:var(--text)">Read access</strong> (clipboard-read permission): one dialog, then persists. Once granted, any script on that origin can read your clipboard silently in the background — no user gesture needed after the first time. Chrome's permission prompt says "See text and images copied to clipboard." Most people click Allow.</p>
+        <p><strong style="color:var(--text)">Write access</strong> (clipboard-write permission): in Chrome and Firefox, writing to clipboard requires no permission dialog at all — only a user gesture (click/key press). Any onclick handler can silently overwrite your clipboard.</p>
+        <p><strong style="color:var(--text)">document.execCommand('copy')</strong>: the old API, deprecated but still supported in all browsers. No permission required, only a user gesture. Scripts have used this to inject content during "Copy" button clicks for over a decade.</p>
+        <p>The attack surface: copy a crypto wallet address → website overwrites clipboard → you paste the attacker's address. Copy a login link → website overwrites with a phishing URL. This attack has been used in active malware.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+<script>
+let writeCount = 0;
+
+async function checkPermission() {
+  const icon = document.getElementById('perm-icon');
+  const label = document.getElementById('perm-label');
+  document.getElementById('clip-stats').style.display = 'flex';
+  document.getElementById('cs-api').textContent = navigator.clipboard ? 'yes — Async Clipboard API' : 'no — only legacy execCommand';
+
+  if (!navigator.permissions) {
+    icon.className = 'perm-icon unknown';
+    label.textContent = 'Permissions API not available (try Chrome)';
+    return;
+  }
+
+  try {
+    const readPerm  = await navigator.permissions.query({ name: 'clipboard-read' });
+    const writePerm = await navigator.permissions.query({ name: 'clipboard-write' });
+    document.getElementById('cs-read-perm').textContent  = readPerm.state;
+    document.getElementById('cs-write-perm').textContent = writePerm.state + (writePerm.state === 'granted' ? ' (no dialog needed)' : '');
+
+    const state = readPerm.state;
+    icon.className = 'perm-icon ' + state;
+    label.textContent = {
+      granted: 'clipboard-read granted — this site can read your clipboard silently',
+      prompt:  'clipboard-read: will ask — one dialog, then persists indefinitely',
+      denied:  'clipboard-read denied — blocked in browser settings'
+    }[state] || state;
+    label.style.color = state === 'granted' ? 'var(--green)' : state === 'denied' ? 'var(--red)' : 'var(--amber)';
+
+    readPerm.onchange = () => checkPermission();
+  } catch(e) {
+    icon.className = 'perm-icon unknown';
+    label.textContent = 'permission query failed: ' + e.message;
+  }
+}
+
+async function readClip() {
+  const display = document.getElementById('clip-display');
+  if (!navigator.clipboard || !navigator.clipboard.readText) {
+    display.textContent = 'Async Clipboard API not available — try Chrome on desktop or Android';
+    display.className = 'clip-display blocked';
+    return;
+  }
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text) {
+      display.textContent = '(clipboard is empty or contains non-text content)';
+      display.className = 'clip-display empty';
+      document.getElementById('stat-len').textContent = '0';
+      document.getElementById('stat-type').textContent = 'empty';
+    } else {
+      display.textContent = text;
+      display.className = 'clip-display revealed';
+      document.getElementById('stat-len').textContent = text.length.toLocaleString();
+      const type = /^https?:\/\//.test(text) ? 'URL' :
+                   text.includes('\n') ? 'multiline text' :
+                   /^\d{10,}$/.test(text.trim()) ? 'number / possible wallet' :
+                   text.length > 200 ? 'long text' : 'text';
+      document.getElementById('stat-type').textContent = type;
+      document.getElementById('cs-len').textContent = text.length + ' chars';
+      document.getElementById('cs-items').textContent = '1 (text/plain)';
+    }
+    checkPermission();
+  } catch(e) {
+    display.textContent = e.name === 'NotAllowedError'
+      ? 'permission denied — user declined the clipboard-read prompt'
+      : 'error: ' + e.message;
+    display.className = 'clip-display blocked';
+  }
+}
+
+async function silentWrite() {
+  const demo = [
+    'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    'https://evil.example.com/login?ref=invisible-layer',
+    '50% OFF CODE: DEMO — (this replaced what you had copied)',
+    'Your clipboard was just overwritten. No permission dialog appeared.'
+  ];
+  const content = demo[writeCount % demo.length];
+  writeCount++;
+  document.getElementById('stat-writes').textContent = writeCount;
+
+  try {
+    await navigator.clipboard.writeText(content);
+    document.getElementById('write-demo').style.display = 'block';
+    document.getElementById('write-content').textContent = content;
+  } catch(e) {
+    // Fallback: execCommand
+    const ta = document.createElement('textarea');
+    ta.value = content;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    document.getElementById('write-demo').style.display = 'block';
+    document.getElementById('write-content').textContent = content + '\n(via execCommand fallback)';
+  }
+}
+
+checkPermission();
+</script>
+<script src="../../../assets/js/i18n.js?v=3"></script>
+</body>
+</html>
