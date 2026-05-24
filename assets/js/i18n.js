@@ -34,7 +34,7 @@
       'exp.theme': 'toggle theme',
 
       // meta layer start screen
-      'meta.eyebrow': 'invisible layer / meta layer',
+      'meta.eyebrow.suffix': 'meta layer',
       'meta.title': 'this is what<br>AI sees.',
       'meta.sub': 'Every invisible signal, field, and force around you — rendered on the world.',
       'meta.sub.strong': 'Sound waves. Magnetic fields. Gravity. RF broadcasts. Atmospheric pressure. All at once.',
@@ -74,17 +74,17 @@
       'section.light': 'Licht & Optik',
       'section.meta': 'Die Meta-Ebene',
 
-      // exp header
-      'exp.back': 'invisible layer',
-      'exp.theme': 'Design wechseln',
-
       // meta layer start screen
-      'meta.eyebrow': 'invisible layer / Meta-Ebene',
+      'meta.eyebrow.suffix': 'Meta-Ebene',
       'meta.title': 'So sieht<br>KI die Welt.',
       'meta.sub': 'Jedes unsichtbare Signal, Feld und jede Kraft um dich herum — auf die Welt projiziert.',
       'meta.sub.strong': 'Schallwellen. Magnetfelder. Schwerkraft. Funksignale. Luftdruck. Alles auf einmal.',
       'meta.btn': '⊙ Alle Sensoren öffnen',
       'meta.warn': 'benötigt Kamera-, Mikrofon- und Bewegungszugriff. alle Berechnungen bleiben auf dem Gerät.',
+
+      // exp header
+      'exp.back': 'invisible layer',
+      'exp.theme': 'Design wechseln',
 
       // footer
       'footer.rights': '© 2025 rfi-irfos. Open Source.',
@@ -116,9 +116,12 @@
 
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
       var key = el.getAttribute('data-i18n-placeholder');
-      if (strings[key] !== undefined) {
-        el.placeholder = strings[key];
-      }
+      if (strings[key] !== undefined) el.placeholder = strings[key];
+    });
+
+    document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-title');
+      if (strings[key] !== undefined) el.title = strings[key];
     });
 
     // update lang toggle button label

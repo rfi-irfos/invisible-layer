@@ -68,11 +68,11 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:
 </div>
 
 <div class="start" id="start">
-  <div class="start-eyebrow"><a href="../../../">invisible layer</a> / meta layer</div>
-  <div class="start-title">this is what<br>AI sees.</div>
+  <div class="start-eyebrow"><a href="../../../">invisible layer</a> / <span data-i18n="meta.eyebrow.suffix">meta layer</span></div>
+  <div class="start-title" data-i18n="meta.title">this is what<br>AI sees.</div>
   <div class="start-sub">
-    Every invisible signal, field, and force around you — rendered on the world.
-    <strong>Sound waves. Magnetic fields. Gravity. RF broadcasts. Atmospheric pressure. All at once.</strong>
+    <span data-i18n="meta.sub">Every invisible signal, field, and force around you — rendered on the world.</span>
+    <strong data-i18n="meta.sub.strong">Sound waves. Magnetic fields. Gravity. RF broadcasts. Atmospheric pressure. All at once.</strong>
   </div>
   <div class="start-sensors">
     <span class="start-sensor-chip">microphone</span>
@@ -86,8 +86,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:
     <span class="start-sensor-chip">ambient light</span>
     <span class="start-sensor-chip">orientation</span>
   </div>
-  <button class="start-btn" onclick="boot()">&#9711; open all sensors</button>
-  <div class="start-warn">grants camera, microphone, and motion access. all processing stays on-device.</div>
+  <button class="start-btn" onclick="boot()" data-i18n="meta.btn">&#9711; open all sensors</button>
+  <div class="start-warn" data-i18n="meta.warn">grants camera, microphone, and motion access. all processing stays on-device.</div>
 </div>
 
 <script>
@@ -386,6 +386,9 @@ function loop() {
   rG.addColorStop(0,'rgba(0,0,0,0)');rG.addColorStop(1,'rgba(0,0,0,0.5)');
   cx.fillStyle=rG;cx.fillRect(W*0.86,0,W*0.14,H);
 
+  // ambient sensor colour wash (drawn before all layers)
+  drawAmbient(t);
+
   // scanline overlay
   drawScanlines();
 
@@ -408,6 +411,36 @@ function loop() {
   cx.beginPath();cx.arc(W-20,20,6,0,Math.PI*2);
   cx.fillStyle='#00ff41';cx.shadowBlur=14;cx.shadowColor='#00ff41';cx.fill();
   cx.shadowBlur=0;cx.restore();
+}
+
+// ── Ambient colour wash — sensor-reactive full-screen tint ───────
+function drawAmbient(t){
+  cx.save();
+  // audio → green wash
+  if(S.audioLevel>0.04){
+    var aG=cx.createRadialGradient(W*0.5,H*0.5,0,W*0.5,H*0.5,Math.max(W,H)*0.6);
+    var aA=(S.audioLevel*0.09).toFixed(3);
+    aG.addColorStop(0,'rgba(0,255,65,'+aA+')');
+    aG.addColorStop(1,'rgba(0,255,65,0)');
+    cx.globalAlpha=1;cx.fillStyle=aG;cx.fillRect(0,0,W,H);
+  }
+  // EM field → purple wash (even synthetic)
+  var emA=Math.max(0.018,Math.min(0.07,S.magTotal/1200));
+  if(!S_magOk) emA=0.02+Math.abs(Math.sin(t*0.6))*0.02;
+  var eG=cx.createRadialGradient(W*0.5,H*0.42,0,W*0.5,H*0.42,Math.max(W,H)*0.65);
+  eG.addColorStop(0,'rgba(167,139,250,'+emA.toFixed(3)+')');
+  eG.addColorStop(1,'rgba(167,139,250,0)');
+  cx.fillStyle=eG;cx.fillRect(0,0,W,H);
+  // motion → cyan edge flash
+  var mag=Math.sqrt(S.ax*S.ax+S.ay*S.ay+S.az*S.az)||0;
+  var mA=Math.min(0.08,mag/220);
+  if(mA>0.005){
+    var mG=cx.createRadialGradient(W*0.5,H*0.5,Math.max(W,H)*0.3,W*0.5,H*0.5,Math.max(W,H)*0.75);
+    mG.addColorStop(0,'rgba(34,211,238,0)');
+    mG.addColorStop(1,'rgba(34,211,238,'+mA.toFixed(3)+')');
+    cx.fillStyle=mG;cx.fillRect(0,0,W,H);
+  }
+  cx.restore();
 }
 
 // ── Scanlines ────────────────────────────────────────────────────
@@ -877,5 +910,6 @@ function hexagon(ctx,x,y,r){
   ctx.closePath();
 }
 </script>
+<script src="../../../assets/js/i18n.js"></script>
 </body>
 </html>
