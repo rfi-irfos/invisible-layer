@@ -1,9 +1,9 @@
 # invisible layer
 
-![experiments](https://img.shields.io/badge/experiments-37-22d3ee?style=flat&labelColor=0f172a)
+![experiments](https://img.shields.io/badge/experiments-40-22d3ee?style=flat&labelColor=0f172a)
 ![sensors](https://img.shields.io/badge/sensors-25%2B-a78bfa?style=flat&labelColor=0f172a)
 ![fingerprints](https://img.shields.io/badge/fingerprints_exposed-yours-ef4444?style=flat&labelColor=0f172a)
-![languages](https://img.shields.io/badge/languages-EN_%C2%B7_DE-f59e0b?style=flat&labelColor=0f172a)
+![languages](https://img.shields.io/badge/languages-EN_%C2%B7_DE_%C2%B7_FR-f59e0b?style=flat&labelColor=0f172a)
 ![install](https://img.shields.io/badge/install-none-4ade80?style=flat&labelColor=0f172a)
 ![data collected](https://img.shields.io/badge/data_collected-zero-4ade80?style=flat&labelColor=0f172a)
 ![runs on](https://img.shields.io/badge/runs_on-your_phone-f97316?style=flat&labelColor=0f172a)
@@ -65,7 +65,7 @@ The profile page answers a different question: *what do they already know about 
 | [BLE broadcast scanner](docs/experiments/ble/) | Bluetooth LE | live |
 | [EM field detector](docs/experiments/em-field/) | magnetometer | live |
 | [compass anomalies](docs/experiments/compass-anomaly/) | magnetometer | partial |
-| [WiFi density map](docs/experiments/wifi-density/) | WiFi RSSI | soon |
+| [WiFi density map](docs/experiments/wifi-density/) | WiFi RSSI | live |
 
 ### acoustic
 | experiment | sensor | status |
@@ -73,16 +73,17 @@ The profile page answers a different question: *what do they already know about 
 | [full spectrum FFT](docs/experiments/acoustic/) | microphone | live |
 | [mains hum detector](docs/experiments/mains-hum/) | microphone | live |
 | [ultrasonic pest repellers](docs/experiments/ultrasonic/) | microphone | live |
-| [room size from echo](docs/experiments/room-acoustics/) | microphone | partial |
-| [infrasound](docs/experiments/infrasound/) | microphone | partial |
+| [room size from echo](docs/experiments/room-acoustics/) | microphone | live |
+| [infrasound](docs/experiments/infrasound/) | microphone | live |
 
 ### motion & structural
 | experiment | sensor | status |
 |---|---|---|
 | [surface resonance](docs/experiments/motion/) | accelerometer | live |
-| [gait biometric](docs/experiments/gait/) | accel + gyro | partial |
-| [micro-seismic logger](docs/experiments/seismic/) | accelerometer | partial |
-| [floor-by-floor altimeter](docs/experiments/barometer/) | barometer | partial |
+| [surface resonance v2](docs/experiments/surface-resonance/) | accelerometer | partial |
+| [gait biometric](docs/experiments/gait/) | accel + gyro | live |
+| [micro-seismic logger](docs/experiments/seismic/) | accelerometer | live |
+| [floor-by-floor altimeter](docs/experiments/barometer/) | barometer | live |
 | [keystroke timing biometric](docs/experiments/keyboard-timing/) | keyboard events | live |
 | [touch biometric](docs/experiments/touch-biometric/) | touch events | live |
 
@@ -90,21 +91,22 @@ The profile page answers a different question: *what do they already know about 
 | experiment | sensor | status |
 |---|---|---|
 | [LED flicker detector](docs/experiments/light-flicker/) | camera | live |
-| [screen PWM dimming](docs/experiments/screen-pwm/) | camera | partial |
-| [retroreflector finder](docs/experiments/retroreflector/) | camera + flash | partial |
-| [sky polarization](docs/experiments/sky-polarization/) | camera | soon |
+| [LED quality meter](docs/experiments/led-quality/) | camera | partial |
+| [screen PWM dimming](docs/experiments/screen-pwm/) | camera | live |
+| [retroreflector finder](docs/experiments/retroreflector/) | camera + flash | live |
+| [sky polarization](docs/experiments/sky-polarization/) | camera | live |
 
 ### the meta layer — what you reveal
 | experiment | sensor | status |
 |---|---|---|
 | [your passive telemetry](docs/experiments/passive-telemetry/) | all sensors | live |
-| [what apps infer from motion](docs/experiments/what-you-reveal/) | accel + gyro | partial |
+| [what apps infer from motion](docs/experiments/what-you-reveal/) | accel + gyro | live |
 | [network fingerprint](docs/experiments/network-fingerprint/) | navigator API | live |
-| [urban canyon detector](docs/experiments/urban-canyon/) | GPS accuracy | partial |
-| [human density from WiFi](docs/experiments/human-density/) | WiFi probes | soon |
+| [urban canyon detector](docs/experiments/urban-canyon/) | GPS accuracy | live |
+| [human density from WiFi](docs/experiments/human-density/) | WiFi probes | live |
 | [font enumeration](docs/experiments/font-enumeration/) | font API | live |
-| [network timing](docs/experiments/network-timing/) | fetch timing | partial |
-| [the full picture](docs/experiments/the-meta/) | everything | partial |
+| [network timing](docs/experiments/network-timing/) | fetch timing | live |
+| [the full picture](docs/experiments/the-meta/) | everything | live |
 
 ### digital fingerprint
 | experiment | sensor | status |
@@ -117,6 +119,9 @@ The profile page answers a different question: *what do they already know about 
 | [codec map](docs/experiments/codec-map/) | media API | live |
 | [WebRTC IP leak](docs/experiments/webrtc-ip-leak/) | WebRTC | live |
 | [battery API](docs/experiments/battery-api/) | battery API | live |
+| [storage quota fingerprint](docs/experiments/storage-quota/) | storage API | live |
+| [clipboard access](docs/experiments/clipboard-access/) | clipboard API | live |
+| [WebRTC TURN leak](docs/experiments/webrtc-turn/) | WebRTC | live |
 
 ---
 
