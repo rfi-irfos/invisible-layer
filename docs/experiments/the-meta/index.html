@@ -160,29 +160,19 @@ function tog(chip) { const k=chip.dataset.l; L[k]=!L[k]; chip.classList.toggle('
 
 // ── Sensor state ──────────────────────────────────────────────
 const S = {
-  // audio
   audioLevel:0, audioPeak:0, audioRMS:0,
   fftBands:new Array(8).fill(0),
-  // magnetometer
   mx:0, my:0, mz:0, magTotal:0, magBaseline:null, magSamples:0,
-  // accelerometer
   ax:0, ay:0, az:0,
-  // gyroscope / orientation
   gyrX:0, gyrY:0, gyrZ:0,
   orAlpha:0, orBeta:0, orGamma:0,
-  // barometer
   pressure:null, pressureBaseline:null,
-  // network
   netType:'?', netRtt:null, netDown:null,
-  // battery
   battLevel:null, battCharging:false,
-  // geo
   lat:null, lon:null, locAcc:null,
-  // device / screen
   hw: navigator.hardwareConcurrency || '?',
   screenRes: screen.width + 'x' + screen.height,
   dpr: (window.devicePixelRatio || 1).toFixed(1),
-  // ambient light
   lux: null,
 };
 
@@ -242,7 +232,7 @@ function startMag() {
     } catch(e){}
   }
   const h = e => onR(e.gamma||0, e.beta||0, (e.alpha||0)*0.1);
-  if (typeof DeviceOrientationEvent.requestPermission==='function') {
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission==='function') {
     DeviceOrientationEvent.requestPermission()
       .then(s=>{if(s==='granted')window.addEventListener('deviceorientation',h,true);})
       .catch(()=>{});
@@ -259,7 +249,7 @@ function startMotion() {
     if (!a) return;
     S.ax=a.x||0; S.ay=a.y||0; S.az=a.z||0;
   };
-  if (typeof DeviceMotionEvent.requestPermission==='function') {
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission==='function') {
     DeviceMotionEvent.requestPermission()
       .then(s=>{if(s==='granted')window.addEventListener('devicemotion',h);})
       .catch(()=>{});
@@ -268,7 +258,6 @@ function startMotion() {
 
 // ── Gyroscope / Orientation ─────────────────────────────────────
 function startGyro() {
-  // Generic Sensor API first
   if (typeof Gyroscope !== 'undefined') {
     try {
       const g = new Gyroscope({frequency:30});
@@ -278,7 +267,6 @@ function startGyro() {
       g.start();
     } catch(e){}
   }
-  // Orientation fallback (always available on mobile)
   const h = e => {
     S.orAlpha = e.alpha || 0;
     S.orBeta  = e.beta  || 0;
@@ -290,31 +278,22 @@ function startGyro() {
 
 // ── Barometer ──────────────────────────────────────────────────
 function startBaro() {
-  const onPressure = p => { S.pressure = p; };
+  const onP = p => {
+    S.pressure = p;
+    if (S.pressureBaseline === null) S.pressureBaseline = p;
+  };
   if (typeof Barometer !== 'undefined') {
-    try {
-      const b = new Barometer({frequency:2});
-      b.addEventListener('reading', () => onPressure(b.pressure));
-      b.start(); return;
-    } catch(e){}
+    try { const b=new Barometer({frequency:2}); b.addEventListener('reading',()=>onP(b.pressure)); b.start(); return; } catch(e){}
   }
   if (typeof AbsolutePressureSensor !== 'undefined') {
-    try {
-      const b = new AbsolutePressureSensor({frequency:2});
-      b.addEventListener('reading', () => onPressure(b.pressure));
-      b.start();
-    } catch(e){}
+    try { const b=new AbsolutePressureSensor({frequency:2}); b.addEventListener('reading',()=>onP(b.pressure)); b.start(); } catch(e){}
   }
 }
 
 // ── Ambient Light ──────────────────────────────────────────────
 function startLight() {
   if (typeof AmbientLightSensor !== 'undefined') {
-    try {
-      const l = new AmbientLightSensor({frequency:2});
-      l.addEventListener('reading', () => { S.lux = l.illuminance; });
-      l.start();
-    } catch(e){}
+    try { const l=new AmbientLightSensor({frequency:2}); l.addEventListener('reading',()=>{S.lux=l.illuminance;}); l.start(); } catch(e){}
   }
 }
 
@@ -351,12 +330,11 @@ function startCamera() {
   const attach = async (stream) => {
     const v = document.getElementById('cam-video');
     v.srcObject = stream;
-    // detect facing mode from track settings
     const track = stream.getVideoTracks()[0];
     if (track) {
-      const settings = track.getSettings();
-      // For AR: show the world as-is — never mirror
-      v.style.transform = 'scaleX(1)';
+      const settings = track.getSettings ? track.getSettings() : {};
+      // Front camera: un-mirror so world looks correct for AR
+      v.style.transform = settings.facingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
     }
     await v.play().catch(()=>{});
   };
@@ -367,21 +345,19 @@ function startCamera() {
   );
 }
 
-// ── Boot ─────────────────────────────────────────────────────────
+// ── Boot — safe sensor starts, loop always fires ─────────────────
 function boot() {
-  // Hide start screen and begin render loop immediately
-  // Camera is async/optional — loop never blocks waiting for it
   document.getElementById('start').classList.add('gone');
-  startAudio();
-  startMag();
-  startMotion();
-  startGyro();
-  startBaro();
-  startLight();
-  startNetwork();
-  startBattery();
-  startGeo();
-  startCamera(); // async, optional
+  try { startAudio(); }   catch(e){}
+  try { startMag(); }     catch(e){}
+  try { startMotion(); }  catch(e){}
+  try { startGyro(); }    catch(e){}
+  try { startBaro(); }    catch(e){}
+  try { startLight(); }   catch(e){}
+  try { startNetwork(); } catch(e){}
+  try { startBattery(); } catch(e){}
+  try { startGeo(); }     catch(e){}
+  try { startCamera(); }  catch(e){}
   requestAnimationFrame(loop);
 }
 
@@ -398,7 +374,7 @@ function loop() {
   const t = (now - t0) / 1000;
   frame++;
 
-  // ── Update audio ──
+  // Update audio
   if (analyser && aData) {
     analyser.getFloatFrequencyData(aData);
     if (aTD) analyser.getFloatTimeDomainData(aTD);
@@ -419,110 +395,105 @@ function loop() {
     }
   }
 
-  // ── Clear canvas ──
   cx.clearRect(0, 0, W, H);
 
-  // Subtle dark gradient sidebars so labels are legible over any camera feed
-  const lG = cx.createLinearGradient(0,0,W*0.2,0);
-  lG.addColorStop(0,'rgba(0,0,0,0.5)'); lG.addColorStop(1,'rgba(0,0,0,0)');
-  cx.fillStyle=lG; cx.fillRect(0,0,W*0.2,H);
-  const rG = cx.createLinearGradient(W*0.75,0,W,0);
-  rG.addColorStop(0,'rgba(0,0,0,0)'); rG.addColorStop(1,'rgba(0,0,0,0.5)');
-  cx.fillStyle=rG; cx.fillRect(W*0.75,0,W*0.25,H);
+  // Subtle dark sidebar gradients so labels are legible over camera
+  const lG = cx.createLinearGradient(0,0,W*0.18,0);
+  lG.addColorStop(0,'rgba(0,0,0,0.55)'); lG.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle=lG; cx.fillRect(0,0,W*0.18,H);
+  const rG = cx.createLinearGradient(W*0.78,0,W,0);
+  rG.addColorStop(0,'rgba(0,0,0,0)'); rG.addColorStop(1,'rgba(0,0,0,0.55)');
+  cx.fillStyle=rG; cx.fillRect(W*0.78,0,W*0.22,H);
 
-  if (L.sound)    drawSound(t, now);
-  if (L.em)       drawEM(t);
-  if (L.motion)   drawMotion(t);
-  if (L.gyro)     drawGyro(t);
-  if (L.rf)       drawRF(t);
-  if (L.altitude) drawAltitude(t);
-  if (L.hud)      drawHUD(t);
-  if (L.spectrum) drawSpectrumBar(t);
+  if (L.sound)    try { drawSound(t, now); }    catch(e){}
+  if (L.em)       try { drawEM(t); }            catch(e){}
+  if (L.motion)   try { drawMotion(t); }        catch(e){}
+  if (L.gyro)     try { drawGyro(t); }          catch(e){}
+  if (L.rf)       try { drawRF(t); }            catch(e){}
+  if (L.altitude) try { drawAltitude(t); }      catch(e){}
+  if (L.hud)      try { drawHUD(t); }           catch(e){}
+  if (L.spectrum) try { drawSpectrumBar(t); }   catch(e){}
 }
 
-// ── SOUND: oscilloscope + frequency band waves ─────────────────
+// ── SOUND: oscilloscope + shockwaves + frequency band waves ───
 function drawSound(t, now) {
   cx.save();
 
-  // Expanding shockwaves from loud sounds
+  // Expanding shockwaves from loud transients
   for (let i=shockwaves.length-1;i>=0;i--) {
     const sw=shockwaves[i];
     const age=(now-sw.born)/1000;
-    sw.r = 8 + age*250;
-    sw.alpha = Math.max(0, 0.75-age*0.65);
+    sw.r = 8 + age*300;
+    sw.alpha = Math.max(0, 0.75-age*0.7);
     if (sw.alpha<=0){shockwaves.splice(i,1);continue;}
     [1.0,0.6,0.3].forEach((frac,ri)=>{
       const a=sw.alpha*(1-ri*0.3);
       cx.beginPath();
       cx.arc(sw.x, sw.y, sw.r*frac, 0, Math.PI*2);
-      cx.strokeStyle=`rgba(0,255,65,${a.toFixed(2)})`;
-      cx.lineWidth = ri===0?2:1;
-      if(ri===0){cx.shadowBlur=20;cx.shadowColor='#00ff41';}
+      cx.strokeStyle='rgba(0,255,65,'+a.toFixed(2)+')';
+      cx.lineWidth = ri===0?2.5:1.2;
+      if(ri===0){cx.shadowBlur=22;cx.shadowColor='#00ff41';}
       cx.stroke(); cx.shadowBlur=0;
     });
   }
 
-  // Real-time oscilloscope waveform across screen center
+  // Real-time oscilloscope waveform
   if (aTD) {
-    const baseY=H*0.5, maxAmp=H*0.2;
-    const glow=8+S.audioLevel*30;
-    // Ghost echo
-    cx.globalAlpha=0.14;
+    const baseY=H*0.5, maxAmp=H*0.22;
+    const glow=10+S.audioLevel*35;
+    cx.globalAlpha=0.18;
     cx.beginPath();
     for (let i=0;i<W;i++) {
-      const idx=Math.floor(i/W*aTD.length);
-      const y=baseY+aTD[Math.max(0,idx-16)]*maxAmp;
+      const y=baseY+aTD[Math.max(0,Math.floor(i/W*aTD.length)-16)]*maxAmp;
       i===0?cx.moveTo(i,y):cx.lineTo(i,y);
     }
     cx.strokeStyle='#00ff41'; cx.lineWidth=1; cx.stroke();
     cx.globalAlpha=1;
-    // Live waveform
     cx.beginPath();
     for (let i=0;i<W;i++) {
       const y=baseY+aTD[Math.floor(i/W*aTD.length)]*maxAmp;
       i===0?cx.moveTo(i,y):cx.lineTo(i,y);
     }
-    cx.strokeStyle=`rgba(0,255,65,${0.5+S.audioLevel*0.4})`;
-    cx.lineWidth=2;
+    cx.strokeStyle='rgba(0,255,65,'+(0.55+S.audioLevel*0.45)+')';
+    cx.lineWidth=2.5;
     cx.shadowBlur=glow; cx.shadowColor='#00ff41';
     cx.stroke(); cx.shadowBlur=0;
   }
 
-  // 6 frequency band sine waves at different heights
+  // 6 frequency band sine waves — always visible, amp driven by FFT
   const yPos=[0.12,0.20,0.36,0.64,0.80,0.88];
-  const alphas=['44','66','99','99','66','44'];
-  [0,1,2,3,4,5].forEach((b,idx)=>{
-    const amp=S.fftBands[b]*H*0.065+12;
-    const freq=(b+1)*0.9+0.8;
-    const bY=H*yPos[idx];
+  const alphaHex=['55','77','bb','bb','77','55'];
+  for (let b=0;b<6;b++) {
+    const amp=S.fftBands[b]*H*0.07+14;
+    const freq=(b+1)*0.85+0.9;
+    const bY=H*yPos[b];
     cx.beginPath();
-    for (let i=0;i<=W;i+=3) {
-      const phase=t*freq*(0.8+b*0.12);
-      const y=bY+Math.sin(i*0.15+phase)*amp+Math.sin(i*0.055+phase*0.5)*amp*0.4;
+    for (let i=0;i<=W;i+=2) {
+      const phase=t*freq*(0.8+b*0.1);
+      const y=bY+Math.sin(i*0.14+phase)*amp+Math.sin(i*0.05+phase*0.45)*amp*0.38;
       i===0?cx.moveTo(i,y):cx.lineTo(i,y);
     }
-    cx.strokeStyle='#00ff41'+alphas[idx];
-    cx.lineWidth=idx===2||idx===3?2.5:1.8;
-    cx.shadowBlur=8+S.fftBands[b]*16; cx.shadowColor='#00ff41';
+    cx.strokeStyle='#00ff41'+alphaHex[b];
+    cx.lineWidth=b===2||b===3?2.8:2;
+    cx.shadowBlur=10+S.fftBands[b]*18; cx.shadowColor='#00ff41';
     cx.stroke(); cx.shadowBlur=0;
-  });
+  }
 
-  const db=Math.round(S.audioRMS*120);
-  pill(cx,14,H*0.4,'#00ff41','SOUND  '+db+' dB');
+  pill(cx,14,H*0.4,'#00ff41','SOUND  '+Math.round(S.audioRMS*120)+' dB');
   cx.restore();
 }
 
-// ── EM FIELD: vector field lines from a magnetic dipole ────────
+// ── EM FIELD: dipole field lines + hex grid ─────────────────
 function drawEM(t) {
   const anom = S.magBaseline ? Math.abs(S.magTotal-S.magBaseline) : 0;
   const norm  = S.magTotal||50;
   const fx=S.mx/norm, fy=S.my/norm;
   const intensity=Math.min(1,S.magTotal/80);
   const isAnom=anom>60;
-  const col=isAnom?'#f87171':'#a78bfa';
+  const emCol=isAnom?'#f87171':'#a78bfa';
 
   cx.save();
-  cx.globalAlpha=0.5+intensity*0.25;
+  cx.globalAlpha=0.55+intensity*0.25;
 
   const cX=W*0.5, cY=H*0.5;
   const N=14;
@@ -542,50 +513,50 @@ function drawEM(t) {
       cx.lineTo(px,py);
     }
     const g=cx.createLinearGradient(cX+Math.cos(angle0)*r0,cY+Math.sin(angle0)*r0*0.65,px,py);
-    g.addColorStop(0,col+'00');
-    g.addColorStop(0.25,col+'cc');
-    g.addColorStop(1,col+'00');
+    g.addColorStop(0,emCol+'00');
+    g.addColorStop(0.25,emCol+'cc');
+    g.addColorStop(1,emCol+'00');
     cx.strokeStyle=g;
-    cx.lineWidth=isAnom?1.8:1;
-    cx.shadowBlur=isAnom?14:6; cx.shadowColor=col;
+    cx.lineWidth=isAnom?2:1.2;
+    cx.shadowBlur=isAnom?16:8; cx.shadowColor=emCol;
     cx.stroke(); cx.shadowBlur=0;
   }
 
-  // Hex grid — distorts with field
+  // Hex grid — distorts with field (ci = column index, avoids shadowing emCol)
   const hexR=13,rows=4,cols=5;
   const offX=cX-(cols-1)*hexR*1.73*0.5;
   const offY=cY-(rows-1)*hexR*1.5*0.5;
   for (let row=0;row<rows;row++) {
-    for (let col=0;col<cols;col++) {
-      const hx=offX+col*hexR*1.73+(row%2)*hexR*0.87+fx*7*Math.sin(t*0.28);
+    for (let ci=0;ci<cols;ci++) {
+      const hx=offX+ci*hexR*1.73+(row%2)*hexR*0.87+fx*7*Math.sin(t*0.28);
       const hy=offY+row*hexR*1.5+fy*5*Math.cos(t*0.28);
-      const pulse=0.25+intensity*0.45+Math.sin(t*1.4+row+col)*0.12;
+      const pulse=0.3+intensity*0.45+Math.sin(t*1.4+row+ci)*0.12;
       cx.save();
-      cx.globalAlpha=pulse*0.55;
+      cx.globalAlpha=pulse*0.6;
       hexagon(cx,hx,hy,hexR*(0.35+intensity*0.25));
-      cx.strokeStyle=col+''; cx.strokeStyle=col; cx.lineWidth=0.7;
       cx.strokeStyle=isAnom?'#f87171':'#a78bfa';
+      cx.lineWidth=0.8;
       cx.stroke();
       cx.restore();
     }
   }
 
-  // EM strength bar on right
+  // Vertical EM strength bar
   const barX=W-18, barH=H*0.4, barY=H*0.3;
   const pct=Math.min(1,S.magTotal/120);
   cx.globalAlpha=0.7;
-  cx.strokeStyle=col+'55'; cx.lineWidth=1;
+  cx.strokeStyle=emCol+'55'; cx.lineWidth=1;
   cx.strokeRect(barX-4,barY,8,barH);
   const fillH=barH*pct;
-  cx.fillStyle=col;
+  cx.fillStyle=emCol;
   cx.fillRect(barX-3,barY+barH-fillH,6,fillH);
-  cx.shadowBlur=8; cx.shadowColor=col;
+  cx.shadowBlur=10; cx.shadowColor=emCol;
   cx.fillRect(barX-3,barY+barH-fillH,6,3);
   cx.shadowBlur=0;
 
   cx.globalAlpha=1;
   const emLbl=isAnom?'! EM ANOMALY  '+S.magTotal.toFixed(0)+' µT':'MAGNETIC FIELD  '+S.magTotal.toFixed(0)+' µT';
-  pill(cx,14,H*0.5-70,col,emLbl);
+  pill(cx,14,H*0.5-70,emCol,emLbl);
   cx.restore();
 }
 
@@ -595,11 +566,9 @@ function initParticles() {
   particles.length=0;
   const cols=18,rows=12;
   for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
-    particles.push({
-      bx:(c/(cols-1))*W*0.9+W*0.05,
-      by:(r/(rows-1))*H*0.8+H*0.1,
-      x:0,y:0,vx:0,vy:0,life:Math.random()
-    });
+    const bx=(c/(cols-1))*W*0.9+W*0.05;
+    const by=(r/(rows-1))*H*0.8+H*0.1;
+    particles.push({bx, by, x:bx, y:by, vx:0, vy:0, life:Math.random()});
   }
 }
 
@@ -608,140 +577,127 @@ function drawMotion(t) {
   const nax=S.ax/(mag||1), nay=S.ay/(mag||1);
   const force=Math.min(1,mag/15);
 
-  cx.save(); cx.globalAlpha=0.6;
+  cx.save(); cx.globalAlpha=0.65;
   particles.forEach(p=>{
-    p.life+=0.011+force*0.022;
+    p.life+=0.012+force*0.02;
     if(p.life>1){p.life=0;p.x=p.bx;p.y=p.by;}
-    if(p.life<0.01){p.x=p.bx;p.y=p.by;}
-    p.vx=nax*force*4.5+Math.sin(t*0.45+p.by*0.04)*0.4;
-    p.vy=nay*force*4.5+Math.cos(t*0.45+p.bx*0.04)*0.4;
+    p.vx=nax*force*5+Math.sin(t*0.45+p.by*0.04)*0.5;
+    p.vy=nay*force*5+Math.cos(t*0.45+p.bx*0.04)*0.5;
     p.x+=p.vx; p.y+=p.vy;
-    const alpha=p.life*(0.35+force*0.45)*Math.sin(Math.PI*p.life);
+    const alpha=p.life*(0.4+force*0.45)*Math.sin(Math.PI*p.life);
     cx.beginPath();
-    cx.arc(p.x,p.y,1.4,0,Math.PI*2);
-    cx.fillStyle=`rgba(34,211,238,${alpha.toFixed(2)})`;
+    cx.arc(p.x,p.y,1.6,0,Math.PI*2);
+    cx.fillStyle='rgba(34,211,238,'+alpha.toFixed(2)+')';
     cx.fill();
-    if(force>0.08){
+    if(force>0.06){
       cx.beginPath();
       cx.moveTo(p.x,p.y);
-      cx.lineTo(p.x-p.vx*4,p.y-p.vy*4);
-      cx.strokeStyle=`rgba(34,211,238,${(alpha*0.35).toFixed(2)})`;
-      cx.lineWidth=0.7; cx.stroke();
+      cx.lineTo(p.x-p.vx*5,p.y-p.vy*5);
+      cx.strokeStyle='rgba(34,211,238,'+(alpha*0.3).toFixed(2)+')';
+      cx.lineWidth=0.8; cx.stroke();
     }
   });
-  // Force vector
   if(force>0.04){
-    const aLen=force*65,aX=W*0.5,aY=H*0.5;
+    const aLen=force*70,aX=W*0.5,aY=H*0.5;
     const eX=aX+nax*aLen,eY=aY+nay*aLen;
     cx.globalAlpha=1;
     cx.beginPath();cx.moveTo(aX,aY);cx.lineTo(eX,eY);
-    cx.strokeStyle=`rgba(34,211,238,${0.55+force*0.45})`;
+    cx.strokeStyle='rgba(34,211,238,'+(0.6+force*0.4)+')';
     cx.lineWidth=2.5;
-    cx.shadowBlur=12; cx.shadowColor='#22d3ee';
+    cx.shadowBlur=14; cx.shadowColor='#22d3ee';
     cx.stroke(); cx.shadowBlur=0;
     const ang=Math.atan2(eY-aY,eX-aX);
     cx.beginPath();
     cx.moveTo(eX,eY);
-    cx.lineTo(eX-11*Math.cos(ang-0.4),eY-11*Math.sin(ang-0.4));
-    cx.lineTo(eX-11*Math.cos(ang+0.4),eY-11*Math.sin(ang+0.4));
+    cx.lineTo(eX-12*Math.cos(ang-0.4),eY-12*Math.sin(ang-0.4));
+    cx.lineTo(eX-12*Math.cos(ang+0.4),eY-12*Math.sin(ang+0.4));
     cx.closePath();
-    cx.fillStyle=`rgba(34,211,238,${0.8+force*0.2})`;
+    cx.fillStyle='rgba(34,211,238,'+(0.85+force*0.15)+')';
     cx.fill();
   }
   pill(cx,14,H-118,'#22d3ee','ACCEL  '+mag.toFixed(1)+' m/s²');
   cx.restore();
 }
 
-// ── GYRO: artificial horizon + orientation indicator ───────────
+// ── GYRO: artificial horizon — NO cx.clip() ────────────────────
 function drawGyro(t) {
-  const beta  = (S.orBeta  ||0)*Math.PI/180;
-  const gamma = (S.orGamma ||0)*Math.PI/180;
-  const roll  = -gamma; // device rolls right → horizon tilts left
-  const pitch = Math.sin(beta);
-
-  cx.save();
-  cx.globalAlpha=0.6;
-
+  const roll    = -(S.orGamma||0)*Math.PI/180;
+  const pitchPx = Math.sin((S.orBeta||0)*Math.PI/180)*H*0.22;
   const cX=W*0.5, cY=H*0.5;
-  const r=Math.min(W,H)*0.38;
-  const pitchOff=pitch*r*0.55;
 
-  // Clipping circle for the artificial horizon
+  // Tilted horizon plane — translate+rotate, no clip
   cx.save();
-  cx.beginPath();
-  cx.arc(cX,cY,r,0,Math.PI*2);
-  cx.clip();
-
-  // Sky / ground fill tilted by roll
-  cx.save();
-  cx.translate(cX,cY);
+  cx.translate(cX, cY+pitchPx);
   cx.rotate(roll);
 
-  // Sky half (above horizon)
-  cx.fillStyle='rgba(30,100,200,0.06)';
-  cx.fillRect(-W,-H,W*2,H+pitchOff);
-  // Ground half (below horizon)
-  cx.fillStyle='rgba(120,60,0,0.06)';
-  cx.fillRect(-W,pitchOff,W*2,H);
+  // Sky tint
+  cx.fillStyle='rgba(20,70,180,0.07)';
+  cx.fillRect(-W*2,-H*2,W*4,H*2);
+  // Ground tint
+  cx.fillStyle='rgba(110,55,0,0.07)';
+  cx.fillRect(-W*2,0,W*4,H*2);
 
-  // Horizon line
+  // Horizon line — main
   cx.beginPath();
-  cx.moveTo(-W*2,pitchOff);
-  cx.lineTo( W*2,pitchOff);
-  cx.strokeStyle='rgba(96,165,250,0.7)';
+  cx.moveTo(-W,0); cx.lineTo(W,0);
+  cx.strokeStyle='rgba(96,165,250,0.75)';
   cx.lineWidth=2;
-  cx.shadowBlur=10; cx.shadowColor='#60a5fa';
+  cx.shadowBlur=14; cx.shadowColor='#60a5fa';
   cx.stroke(); cx.shadowBlur=0;
 
-  // Pitch ladder lines
-  for (let i=-4;i<=4;i++) {
-    if(i===0)continue;
-    const ly=pitchOff+i*22;
-    const lw=Math.abs(i)%2===0?45:25;
+  // Pitch ladder
+  for (let step=-4;step<=4;step++) {
+    if(step===0) continue;
+    const ly=step*24;
+    const lw=Math.abs(step)%2===0?50:28;
     cx.beginPath();
     cx.moveTo(-lw,ly); cx.lineTo(lw,ly);
-    cx.strokeStyle=`rgba(96,165,250,${Math.abs(i)%2===0?0.4:0.2})`;
+    cx.strokeStyle='rgba(96,165,250,'+(Math.abs(step)%2===0?0.45:0.22)+')';
     cx.lineWidth=1; cx.stroke();
-    if(Math.abs(i)%2===0){
-      cx.fillStyle='rgba(96,165,250,0.4)';
+    if(Math.abs(step)%2===0){
+      cx.fillStyle='rgba(96,165,250,0.45)';
       cx.font='8px monospace';
+      cx.textAlign='right';
+      cx.fillText((step*5)+'°',-lw-4,ly+3);
       cx.textAlign='left';
-      cx.fillText((i*5)+'°',lw+5,ly+3);
     }
   }
-  cx.restore(); // undo roll transform
-  cx.restore(); // undo clip
+  cx.restore(); // undoes translate+rotate only
 
-  // Fixed aircraft reticle (does not rotate)
-  cx.globalAlpha=0.85;
-  cx.strokeStyle='rgba(255,255,255,0.8)';
+  // Fixed aircraft reticle — never rotates
+  cx.save();
+  cx.globalAlpha=0.9;
+  cx.strokeStyle='rgba(255,255,255,0.85)';
   cx.lineWidth=2.5;
-  // Left bar
-  cx.beginPath();cx.moveTo(cX-65,cY);cx.lineTo(cX-18,cY);cx.stroke();
-  // Right bar
-  cx.beginPath();cx.moveTo(cX+18,cY);cx.lineTo(cX+65,cY);cx.stroke();
-  // Down tick
-  cx.beginPath();cx.moveTo(cX,cY+8);cx.lineTo(cX,cY+18);cx.stroke();
-  // Center dot
-  cx.beginPath();cx.arc(cX,cY,3,0,Math.PI*2);cx.fillStyle='rgba(255,255,255,0.9)';cx.fill();
+  cx.shadowBlur=8; cx.shadowColor='#60a5fa';
+  cx.beginPath();
+  cx.moveTo(cX-68,cY); cx.lineTo(cX-18,cY);
+  cx.moveTo(cX+18,cY); cx.lineTo(cX+68,cY);
+  cx.moveTo(cX,cY+8);  cx.lineTo(cX,cY+20);
+  cx.stroke(); cx.shadowBlur=0;
+  cx.beginPath();
+  cx.arc(cX,cY,4,0,Math.PI*2);
+  cx.fillStyle='rgba(255,255,255,0.9)';
+  cx.fill();
 
   // Roll arc indicator
-  const arcR=r+14;
+  const arcR=Math.min(W,H)*0.38+18;
+  cx.globalAlpha=0.4;
   cx.beginPath();
-  cx.arc(cX,cY,arcR,Math.PI*1.15,Math.PI*1.85);
-  cx.strokeStyle='rgba(96,165,250,0.2)'; cx.lineWidth=2; cx.stroke();
-  // Roll needle
+  cx.arc(cX,cY,arcR,Math.PI*1.1,Math.PI*1.9);
+  cx.strokeStyle='rgba(96,165,250,0.3)'; cx.lineWidth=2; cx.stroke();
   const needleA=Math.PI*1.5+roll;
+  cx.globalAlpha=0.9;
   cx.beginPath();
-  cx.moveTo(cX+Math.cos(needleA)*(arcR-10),cY+Math.sin(needleA)*(arcR-10));
-  cx.lineTo(cX+Math.cos(needleA)*(arcR+10),cY+Math.sin(needleA)*(arcR+10));
+  cx.moveTo(cX+Math.cos(needleA)*(arcR-12),cY+Math.sin(needleA)*(arcR-12));
+  cx.lineTo(cX+Math.cos(needleA)*(arcR+12),cY+Math.sin(needleA)*(arcR+12));
   cx.strokeStyle='#60a5fa'; cx.lineWidth=3;
-  cx.shadowBlur=12; cx.shadowColor='#60a5fa';
+  cx.shadowBlur=14; cx.shadowColor='#60a5fa';
   cx.stroke(); cx.shadowBlur=0;
 
   cx.globalAlpha=1;
   const gyrTot=Math.sqrt(S.gyrX*S.gyrX+S.gyrY*S.gyrY+S.gyrZ*S.gyrZ);
-  pill(cx,14,cY-r-22,'#60a5fa',
+  pill(cx,14,cY-arcR-8,'#60a5fa',
     'GYRO  β'+Math.round(S.orBeta||0)+'° γ'+Math.round(S.orGamma||0)+'° '+gyrTot.toFixed(1)+' r/s');
   cx.restore();
 }
@@ -763,7 +719,7 @@ function drawRF(t) {
     const isWifi=band.label.startsWith('WiFi');
     const spd=isWifi?band.spd*rttAgit:band.spd;
     const pulse=0.5+Math.sin(t*spd*Math.PI*2)*0.3;
-    const wAmp=isWifi?10+rttAgit*4:11;
+    const wAmp=isWifi?10+rttAgit*4:12;
     const wLen=W*0.48;
     const off=((t*spd*0.45)%1)*(W+wLen);
     for (let p=0;p<4;p++) {
@@ -776,38 +732,36 @@ function drawRF(t) {
         const wy=y+Math.sin(d*Math.PI*9+t*spd*6)*wAmp*env;
         x===Math.max(0,ox-wLen)?cx.moveTo(x,wy):cx.lineTo(x,wy);
       }
-      const aHex=Math.round((0.18+pulse*0.45*(1-p*0.22))*255).toString(16).padStart(2,'0');
-      cx.strokeStyle=band.col+aHex;
-      cx.lineWidth=p===0?2.2:1.2;
-      if(p===0){cx.shadowBlur=14;cx.shadowColor=band.col;}
+      const aVal=Math.round((0.22+pulse*0.5*(1-p*0.22))*255).toString(16).padStart(2,'0');
+      cx.strokeStyle=band.col+aVal;
+      cx.lineWidth=p===0?2.5:1.3;
+      if(p===0){cx.shadowBlur=16;cx.shadowColor=band.col;}
       cx.stroke(); cx.shadowBlur=0;
     }
-    pill(cx,W-145,y+4,band.col,band.label);
+    pill(cx,W-148,y+4,band.col,band.label);
   });
   pill(cx,14,H*0.18,'#f59e0b','RF SIGNALS  always here');
   cx.restore();
 }
 
-// ── ALTITUDE: barometric pressure + floor ─────────────────────
+// ── ALTITUDE: barometric pressure ─────────────────────────────
 function drawAltitude(t) {
-  if (!S.pressure && S.pressure!==0) {
-    // No barometer — show a minimal placeholder
+  if (S.pressure===null) {
     cx.save();
     pill(cx,14,H*0.65,'#8b5cf6','PRESSURE  no barometer');
     cx.restore();
     return;
   }
   cx.save();
-  cx.globalAlpha=0.7;
+  cx.globalAlpha=0.75;
   const p=S.pressure;
   const floor=S.pressureBaseline
     ? Math.round(-(p-S.pressureBaseline)*8.5/3.3)+1
     : '?';
 
-  // Vertical bar
   const bX=W-26, bH=H*0.45, bY=H*0.27;
   const pct=Math.max(0,Math.min(1,(p-950)/120));
-  cx.strokeStyle='rgba(139,92,246,0.3)'; cx.lineWidth=1;
+  cx.strokeStyle='rgba(139,92,246,0.35)'; cx.lineWidth=1;
   cx.strokeRect(bX-5,bY,10,bH);
   const fillH=bH*pct;
   const grd=cx.createLinearGradient(0,bY+bH,0,bY+bH-fillH);
@@ -818,15 +772,13 @@ function drawAltitude(t) {
   cx.fillRect(bX-4,bY+bH-fillH,8,3);
   cx.shadowBlur=0;
 
-  // Labels
   cx.fillStyle='rgba(196,181,253,0.5)'; cx.font='8px monospace'; cx.textAlign='center';
   cx.fillText('1070',bX,bY-2);
   cx.fillText('950',bX,bY+bH+11);
   cx.textAlign='left';
 
   cx.globalAlpha=1;
-  const pLabel='ALTITUDE  '+p.toFixed(1)+' hPa  floor '+floor;
-  pill(cx,14,H*0.67,'#8b5cf6',pLabel);
+  pill(cx,14,H*0.67,'#8b5cf6','ALTITUDE  '+p.toFixed(1)+' hPa  floor '+floor);
   cx.restore();
 }
 
@@ -836,52 +788,51 @@ function drawHUD(t) {
   cx.shadowBlur=3; cx.shadowColor='rgba(0,0,0,0.95)';
   const pulse=0.7+Math.sin(t*1.5)*0.3;
 
-  // ── Top-left: GPS ──
-  cx.fillStyle=`rgba(34,211,238,${pulse*0.9})`;
+  // Top-left: GPS
+  cx.fillStyle='rgba(34,211,238,'+(pulse*0.9)+')';
   cx.font='9px monospace'; cx.textAlign='left';
   cx.fillText('GPS',16,64);
   if (S.lat!==null) {
-    cx.fillStyle='rgba(255,255,255,0.5)';
+    cx.fillStyle='rgba(255,255,255,0.55)';
     cx.fillText(S.lat.toFixed(5)+'N',16,78);
     cx.fillText(S.lon.toFixed(5)+'E',16,91);
     cx.fillText('±'+Math.round(S.locAcc)+'m',16,104);
   } else {
-    cx.fillStyle='rgba(255,255,255,0.18)';
+    cx.fillStyle='rgba(255,255,255,0.2)';
     cx.fillText('acquiring...',16,78);
   }
 
-  // ── Top-right: network + screen ──
+  // Top-right: network + screen
   const netCol={wifi:'#a78bfa','4g':'#22d3ee','5g':'#00ff41','3g':'#f59e0b','2g':'#f87171'}[S.netType.toLowerCase()]||'#64748b';
   cx.textAlign='right';
   cx.fillStyle=netCol; cx.font='bold 11px monospace';
   cx.fillText(S.netType.toUpperCase(),W-16,64);
-  cx.font='9px monospace'; cx.fillStyle='rgba(255,255,255,0.4)';
+  cx.font='9px monospace'; cx.fillStyle='rgba(255,255,255,0.45)';
   if(S.netRtt!=null)cx.fillText('rtt '+S.netRtt+'ms',W-16,78);
   if(S.netDown!=null)cx.fillText(S.netDown+' Mbps',W-16,91);
   cx.fillText(S.screenRes+'@'+DPR+'x',W-16,105);
   cx.fillText(S.hw+' cores',W-16,118);
 
-  // ── Bottom-left: accel + gyro angles ──
+  // Bottom-left: accel + gyro + light
   const gv=Math.sqrt(S.ax*S.ax+S.ay*S.ay+S.az*S.az);
-  cx.textAlign='left'; cx.fillStyle='rgba(34,211,238,0.45)'; cx.font='9px monospace';
+  cx.textAlign='left'; cx.fillStyle='rgba(34,211,238,0.5)'; cx.font='9px monospace';
   cx.fillText('X:'+S.ax.toFixed(1)+' Y:'+S.ay.toFixed(1)+' Z:'+S.az.toFixed(1),16,H-148);
-  cx.fillStyle='rgba(96,165,250,0.45)';
+  cx.fillStyle='rgba(96,165,250,0.5)';
   cx.fillText('α:'+Math.round(S.orAlpha||0)+'° β:'+Math.round(S.orBeta||0)+'° γ:'+Math.round(S.orGamma||0)+'°',16,H-134);
   if(S.lux!==null){
-    cx.fillStyle='rgba(250,204,21,0.5)';
+    cx.fillStyle='rgba(250,204,21,0.55)';
     cx.fillText('light: '+S.lux.toFixed(0)+' lux',16,H-120);
   }
 
-  // ── Bottom-right: battery ──
+  // Bottom-right: battery
   if(S.battLevel!==null){
     const pct=Math.round(S.battLevel*100);
     const bc=pct>60?'#00ff41':pct>20?'#f59e0b':'#f87171';
     cx.textAlign='right';
     cx.fillStyle=bc; cx.font='bold 12px monospace';
     cx.fillText(pct+'%',W-16,H-150);
-    cx.font='9px monospace'; cx.fillStyle='rgba(255,255,255,0.3)';
+    cx.font='9px monospace'; cx.fillStyle='rgba(255,255,255,0.35)';
     cx.fillText(S.battCharging?'charging':'battery',W-16,H-137);
-    // Battery icon
     const bx=W-40,by=H-168,bw=20,bh=10;
     cx.strokeStyle=bc; cx.lineWidth=1.5;
     cx.strokeRect(bx,by,bw,bh);
@@ -889,8 +840,8 @@ function drawHUD(t) {
     cx.fillRect(bx+1,by+1,(bw-2)*S.battLevel,bh-2);
   }
 
-  // ── Center: EM field strength ──
-  const anomCol=(S.magBaseline&&Math.abs(S.magTotal-S.magBaseline)>60)?'#f87171':'rgba(167,139,250,0.55)';
+  // Center bottom: EM readout
+  const anomCol=(S.magBaseline&&Math.abs(S.magTotal-S.magBaseline)>60)?'#f87171':'rgba(167,139,250,0.6)';
   cx.textAlign='center'; cx.fillStyle=anomCol;
   cx.font='9px monospace';
   cx.fillText(S.magTotal.toFixed(0)+' µT',W*0.5,H-105);
@@ -899,7 +850,7 @@ function drawHUD(t) {
   cx.restore();
 }
 
-// ── SPECTRUM BAR: EM spectrum from ELF to EHF ─────────────────
+// ── SPECTRUM BAR: ELF to EHF ─────────────────────────────────
 const specBands=[
   {label:'ELF/SLF', col:'#7c3aed', lo:0,    hi:0.04, note:'submarine'},
   {label:'VLF/LF',  col:'#6366f1', lo:0.04, hi:0.09, note:'nav beacons'},
@@ -919,19 +870,15 @@ function drawSpectrumBar(t) {
     bg.addColorStop(b.hi,b.col+'18');
   });
   sc.fillStyle=bg; sc.fillRect(0,0,BW,BH);
-  // UHF activity pulse
   const uhf=specBands[5];
   const up=0.12+Math.sin(t*2.4)*0.08;
-  sc.fillStyle=`rgba(245,158,11,${up})`; sc.fillRect(BW*uhf.lo,0,BW*(uhf.hi-uhf.lo),BH);
-  // Audio band driven by mic
+  sc.fillStyle='rgba(245,158,11,'+up+')'; sc.fillRect(BW*uhf.lo,0,BW*(uhf.hi-uhf.lo),BH);
   const hf=specBands[3];
-  sc.fillStyle=`rgba(6,182,212,${S.audioLevel*0.55})`; sc.fillRect(BW*hf.lo,0,BW*(hf.hi-hf.lo),BH);
-  // Band dividers
+  sc.fillStyle='rgba(6,182,212,'+(S.audioLevel*0.6)+')'; sc.fillRect(BW*hf.lo,0,BW*(hf.hi-hf.lo),BH);
   specBands.forEach(b=>{
     sc.strokeStyle=b.col+'55'; sc.lineWidth=1;
     sc.beginPath(); sc.moveTo(BW*b.lo,0); sc.lineTo(BW*b.lo,BH); sc.stroke();
   });
-  // Labels
   sc.font='7px monospace'; sc.textAlign='center';
   specBands.forEach(b=>{
     const mx=BW*(b.lo+(b.hi-b.lo)*0.5);
@@ -950,13 +897,13 @@ function pill(ctx,x,y,color,text) {
   ctx.font='bold 10px monospace';
   const tw=ctx.measureText(text).width;
   const ph=17,pr=4,py=y-13;
-  ctx.fillStyle='rgba(0,0,0,0.8)';
+  ctx.fillStyle='rgba(0,0,0,0.82)';
   ctx.beginPath();
   if(ctx.roundRect){ctx.roundRect(x-2,py,tw+16,ph,pr);}
   else{ctx.rect(x-2,py,tw+16,ph);}
   ctx.fill();
   ctx.fillStyle=color;
-  ctx.shadowBlur=5; ctx.shadowColor=color;
+  ctx.shadowBlur=6; ctx.shadowColor=color;
   ctx.fillText(text,x+5,y);
   ctx.shadowBlur=0;
   ctx.restore();
