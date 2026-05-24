@@ -253,15 +253,24 @@ function startCamera(){
     v.srcObject=stream;
     var track=stream.getVideoTracks()[0];
     if(track&&track.getSettings){
-      var s=track.getSettings();
-      v.style.transform=s.facingMode==='user'?'scaleX(-1)':'scaleX(1)';
+      try{
+        var s=track.getSettings();
+        v.style.transform=s.facingMode==='user'?'scaleX(-1)':'none';
+      }catch(e){}
     }
-    v.play().catch(function(){});
+    // play immediately, then retry on loadedmetadata in case of race
+    var tryPlay=function(){v.play().catch(function(){setTimeout(tryPlay,300);});};
+    v.addEventListener('loadedmetadata',function(){tryPlay();},{once:true});
+    tryPlay();
   };
   navigator.mediaDevices.getUserMedia({
     video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
   }).then(attach).catch(function(){
-    navigator.mediaDevices.getUserMedia({video:true}).then(attach).catch(function(){});
+    navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}}).then(attach).catch(function(){
+      navigator.mediaDevices.getUserMedia({video:true}).then(attach).catch(function(){
+        log('cam: permission denied');
+      });
+    });
   });
 }
 
