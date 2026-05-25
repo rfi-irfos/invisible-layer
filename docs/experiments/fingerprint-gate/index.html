@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>fingerprint gate — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.fp-scanner {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 16px; padding: 24px 0;
+}
+.fp-ring { position: relative; width: 128px; height: 128px; }
+.fp-ring svg { width: 100%; height: 100%; }
+.fp-state {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--dim); text-align: center;
+}
+.fp-state.active { color: var(--cyan); }
+.fp-state.success { color: var(--green); }
+.fp-state.error { color: var(--red); }
+.reveal-wrap {
+  width: 100%; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.reveal-section { border-bottom: 1px solid var(--border); }
+.reveal-section:last-child { border-bottom: none; }
+.reveal-head {
+  padding: 8px 14px; font-size: 0.56rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
+}
+.reveal-head.gets { color: var(--amber); }
+.reveal-head.blocked { color: var(--green); }
+.reveal-head.danger { color: var(--red); }
+.reveal-rows { display: flex; flex-direction: column; gap: 1px; background: var(--border); }
+.reveal-row {
+  background: var(--surface); padding: 9px 14px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.reveal-key { font-size: 0.6rem; color: var(--dim); }
+.reveal-val {
+  font-family: var(--font-mono); font-size: 0.62rem;
+  color: var(--dim); word-break: break-all; line-height: 1.5;
+}
+.reveal-val.live { color: var(--cyan); }
+.reveal-val.safe { color: var(--green); font-style: italic; }
+.reveal-val.warn { color: var(--amber); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>fingerprint gate</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · biometric gate</div>
+      <div class="exp-title">your fingerprint<br>unlocks everything.</div>
+      <div class="exp-desc">
+        Touch the sensor. A WebAuthn authentication request will invoke your device's
+        biometric hardware — the same sensor your banking app, phone lock screen,
+        and government ID app use. Below you will see exactly what the browser receives,
+        and what a native app receives instead. The difference between these two lists
+        is where your privacy lives or disappears.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>Your fingerprint template never leaves the secure enclave — in the browser.</strong>
+      Native apps, MDM profiles, and OS-level APIs operate under entirely different rules.
+      India's Aadhaar system has centrally stored fingerprints of 1.4 billion people.
+      China's Social Credit system links biometric data to financial and movement records.
+      The EU's Entry/Exit System began fingerprint collection at all external borders in 2024.
+      The sensor in your phone is neutral. Who calls it — and what they do with the result — is not.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button class="exp-btn" id="btn-auth" onclick="runWebAuthn()">◉ touch the sensor</button>
+      <button class="exp-btn" id="btn-reset" onclick="resetState()" style="display:none">↺ reset</button>
+    </div>
+
+    <div class="fp-scanner">
+      <div class="fp-ring">
+        <svg viewBox="0 0 128 128" fill="none">
+          <circle cx="64" cy="64" r="58" stroke="var(--border)" stroke-width="1.5"/>
+          <circle id="fp-arc" cx="64" cy="64" r="58" stroke="var(--cyan)" stroke-width="1.5"
+            stroke-dasharray="364.4" stroke-dashoffset="364.4" stroke-linecap="round"
+            transform="rotate(-90 64 64)"
+            style="transition:stroke-dashoffset 0.8s ease,stroke 0.4s"/>
+          <!-- fingerprint ridge paths -->
+          <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none" opacity="0.25" transform="translate(64,64)">
+            <path d="M0,-26 C14,0 14,20 0,28"/>
+            <path d="M-8,-22 C10,0 10,18 -4,28"/>
+            <path d="M8,-22 C22,2 20,22 4,30"/>
+            <path d="M-16,-16 C6,4 6,22 -10,28"/>
+            <path d="M16,-16 C28,6 26,24 10,28"/>
+            <path d="M-22,-8 C0,8 0,20 -16,24"/>
+            <path d="M22,-8 C32,10 28,24 16,24"/>
+            <path d="M0,-14 C10,0 10,12 0,18"/>
+          </g>
+        </svg>
+      </div>
+      <div class="fp-state" id="fp-state">ready — press the button above</div>
+    </div>
+
+    <div class="reveal-wrap" id="reveal-wrap" style="display:none">
+
+      <div class="reveal-section">
+        <div class="reveal-head gets">what the browser receives</div>
+        <div class="reveal-rows">
+          <div class="reveal-row">
+            <span class="reveal-key">credential id (site-scoped, non-portable)</span>
+            <span class="reveal-val" id="rv-credid">—</span>
+          </div>
+          <div class="reveal-row">
+            <span class="reveal-key">authenticator type</span>
+            <span class="reveal-val" id="rv-authtype">—</span>
+          </div>
+          <div class="reveal-row">
+            <span class="reveal-key">user biometrically verified</span>
+            <span class="reveal-val" id="rv-uv">—</span>
+          </div>
+          <div class="reveal-row">
+            <span class="reveal-key">public key (COSE format)</span>
+            <span class="reveal-val" id="rv-pubkey">—</span>
+          </div>
+          <div class="reveal-row">
+            <span class="reveal-key">authenticator data (hex excerpt)</span>
+            <span class="reveal-val" id="rv-authdata">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal-section">
+        <div class="reveal-head blocked">what the browser never receives</div>
+        <div class="reveal-rows">
+          <div class="reveal-row">
+            <span class="reveal-key">fingerprint template</span>
+            <span class="reveal-val safe">withheld by secure enclave — cryptographic guarantee</span>
+          </div>
+          <div class="reveal-row">
+            <span class="reveal-key">ridge minutiae map</span>
+            <span class="reveal-val safe">never crosses the hardware boundary</span>
+          </div>
+          <div class="reveal-row">
+            <span class="reveal-key">biometric match score</span>
+            <span class="reveal-val safe">only a boolean result is returned</span>
+          </div>
+          <div class="reveal-row">
+            <span class="reveal-key">enrollment image</span>
+            <span class="reveal-val safe">destroyed after template generation at enrollment</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal-section">
+        <div class="reveal-head danger">what a native app may receive instead</div>
+        <div class="reveal-rows">
+          <div class="reveal-row">
+            <span class="reveal-key">biometric match score</span>
+            <span class="reveal-val warn">available via proprietary OEM APIs on some platforms</span>
+          </div>
+          <div class="reveal-row">
+            <span class="reveal-key">enrollment metadata</span>
+            <span class="reveal-val warn">number of enrolled fingers, failure counts, last enrollment date</span>
+          </div>
+          <div class="reveal-row">
+            <span class="reveal-key">liveness / anti-spoof result</span>
+            <span class="reveal-val warn">presentation attack score — logged and transmitted by some SDKs</span>
+          </div>
+          <div class="reveal-row">
+            <span class="reveal-key">partial feature vectors</span>
+            <span class="reveal-val warn">some banking and government SDKs expose geometric features, not full templates</span>
+          </div>
+          <div class="reveal-row">
+            <span class="reveal-key">sensor hardware identifier</span>
+            <span class="reveal-val warn">manufacturer, model, and firmware version — fingerprints your device</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ WebAuthn and the secure enclave</summary>
+        <p>WebAuthn (FIDO2) is designed so that biometric data never leaves the device's secure
+        enclave — a hardware-isolated cryptographic processor separate from the main CPU.
+        When you authenticate, the enclave performs the biometric match internally and returns
+        only a cryptographic signature, not the fingerprint itself.</p>
+        <p>Native apps operate differently. Android's BiometricPrompt API and iOS's LocalAuthentication
+        framework give developers a result — but OEM-specific and enterprise APIs expose
+        substantially more. Government ID apps, banking fraud systems, and enterprise MDM
+        profiles often access enrollment metadata, liveness scores, and partial feature data,
+        sometimes with explicit consent buried deep in terms documents, sometimes without.</p>
+        <p>The credential ID shown is scoped to this domain and cannot be used to link your
+        identity across other services. That constraint is WebAuthn by design.
+        Native app databases are not bound by it.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<script>
+const ARC_TOTAL = 2 * Math.PI * 58;
+
+function setArc(pct, color) {
+  const el = document.getElementById('fp-arc');
+  el.style.strokeDashoffset = ARC_TOTAL * (1 - pct);
+  if (color) el.style.stroke = color;
+}
+
+function setFPState(txt, cls) {
+  const el = document.getElementById('fp-state');
+  el.textContent = txt;
+  el.className = 'fp-state' + (cls ? ' ' + cls : '');
+}
+
+function toBase64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+function toHex(buf, max) {
+  const b = new Uint8Array(buf);
+  const s = Array.from(max ? b.slice(0,max) : b).map(x=>x.toString(16).padStart(2,'0')).join(' ');
+  return s + (max && b.length > max ? ' ...' : '');
+}
+
+function setVal(id, text, cls) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'reveal-val' + (cls ? ' ' + cls : '');
+}
+
+async function runWebAuthn() {
+  if (!window.PublicKeyCredential) {
+    setFPState('WebAuthn not available on this browser', 'error');
+    return;
+  }
+  document.getElementById('btn-auth').style.display = 'none';
+  setFPState('touch the sensor on your device...', 'active');
+  setArc(0.15);
+
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  const userId = crypto.getRandomValues(new Uint8Array(16));
+
+  let cred;
+  try {
+    setArc(0.3);
+    cred = await navigator.credentials.create({
+      publicKey: {
+        challenge,
+        rp: { name: 'invisible layer', id: location.hostname || 'localhost' },
+        user: { id: userId, name: 'observer', displayName: 'Observer' },
+        pubKeyCredParams: [
+          { type: 'public-key', alg: -7 },
+          { type: 'public-key', alg: -257 },
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          userVerification: 'required',
+          residentKey: 'discouraged',
+        },
+        timeout: 60000,
+        attestation: 'none',
+      }
+    });
+  } catch (e) {
+    setArc(0, 'var(--red)');
+    const msgs = {
+      'NotAllowedError': 'cancelled or timed out',
+      'InvalidStateError': 'credential already exists for this device',
+    };
+    setFPState(msgs[e.name] || (e.message || 'authentication failed'), 'error');
+    document.getElementById('btn-auth').style.display = 'inline-flex';
+    return;
+  }
+
+  setArc(1, 'var(--green)');
+  setFPState('biometric verified — reading authenticator data', 'success');
+
+  const authData = new Uint8Array(cred.response.getAuthenticatorData
+    ? cred.response.getAuthenticatorData()
+    : cred.response.attestationObject);
+
+  const flagsByte = authData.length > 32 ? authData[32] : 0;
+  const uvFlag = !!(flagsByte & 0x04);
+  const atFlag = !!(flagsByte & 0x40);
+
+  let authType = 'platform authenticator';
+  if (atFlag && authData.length > 53) {
+    const aaguid = authData.slice(37, 53);
+    if (!aaguid.every(b => b === 0)) {
+      authType = 'platform authenticator (AAGUID: ' + toHex(aaguid.buffer).replace(/ /g,'').slice(0,16) + '...)';
+    } else {
+      authType = 'platform authenticator (anonymous AAGUID — privacy-preserving)';
+    }
+  }
+
+  document.getElementById('reveal-wrap').style.display = 'block';
+  setVal('rv-credid', toBase64url(cred.rawId), 'live');
+  setVal('rv-authtype', authType, 'live');
+  setVal('rv-uv', uvFlag ? 'yes — fingerprint or face matched' : 'no — device PIN or swipe used', uvFlag ? 'live' : '');
+  setVal('rv-pubkey', cred.response.getPublicKey
+    ? toHex(cred.response.getPublicKey(), 20) + '  (alg: ' + (cred.response.getPublicKeyAlgorithm?.() ?? '?') + ')'
+    : 'getPublicKey() unavailable in this browser', 'live');
+  setVal('rv-authdata', toHex(authData.buffer, 24), 'live');
+
+  setFPState('complete · ' + (uvFlag ? 'biometric confirmed' : 'PIN confirmed'), 'success');
+  document.getElementById('btn-reset').style.display = 'inline-flex';
+
+  try {
+    localStorage.setItem('il-biometric-report', JSON.stringify({
+      credentialId: toBase64url(cred.rawId).slice(0, 16) + '...',
+      userVerified: uvFlag,
+      authType,
+      timestamp: Date.now()
+    }));
+  } catch {}
+}
+
+function resetState() {
+  setFPState('ready — press the button above');
+  setArc(0); document.getElementById('fp-arc').style.stroke = 'var(--cyan)';
+  document.getElementById('reveal-wrap').style.display = 'none';
+  document.getElementById('btn-auth').style.display = 'inline-flex';
+  document.getElementById('btn-reset').style.display = 'none';
+}
+</script>
+<script src="../../../assets/js/i18n.js?v=3"></script>
+</body>
+</html>

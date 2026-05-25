@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>body sensors — invisible layer</title>
+<meta name="theme-color" content="#000000"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.body-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 8px;
+  overflow: hidden; width: 100%;
+}
+.body-cell {
+  background: var(--surface); padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.body-cell.full { grid-column: 1 / -1; }
+.body-key {
+  font-family: var(--font-mono); font-size: 0.56rem;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
+}
+.body-val { font-size: 1.1rem; color: var(--text); line-height: 1.1; }
+.body-val.live { color: var(--cyan); }
+.body-val.warn { color: var(--amber); }
+.body-sub { font-family: var(--font-mono); font-size: 0.58rem; color: var(--dim); }
+.sensor-canvas-wrap {
+  width: 100%; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px;
+  overflow: hidden; position: relative;
+}
+.sensor-canvas-wrap canvas { width: 100%; display: block; }
+.canvas-label {
+  position: absolute; top: 7px; left: 10px;
+  font-family: var(--font-mono); font-size: 0.55rem;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim);
+}
+.iob-bundle {
+  width: 100%; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.iob-head {
+  padding: 9px 14px; font-size: 0.56rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--amber); border-bottom: 1px solid var(--border);
+}
+.iob-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 8px 14px; border-bottom: 1px solid var(--border);
+}
+.iob-row:last-child { border-bottom: none; }
+.iob-source {
+  font-family: var(--font-mono); font-size: 0.62rem;
+  color: var(--cyan); width: 110px; flex-shrink: 0; padding-top: 1px;
+}
+.iob-infer { font-size: 0.7rem; color: var(--dim); line-height: 1.5; }
+.iob-infer strong { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>body sensors</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" aria-label="toggle theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="exp-lang-btn" id="lang-btn" onclick="IL_I18N.toggle()">DE</button>
+    <a class="exp-close" href="../../../">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment · internet of bodies</div>
+      <div class="exp-title">your body<br>is already transmitting.</div>
+      <div class="exp-desc">
+        The sensors in your phone — accelerometer, gyroscope, microphone — were built for
+        navigation and calls. They have a second function nobody disclosed: inferring what
+        your body is doing and how it is doing it. Activity level, tremor, stress, breathing
+        rate, and heartbeat proxies can all be extracted without specialist hardware.
+        No medical device required. No consent requested.
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>The Internet of Bodies (IoB) is not a future concept. It is already running.</strong>
+      Wearables, phones, smart home devices, and implantables form a continuous biometric
+      data layer. Insurance companies in the US already price premiums on wearable activity data.
+      Employers in several jurisdictions use smart badge sensors to monitor physical proximity
+      and stress levels. The EU's proposed IoB regulatory framework was filed in 2023
+      and remains unadopted. In the meantime, the data flows.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startSensors()">◉ start sensors</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopSensors()" style="display:none">■ stop</button>
+    </div>
+
+    <div class="body-grid" id="body-grid" style="display:none">
+      <div class="body-cell">
+        <span class="body-key">activity level</span>
+        <span class="body-val live" id="bs-activity">—</span>
+        <span class="body-sub" id="bs-activity-sub">—</span>
+      </div>
+      <div class="body-cell">
+        <span class="body-key">motion magnitude</span>
+        <span class="body-val live" id="bs-mag">—</span>
+        <span class="body-sub">m/s² (linear acceleration)</span>
+      </div>
+      <div class="body-cell">
+        <span class="body-key">tremor index</span>
+        <span class="body-val" id="bs-tremor">—</span>
+        <span class="body-sub">gyroscope jitter (°/s std-dev)</span>
+      </div>
+      <div class="body-cell">
+        <span class="body-key">rotation rate</span>
+        <span class="body-val" id="bs-rot">—</span>
+        <span class="body-sub">°/s (device orientation change)</span>
+      </div>
+      <div class="body-cell">
+        <span class="body-key">heart rate proxy</span>
+        <span class="body-val warn" id="bs-hr">—</span>
+        <span class="body-sub">ballistocardiography (place phone on chest)</span>
+      </div>
+      <div class="body-cell">
+        <span class="body-key">step cadence</span>
+        <span class="body-val" id="bs-steps">—</span>
+        <span class="body-sub">steps/min (from acceleration peaks)</span>
+      </div>
+      <div class="body-cell full">
+        <span class="body-key">audio envelope — breathing / ambient stress proxy</span>
+        <span class="body-val" id="bs-audio">—</span>
+        <span class="body-sub" id="bs-audio-sub">microphone not active</span>
+      </div>
+    </div>
+
+    <div class="sensor-canvas-wrap" id="canvas-wrap" style="display:none; aspect-ratio:4/1">
+      <canvas id="motion-canvas"></canvas>
+      <div class="canvas-label">linear acceleration (3-axis)</div>
+    </div>
+
+    <div class="iob-bundle" id="iob-bundle" style="display:none">
+      <div class="iob-head">what gets inferred when this data is bundled</div>
+      <div class="iob-row">
+        <span class="iob-source">accelerometer</span>
+        <span class="iob-infer"><strong>Heart rate, breathing rate, sleep quality</strong> — ballistocardiography detects the micro-jolt of each heartbeat when the device is held still. Academic accuracy: ±5 bpm.</span>
+      </div>
+      <div class="iob-row">
+        <span class="iob-source">gyroscope</span>
+        <span class="iob-infer"><strong>Tremor signature, neurological markers</strong> — Parkinson's and essential tremor produce characteristic frequency profiles (4–12 Hz) detectable in gyroscope data. Validated in peer-reviewed studies.</span>
+      </div>
+      <div class="iob-row">
+        <span class="iob-source">microphone</span>
+        <span class="iob-infer"><strong>Breathing rate, cough detection, stress voice markers</strong> — low-frequency amplitude envelope tracks respiratory rhythm. Prosody analysis infers emotional and physical stress without speech recognition.</span>
+      </div>
+      <div class="iob-row">
+        <span class="iob-source">gait pattern</span>
+        <span class="iob-infer"><strong>Age, injury, intoxication, cognitive load</strong> — gait stability degrades measurably under fatigue, illness, or substance impairment. Insurance actuarial models already use this.</span>
+      </div>
+      <div class="iob-row">
+        <span class="iob-source">+ face inference<br>+ fingerprint<br>+ location</span>
+        <span class="iob-infer"><strong>Complete body-state profile.</strong> Emotion + physiological state + identity + location + time = a health, behavioral, and risk model updated continuously. This is what data brokers, insurers, and state surveillance systems are building toward. Some already have it.</span>
+      </div>
+    </div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ which sensors and what they can actually measure</summary>
+        <p>All readings on this page use sensors that require no special permission on Android
+        and are gated only by a generic motion permission prompt on iOS 13+.</p>
+        <ul style="font-size:0.72rem;color:var(--dim);line-height:1.9;padding-left:20px;margin-top:6px">
+          <li><strong style="color:#fff">Accelerometer</strong> — measures linear acceleration including gravity. Detects steps, orientation, and micro-vibrations from heartbeat when placed on a rigid surface against the body.</li>
+          <li><strong style="color:#fff">Gyroscope</strong> — measures angular velocity. Jitter analysis reveals tremor frequency and amplitude. Combined with accelerometer: full 6-DOF motion capture.</li>
+          <li><strong style="color:#fff">Microphone</strong> — audio envelope (not speech content) reveals breathing rhythm, cough events, and ambient sound level. Voice stress analysis is a separate application layer.</li>
+        </ul>
+        <p>The heart rate proxy shown requires the phone to be held still against the chest or placed flat on a table while the user sits. It measures acceleration variance at 0.8–2 Hz — the frequency band of a resting heartbeat. Accuracy is highly variable and should not be used for medical purposes.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<script>
+const BUF = 200;
+const axBuf = new Array(BUF).fill(0);
+const ayBuf = new Array(BUF).fill(0);
+const azBuf = new Array(BUF).fill(0);
+const magBuf = new Array(BUF).fill(0);
+const gyroBuf = new Array(BUF).fill(0);
+let head = 0;
+
+// Step detection
+let steps = 0, lastStep = 0;
+const stepIntervals = [];
+
+// Heart rate proxy: bandpass 0.8–2.5 Hz in accel magnitude
+const hrBuf = new Array(600).fill(0);
+let hrHead = 0;
+
+let running = false;
+let audioCtx = null, analyser = null, audioStream = null;
+
+const canvas = document.getElementById('motion-canvas');
+const ctx2d = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+}
+
+function mean(arr) { return arr.reduce((a,b)=>a+b,0)/arr.length; }
+function stdDev(arr) {
+  if (arr.length < 2) return 0;
+  const m = mean(arr);
+  return Math.sqrt(arr.reduce((s,v)=>s+(v-m)**2,0)/arr.length);
+}
+
+function classify(mag) {
+  if (mag < 0.3) return ['still', 'device stationary'];
+  if (mag < 1.5) return ['light motion', 'minor handling or breathing'];
+  if (mag < 5)   return ['active', 'walking or gesturing'];
+  return ['high activity', 'running or vigorous movement'];
+}
+
+let gx=0,gy=0,gz=9.8;
+const ALPHA=0.85;
+
+function onMotion(e) {
+  if (!running || !e.accelerationIncludingGravity) return;
+  const rx = e.accelerationIncludingGravity.x||0;
+  const ry = e.accelerationIncludingGravity.y||0;
+  const rz = e.accelerationIncludingGravity.z||0;
+  gx=ALPHA*gx+(1-ALPHA)*rx; gy=ALPHA*gy+(1-ALPHA)*ry; gz=ALPHA*gz+(1-ALPHA)*rz;
+  const ax=rx-gx, ay=ry-gy, az=rz-gz;
+  const mag=Math.sqrt(ax*ax+ay*ay+az*az);
+
+  const i=head%BUF;
+  axBuf[i]=ax; ayBuf[i]=ay; azBuf[i]=az; magBuf[i]=mag;
+  hrBuf[hrHead%600]=mag;
+  head++; hrHead++;
+
+  // Step detection
+  const prev=magBuf[(head-2+BUF)%BUF];
+  const pp=magBuf[(head-3+BUF)%BUF];
+  if (mag>1.8&&mag>prev&&mag>pp) {
+    const now=Date.now();
+    if (now-lastStep>250) {
+      if (lastStep>0) stepIntervals.push(now-lastStep);
+      if (stepIntervals.length>20) stepIntervals.shift();
+      lastStep=now; steps++;
+    }
+  }
+}
+
+function onGyro(e) {
+  if (!running) return;
+  const rate=Math.sqrt((e.alpha||0)**2+(e.beta||0)**2+(e.gamma||0)**2);
+  gyroBuf[head%BUF]=rate;
+}
+
+function updateUI() {
+  if (!running) return;
+  requestAnimationFrame(updateUI);
+
+  const ordered=[...magBuf]; // shallow copy — fine for display
+  const mag=mean(ordered);
+  const [act,sub]=classify(mag);
+  document.getElementById('bs-activity').textContent=act;
+  document.getElementById('bs-activity-sub').textContent=sub;
+  document.getElementById('bs-mag').textContent=mag.toFixed(3);
+
+  const gyroOrdered=[...gyroBuf];
+  const tremor=stdDev(gyroOrdered);
+  const tremorEl=document.getElementById('bs-tremor');
+  tremorEl.textContent=tremor.toFixed(3);
+  tremorEl.className='body-val'+(tremor>2?' warn':'');
+
+  const rotMean=mean(gyroOrdered);
+  document.getElementById('bs-rot').textContent=rotMean.toFixed(2);
+
+  if (stepIntervals.length>1) {
+    const cadence=Math.round(60000/mean(stepIntervals));
+    document.getElementById('bs-steps').textContent=cadence+' steps/min';
+  }
+
+  // Heart rate proxy: detect peaks in 0.8–2.5 Hz band (crude)
+  const hrSlice=hrBuf.slice(0,Math.min(hrHead,600));
+  if (hrSlice.length>60) {
+    const hrMag=mean(hrSlice);
+    const hrStd=stdDev(hrSlice);
+    // Very rough: count zero-crossings of detrended signal
+    const det=hrSlice.map(v=>v-hrMag);
+    let crosses=0;
+    for (let i=1;i<det.length;i++) if (det[i-1]<0&&det[i]>=0) crosses++;
+    // crosses per second * 60 = BPM (accelerometer at ~50Hz on most devices)
+    const sampleRate=50;
+    const duration=hrSlice.length/sampleRate;
+    const bpm=Math.round((crosses/duration)*60);
+    const hrEl=document.getElementById('bs-hr');
+    if (bpm>30&&bpm<220&&hrStd>0.005) {
+      hrEl.textContent=bpm+' bpm (proxy)';
+      hrEl.className='body-val live';
+    } else {
+      hrEl.textContent='hold still on chest';
+      hrEl.className='body-val warn';
+    }
+  }
+
+  // Audio
+  if (analyser) {
+    const freq=new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(freq);
+    const level=mean(Array.from(freq));
+    document.getElementById('bs-audio').textContent=level.toFixed(1)+' dB (relative)';
+    document.getElementById('bs-audio').className='body-val live';
+    const stress=level>60?'elevated ambient level':'quiet environment';
+    document.getElementById('bs-audio-sub').textContent=stress;
+  }
+
+  drawCanvas(ordered);
+}
+
+function drawCanvas(ordered) {
+  const W=canvas.width/devicePixelRatio;
+  const H=canvas.height/devicePixelRatio;
+  ctx2d.clearRect(0,0,W,H);
+
+  const axes=[
+    {buf:axBuf,color:'rgba(34,211,238,0.8)'},
+    {buf:ayBuf,color:'rgba(168,85,247,0.6)'},
+    {buf:azBuf,color:'rgba(245,158,11,0.5)'},
+  ];
+
+  axes.forEach(({buf,color})=>{
+    const ord=new Array(BUF);
+    for(let i=0;i<BUF;i++) ord[i]=buf[(head+i)%BUF];
+    const max=Math.max(...ord.map(Math.abs),1);
+    ctx2d.beginPath();
+    ord.forEach((v,i)=>{
+      const x=(i/BUF)*W;
+      const y=H/2-(v/max)*(H/2)*0.85;
+      i===0?ctx2d.moveTo(x,y):ctx2d.lineTo(x,y);
+    });
+    ctx2d.strokeStyle=color;
+    ctx2d.lineWidth=1.2;
+    ctx2d.stroke();
+  });
+
+  // Zero line
+  ctx2d.strokeStyle='rgba(255,255,255,0.06)';
+  ctx2d.lineWidth=1;
+  ctx2d.beginPath();
+  ctx2d.moveTo(0,H/2); ctx2d.lineTo(W,H/2);
+  ctx2d.stroke();
+}
+
+async function startSensors() {
+  document.getElementById('btn-start').style.display='none';
+
+  const go = () => {
+    running=true;
+    resizeCanvas();
+    window.addEventListener('resize',resizeCanvas);
+    window.addEventListener('devicemotion',onMotion);
+    if (window.DeviceOrientationEvent) window.addEventListener('deviceorientation',onGyro);
+    document.getElementById('body-grid').style.display='grid';
+    document.getElementById('canvas-wrap').style.display='block';
+    document.getElementById('iob-bundle').style.display='block';
+    document.getElementById('btn-stop').style.display='inline-flex';
+    requestAnimationFrame(updateUI);
+
+    // Try microphone
+    navigator.mediaDevices?.getUserMedia({audio:true,video:false}).then(s=>{
+      audioStream=s;
+      audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      analyser=audioCtx.createAnalyser();
+      analyser.fftSize=256;
+      audioCtx.createMediaStreamSource(s).connect(analyser);
+      document.getElementById('bs-audio-sub').textContent='microphone active';
+    }).catch(()=>{
+      document.getElementById('bs-audio-sub').textContent='microphone not available or denied';
+    });
+
+    // Write initial body report
+    try { localStorage.setItem('il-body-report',JSON.stringify({active:true,timestamp:Date.now()})); } catch {}
+  };
+
+  if (typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function') {
+    try {
+      const perm=await DeviceMotionEvent.requestPermission();
+      if (perm==='granted') go();
+      else { document.getElementById('btn-start').style.display='inline-flex'; }
+    } catch { document.getElementById('btn-start').style.display='inline-flex'; }
+  } else if (typeof DeviceMotionEvent!=='undefined') {
+    go();
+  } else {
+    document.getElementById('btn-start').style.display='inline-flex';
+    alert('DeviceMotion not available on this browser/device.');
+  }
+
+  setInterval(()=>{
+    if (!running) return;
+    const ordered=[...magBuf];
+    const mag=mean(ordered);
+    const tremor=stdDev([...gyroBuf]);
+    try {
+      localStorage.setItem('il-body-report',JSON.stringify({
+        active: true,
+        activityLevel: classify(mag)[0],
+        motionMagnitude: +mag.toFixed(3),
+        tremorIndex: +tremor.toFixed(3),
+        stepCadence: stepIntervals.length>1?Math.round(60000/mean(stepIntervals)):null,
+        timestamp: Date.now()
+      }));
+    } catch {}
+  }, 5000);
+}
+
+function stopSensors() {
+  running=false;
+  window.removeEventListener('devicemotion',onMotion);
+  window.removeEventListener('deviceorientation',onGyro);
+  if (audioStream) { audioStream.getTracks().forEach(t=>t.stop()); audioStream=null; }
+  if (audioCtx) { audioCtx.close(); audioCtx=null; }
+  document.getElementById('body-grid').style.display='none';
+  document.getElementById('canvas-wrap').style.display='none';
+  document.getElementById('iob-bundle').style.display='none';
+  document.getElementById('btn-start').style.display='inline-flex';
+  document.getElementById('btn-stop').style.display='none';
+}
+</script>
+<script src="../../../assets/js/i18n.js?v=3"></script>
+</body>
+</html>
