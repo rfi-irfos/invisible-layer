@@ -285,6 +285,14 @@
       'nav.filter.biometric': 'biometric & body',
       'section.biometric': 'biometric & body',
 
+      // card titles — biometric & body
+      'card.face-inference.title': 'face inference',
+      'card.face-inference.desc': 'A model running in your browser infers your emotion, age, gender, and generates a biometric identity hash from your face geometry. No server. No upload. This is the baseline.',
+      'card.fingerprint-gate.title': 'fingerprint gate',
+      'card.fingerprint-gate.desc': 'Touch the sensor. See what the browser receives versus what a native app may receive instead. The gap between those two lists is where your privacy lives — or disappears.',
+      'card.body-sensors.title': 'body sensors',
+      'card.body-sensors.desc': 'Accelerometer, gyroscope, and microphone as proxies for heart rate, tremor, activity, and breathing. The Internet of Bodies is not a future concept — it is running on the device in your hand.',
+
       // card titles — digital fingerprint
       'card.canvas-fingerprint.title': 'canvas fingerprint',
       'card.gpu-identity.title': 'GPU identity',
@@ -741,6 +749,14 @@
       // nav filter — biometric & body
       'nav.filter.biometric': 'Biometrie & Körper',
       'section.biometric': 'Biometrie & Körper',
+
+      // card titles — biometric & body
+      'card.face-inference.title': 'Gesichtsinferenz',
+      'card.face-inference.desc': 'Ein Modell in deinem Browser erkennt deine Emotion, schätzt Alter und Geschlecht und erzeugt aus deiner Gesichtsgeometrie einen biometrischen Hash. Kein Server. Kein Upload. Das ist der Normalfall.',
+      'card.fingerprint-gate.title': 'Fingerabdruck-Schranke',
+      'card.fingerprint-gate.desc': 'Berühr den Sensor. Sieh, was der Browser erhält — und was eine native App stattdessen bekommen kann. In der Lücke zwischen diesen Listen lebt deine Privatsphäre — oder verschwindet.',
+      'card.body-sensors.title': 'Körpersensoren',
+      'card.body-sensors.desc': 'Beschleunigungssensor, Gyroskop und Mikrofon als Proxys für Herzfrequenz, Tremor, Aktivität und Atmung. Das Internet der Körper ist kein Zukunftskonzept — es läuft auf dem Gerät in deiner Hand.',
 
       // card titles — digital fingerprint
       'card.canvas-fingerprint.title': 'Canvas-Fingerabdruck',

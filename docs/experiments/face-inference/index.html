@@ -306,7 +306,7 @@ async function inferLoop(ts) {
   }
 
   document.getElementById('face-badge').textContent = 'face detected · analyzing';
-  drawLandmarks(det.landmarks.positions);
+  drawOverlay(det);
 
   const exprs = det.expressions;
   const dominant = Object.entries(exprs).reduce((a,b) => b[1]>a[1] ? b : a);
@@ -344,28 +344,96 @@ async function inferLoop(ts) {
   } catch {}
 }
 
-const CONNECTIONS = [
-  [0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],
-  [17,18],[18,19],[19,20],[20,21],[22,23],[23,24],[24,25],[25,26],
-  [27,28],[28,29],[29,30],[30,31],[31,32],[32,33],[33,34],[34,35],
-  [36,37],[37,38],[38,39],[39,40],[40,41],[41,36],
-  [42,43],[43,44],[44,45],[45,46],[46,47],[47,42],
-  [48,49],[49,50],[50,51],[51,52],[52,53],[53,54],[54,55],[55,56],[56,57],[57,58],[58,59],[59,48],
-  [60,61],[61,62],[62,63],[63,64],[64,65],[65,66],[66,67],[67,60],
+// Semantic face regions — color-coded for visual clarity
+const REGIONS = [
+  { color:'rgba(80,140,160,0.5)',  w:1.0, glow:false, segs:[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]] },
+  { color:'rgba(34,211,238,0.6)',  w:1.0, glow:false, segs:[[17,18,19,20,21],[22,23,24,25,26]] },
+  { color:'rgba(34,211,238,0.65)', w:1.0, glow:false, segs:[[27,28,29,30],[30,31,32,33,34,35]] },
+  { color:'rgba(100,220,255,1.0)', w:1.5, glow:true,  segs:[[36,37,38,39,40,41,36],[42,43,44,45,46,47,42]] },
+  { color:'rgba(251,191,36,0.8)',  w:1.1, glow:false, segs:[[48,49,50,51,52,53,54,55,56,57,58,59,48]] },
+  { color:'rgba(251,191,36,0.55)', w:0.9, glow:false, segs:[[60,61,62,63,64,65,66,67,60]] },
 ];
 const KEY_PTS = new Set([0,8,16,27,30,36,39,42,45,48,54,57]);
 
-function drawLandmarks(pts) {
-  ctx.strokeStyle = 'rgba(34,211,238,0.3)';
-  ctx.lineWidth = 0.8;
-  CONNECTIONS.forEach(([a,b]) => {
-    if (!pts[a] || !pts[b]) return;
-    ctx.beginPath(); ctx.moveTo(pts[a].x,pts[a].y); ctx.lineTo(pts[b].x,pts[b].y); ctx.stroke();
+function drawOverlay(det) {
+  const pts = det.landmarks.positions;
+
+  // Color-coded mesh regions
+  REGIONS.forEach(({color, w, glow, segs}) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = w;
+    ctx.shadowColor = glow ? color : 'transparent';
+    ctx.shadowBlur  = glow ? 6 : 0;
+    segs.forEach(seg => {
+      ctx.beginPath();
+      seg.forEach((idx, n) => {
+        if (!pts[idx]) return;
+        n === 0 ? ctx.moveTo(pts[idx].x, pts[idx].y) : ctx.lineTo(pts[idx].x, pts[idx].y);
+      });
+      ctx.stroke();
+    });
   });
-  pts.forEach((p,i) => {
-    ctx.fillStyle = KEY_PTS.has(i) ? 'rgba(34,211,238,0.9)' : 'rgba(34,211,238,0.45)';
-    ctx.beginPath(); ctx.arc(p.x, p.y, KEY_PTS.has(i) ? 1.8 : 1.1, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Landmark dots
+  pts.forEach((p, i) => {
+    const key = KEY_PTS.has(i);
+    ctx.shadowColor = key ? 'rgba(100,220,255,0.8)' : 'transparent';
+    ctx.shadowBlur  = key ? 5 : 0;
+    ctx.fillStyle   = key ? 'rgba(100,220,255,1)' : 'rgba(34,211,238,0.4)';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, key ? 2.6 : 1.1, 0, Math.PI * 2);
+    ctx.fill();
   });
+  ctx.shadowBlur = 0;
+
+  // HUD bounding box — corner brackets only
+  const b = det.detection.box;
+  const cL = Math.min(b.width * 0.16, 20);
+  ctx.strokeStyle = 'rgba(34,211,238,0.65)';
+  ctx.shadowColor = 'rgba(34,211,238,0.5)';
+  ctx.shadowBlur  = 5;
+  ctx.lineWidth   = 1.8;
+  [[b.x, b.y, 1, 1],[b.x+b.width, b.y, -1, 1],[b.x, b.y+b.height, 1, -1],[b.x+b.width, b.y+b.height, -1, -1]]
+    .forEach(([px,py,sx,sy]) => {
+      ctx.beginPath(); ctx.moveTo(px+sx*cL,py); ctx.lineTo(px,py); ctx.lineTo(px,py+sy*cL); ctx.stroke();
+    });
+  ctx.shadowBlur = 0;
+
+  // AR floating labels
+  const dom = Object.entries(det.expressions).reduce((a,c)=>c[1]>a[1]?c:a);
+  const lex = (pts[36].x + pts[39].x) / 2, rex = (pts[42].x + pts[45].x) / 2;
+  const eyeTop = Math.min(pts[36].y, pts[42].y) - 9;
+  arTag(lex, eyeTop, 'L-EYE', 'rgba(100,220,255,0.95)');
+  arTag(rex, eyeTop, 'R-EYE', 'rgba(100,220,255,0.95)');
+  arTag(pts[30].x, pts[30].y - 7, 'NOSE', 'rgba(34,211,238,0.8)');
+  arTag(pts[27].x, b.y - 9, dom[0].toUpperCase() + ' ' + (dom[1]*100).toFixed(0) + '%', 'rgba(251,191,36,1)');
+  arTag(pts[8].x,  b.y + b.height + 11, Math.round(det.age) + 'y · ' + det.gender, 'rgba(80,200,130,0.95)');
+}
+
+// Readable text on a CSS scaleX(-1) canvas: double-flip cancels out
+function arTag(cx, cy, text, color) {
+  const W = overlay.width;
+  ctx.save();
+  ctx.translate(W, 0);
+  ctx.scale(-1, 1);
+  ctx.font = 'bold 8px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const mx = W - cx;
+  const tw = ctx.measureText(text).width + 9;
+  const th = 12;
+  ctx.fillStyle = 'rgba(0,0,0,0.62)';
+  ctx.fillRect(mx - tw/2, cy - th/2, tw, th);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 0.7;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 3;
+  ctx.strokeRect(mx - tw/2, cy - th/2, tw, th);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = color;
+  ctx.fillText(text, mx, cy);
+  ctx.restore();
 }
 
 function dist(a,b) { return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2); }
