@@ -281,6 +281,10 @@
       'nav.filter.fp': 'digital fingerprint',
       'section.fp': 'digital fingerprint',
 
+      // nav filter — biometric & body
+      'nav.filter.biometric': 'biometric & body',
+      'section.biometric': 'biometric & body',
+
       // card titles — digital fingerprint
       'card.canvas-fingerprint.title': 'canvas fingerprint',
       'card.gpu-identity.title': 'GPU identity',
@@ -733,6 +737,10 @@
       // nav filter — digital fingerprint
       'nav.filter.fp': 'Digitaler Fingerabdruck',
       'section.fp': 'Digitaler Fingerabdruck',
+
+      // nav filter — biometric & body
+      'nav.filter.biometric': 'Biometrie & Körper',
+      'section.biometric': 'Biometrie & Körper',
 
       // card titles — digital fingerprint
       'card.canvas-fingerprint.title': 'Canvas-Fingerabdruck',

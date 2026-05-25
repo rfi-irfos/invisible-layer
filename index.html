@@ -318,11 +318,10 @@ body { display:flex; flex-direction:column; align-items:center; }
     </button>
     <!-- Language picker -->
     <div class="lang-picker" id="lang-picker">
-      <button class="site-icon-btn site-lang-btn" id="lang-btn" onclick="toggleLangPicker()" aria-haspopup="listbox" aria-expanded="false" title="Language / Sprache / Langue">EN</button>
+      <button class="site-icon-btn site-lang-btn" id="lang-btn" onclick="toggleLangPicker()" aria-haspopup="listbox" aria-expanded="false" title="Language / Sprache">EN</button>
       <div class="lang-dropdown" id="lang-dropdown" role="listbox" aria-label="Select language">
         <button class="lang-option" role="option" data-lang="en" onclick="pickLang('en')">EN — English</button>
         <button class="lang-option" role="option" data-lang="de" onclick="pickLang('de')">DE — Deutsch</button>
-        <button class="lang-option" role="option" data-lang="fr" onclick="pickLang('fr')">FR — Français</button>
       </div>
     </div>
     <!-- Mobile menu -->
@@ -343,6 +342,7 @@ body { display:flex; flex-direction:column; align-items:center; }
     <button class="drawer-filter-btn" onclick="filter('light',this);closeMenu()" data-i18n="nav.filter.light">light</button>
     <button class="drawer-filter-btn" onclick="filter('meta',this);closeMenu()" data-i18n="nav.filter.meta">meta layer</button>
     <button class="drawer-filter-btn" onclick="filter('fp',this);closeMenu()" data-i18n="nav.filter.fp">digital fingerprint</button>
+    <button class="drawer-filter-btn" onclick="filter('biometric',this);closeMenu()" data-i18n="nav.filter.biometric">biometric &amp; body</button>
   </div>
   <div class="drawer-divider"></div>
   <a class="drawer-link" href="docs/experiments/the-profile/" style="color:#ef4444;border:1px solid rgba(239,68,68,0.18);border-radius:8px;background:rgba(239,68,68,0.04);" onclick="closeMenu()" data-i18n="drawer.profile">
@@ -432,6 +432,7 @@ body { display:flex; flex-direction:column; align-items:center; }
     <button class="filter-btn" onclick="filter('light',this)" data-i18n="nav.filter.light">light</button>
     <button class="filter-btn" onclick="filter('meta',this)" data-i18n="nav.filter.meta">meta layer</button>
     <button class="filter-btn" onclick="filter('fp',this)" data-i18n="nav.filter.fp">digital fingerprint</button>
+    <button class="filter-btn" onclick="filter('biometric',this)" data-i18n="nav.filter.biometric">biometric &amp; body</button>
   </div>
 </div>
 
@@ -579,7 +580,12 @@ body { display:flex; flex-direction:column; align-items:center; }
       </div>
       <div class="card-right"><span class="badge live">live</span><span class="card-sensor">touch events</span></div>
     </a>
-    <a class="card" data-cat="motion" href="docs/experiments/face-inference/">
+  </div>
+
+  <!-- BIOMETRIC & BODY -->
+  <div class="section-label" data-cat="biometric" data-i18n="section.biometric">biometric &amp; body</div>
+  <div class="grid">
+    <a class="card" data-cat="biometric" href="docs/experiments/face-inference/">
       <div class="card-icon">◈</div>
       <div class="card-body">
         <div class="card-title">face inference</div>
@@ -587,7 +593,7 @@ body { display:flex; flex-direction:column; align-items:center; }
       </div>
       <div class="card-right"><span class="badge live">live</span><span class="card-sensor">camera · ML</span></div>
     </a>
-    <a class="card" data-cat="motion" href="docs/experiments/fingerprint-gate/">
+    <a class="card" data-cat="biometric" href="docs/experiments/fingerprint-gate/">
       <div class="card-icon">⬡</div>
       <div class="card-body">
         <div class="card-title">fingerprint gate</div>
@@ -595,7 +601,7 @@ body { display:flex; flex-direction:column; align-items:center; }
       </div>
       <div class="card-right"><span class="badge live">live</span><span class="card-sensor">biometric · WebAuthn</span></div>
     </a>
-    <a class="card" data-cat="motion" href="docs/experiments/body-sensors/">
+    <a class="card" data-cat="biometric" href="docs/experiments/body-sensors/">
       <div class="card-icon">⌁</div>
       <div class="card-body">
         <div class="card-title">body sensors</div>
