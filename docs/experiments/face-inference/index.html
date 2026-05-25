@@ -202,7 +202,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
-const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/weights';
 const EMOTIONS = ['neutral','happy','sad','angry','fearful','disgusted','surprised'];
 
 let running = false, stream = null, modelsLoaded = false;
@@ -225,7 +225,17 @@ async function loadModels() {
 
 async function startInference() {
   document.getElementById('btn-start').style.display = 'none';
-  if (!modelsLoaded) await loadModels();
+  if (!modelsLoaded) {
+    try {
+      await loadModels();
+    } catch (e) {
+      const msg = document.getElementById('load-msg');
+      msg.style.display = 'block';
+      msg.textContent = 'model load failed: ' + (e && e.message ? e.message : String(e));
+      document.getElementById('btn-start').style.display = 'inline-flex';
+      return;
+    }
+  }
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
