@@ -1,13 +1,13 @@
 /* ── Themes ── */
 :root,
 [data-theme="dark"] {
-  --bg: #000000;
-  --surface: #0a0a0a;
-  --surface2: #111111;
-  --border: #1c1c1c;
-  --text: #e2e8f0;
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #162032;
+  --border: #2d3f57;
+  --text: #f1f5f9;
   --dim: #6b7a8d;
-  --muted: #1e293b;
+  --muted: #243348;
   --green: #00ff41;
   --cyan: #22d3ee;
   --red: #f87171;
