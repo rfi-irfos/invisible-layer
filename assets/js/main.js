@@ -109,7 +109,7 @@ document.addEventListener('click', function(e) {
 
 // Sync active option when i18n auto-applies on load
 document.addEventListener('DOMContentLoaded', function() {
-  const cur = localStorage.getItem('il-lang') || 'en';
+  const cur = localStorage.getItem('il-lang') || 'de';
   const btn = document.getElementById('lang-btn');
   if (btn) btn.textContent = cur.toUpperCase();
   document.querySelectorAll('.lang-option').forEach(o => {

@@ -937,9 +937,9 @@
   function detectLang() {
     var saved = localStorage.getItem('il-lang');
     if (saved && SUPPORTED.indexOf(saved) >= 0) return saved;
-    var nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
-    if (nav.indexOf('de') === 0) return 'de';
-    return 'en';
+    var nav = (navigator.language || navigator.userLanguage || '').toLowerCase();
+    if (nav.indexOf('en') === 0) return 'en';
+    return 'de';
   }
 
   function applyLang(lang) {
