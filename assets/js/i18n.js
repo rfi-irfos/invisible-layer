@@ -461,6 +461,12 @@
       'exp.storage-quota.btn-start': '◉ measure disk',
       'exp.storage-quota.summary': '▶ how does this work?',
 
+      // institutional categories
+      'nav.inst.header': 'For Institutions',
+      'nav.inst.identity': 'Digital Identity &amp; Control',
+      'nav.inst.biometry': 'Biometry &amp; Surveillance',
+      'nav.inst.location': 'Location &amp; Movement',
+
       // footer
       'footer.rights': '© 2025 rfi-irfos. open source.',
     },
@@ -925,6 +931,12 @@
       'exp.storage-quota.shock': '<strong>Deine genaue Festplattenkapazität und dein freier Speicherplatz können dich seitenübergreifend identifizieren.</strong> Wenn du zwei verschiedene Websites besuchst, sehen beide auf das Byte genau dieselbe Speicherquote. Da diese Zahl schwankt, wenn du Dateien herunterlädst oder löschst, entsteht ein sich kontinuierlich aktualisierender Fingerabdruck, der für dein physisches Gerät einzigartig ist. Keine Cookies erforderlich.',
       'exp.storage-quota.btn-start': '◉ speicher messen',
       'exp.storage-quota.summary': '▶ wie funktioniert das?',
+
+      // institutional categories
+      'nav.inst.header': 'Für Institutionen',
+      'nav.inst.identity': 'Digitale Identität &amp; Kontrolle',
+      'nav.inst.biometry': 'Biometrie &amp; Überwachung',
+      'nav.inst.location': 'Standort &amp; Bewegung',
 
       // footer
       'footer.rights': '© 2025 rfi-irfos. Open Source.',

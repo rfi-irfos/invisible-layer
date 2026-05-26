@@ -51,7 +51,7 @@ document.addEventListener('click', function(e) {
 
 // ── Filter ──
 function filter(cat, btn) {
-  document.querySelectorAll('.filter-btn, .drawer-filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.filter-btn, .drawer-filter-btn, .inst-filter-btn').forEach(b => b.classList.remove('active'));
   // mark both the top-bar and drawer buttons active
   document.querySelectorAll('.filter-btn').forEach(b => {
     if (b.textContent.trim().toLowerCase().startsWith(cat === 'all' ? 'all' : cat.split(' ')[0]))
@@ -66,6 +66,39 @@ function filter(cat, btn) {
   });
   document.querySelectorAll('.grid').forEach(grid => {
     const visible = [...grid.children].some(c => c.style.display !== 'none');
+    grid.style.display = visible ? '' : 'none';
+  });
+}
+
+// ── Institutional filter (multi-experiment cross-category view) ──
+// INST_GROUPS maps button key → array of experiment path slugs
+var INST_GROUPS = {
+  'inst-identity': ['canvas-fingerprint','gpu-identity','audio-fingerprint','device-identity','webrtc-ip-leak','webrtc-turn','network-fingerprint','the-profile'],
+  'inst-biometry': ['gait','face-inference','fingerprint-gate','touch-biometric','body-sensors','keyboard-timing'],
+  'inst-location': ['barometer','gait','urban-canyon','human-density','ble','wifi-density','network-timing']
+};
+
+function filterInst(key, btn) {
+  document.querySelectorAll('.filter-btn, .drawer-filter-btn, .inst-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  var slugs = INST_GROUPS[key] || [];
+  document.querySelectorAll('.experiments .section-label').forEach(function(el) {
+    // show section labels only if at least one card in the group belongs here
+    var grid = el.nextElementSibling;
+    var anyVisible = false;
+    if (grid) {
+      grid.querySelectorAll('.card').forEach(function(card) {
+        var href = card.getAttribute('href') || '';
+        var slug = href.replace(/\/$/, '').split('/').pop();
+        var show = slugs.indexOf(slug) >= 0;
+        card.style.display = show ? '' : 'none';
+        if (show) anyVisible = true;
+      });
+    }
+    el.style.display = anyVisible ? '' : 'none';
+  });
+  document.querySelectorAll('.grid').forEach(function(grid) {
+    var visible = [].some.call(grid.children, function(c) { return c.style.display !== 'none'; });
     grid.style.display = visible ? '' : 'none';
   });
 }

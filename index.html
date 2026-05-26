@@ -345,6 +345,13 @@ body { display:flex; flex-direction:column; align-items:center; }
     <button class="drawer-filter-btn" onclick="filter('biometric',this);closeMenu()" data-i18n="nav.filter.biometric">biometric &amp; body</button>
   </div>
   <div class="drawer-divider"></div>
+  <div style="padding:6px 14px 4px;font-family:var(--font-mono);font-size:0.52rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--dim)" data-i18n="nav.inst.header">Für Institutionen</div>
+  <div class="drawer-categories" role="navigation" aria-label="Institutionelle Kategorien">
+    <button class="drawer-filter-btn inst-filter-btn" onclick="filterInst('inst-identity',this);closeMenu()" data-i18n="nav.inst.identity">Digitale Identität &amp; Kontrolle</button>
+    <button class="drawer-filter-btn inst-filter-btn" onclick="filterInst('inst-biometry',this);closeMenu()" data-i18n="nav.inst.biometry">Biometrie &amp; Überwachung</button>
+    <button class="drawer-filter-btn inst-filter-btn" onclick="filterInst('inst-location',this);closeMenu()" data-i18n="nav.inst.location">Standort &amp; Bewegung</button>
+  </div>
+  <div class="drawer-divider"></div>
   <a class="drawer-link" href="docs/experiments/the-profile/" style="color:#ef4444;border:1px solid rgba(239,68,68,0.18);border-radius:8px;background:rgba(239,68,68,0.04);" onclick="closeMenu()" data-i18n="drawer.profile">
     <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm5 5a5 5 0 0 0-10 0h10z"/></svg>
     your digital profile
@@ -433,6 +440,10 @@ body { display:flex; flex-direction:column; align-items:center; }
     <button class="filter-btn" onclick="filter('meta',this)" data-i18n="nav.filter.meta">meta layer</button>
     <button class="filter-btn" onclick="filter('fp',this)" data-i18n="nav.filter.fp">digital fingerprint</button>
     <button class="filter-btn" onclick="filter('biometric',this)" data-i18n="nav.filter.biometric">biometric &amp; body</button>
+    <span style="width:1px;background:var(--border);margin:10px 4px;flex-shrink:0"></span>
+    <button class="filter-btn inst-filter-btn" onclick="filterInst('inst-identity',this)" data-i18n="nav.inst.identity">Digitale Identität &amp; Kontrolle</button>
+    <button class="filter-btn inst-filter-btn" onclick="filterInst('inst-biometry',this)" data-i18n="nav.inst.biometry">Biometrie &amp; Überwachung</button>
+    <button class="filter-btn inst-filter-btn" onclick="filterInst('inst-location',this)" data-i18n="nav.inst.location">Standort &amp; Bewegung</button>
   </div>
 </div>
 
