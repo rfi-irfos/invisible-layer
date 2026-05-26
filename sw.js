@@ -1,4 +1,4 @@
-const CACHE_NAME = 'invisible-layer-v2';
+const CACHE_NAME = 'invisible-layer-v3';
 const ASSETS_TO_CACHE = [
   '/invisible-layer/assets/css/base.css',
   '/invisible-layer/assets/css/experiment.css',
