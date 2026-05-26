@@ -72,29 +72,29 @@
   <div class="exp-stage">
 
     <div class="exp-intro">
-      <div class="exp-label">experiment · biometric gate</div>
-      <div class="exp-title">your fingerprint<br>unlocks everything.</div>
-      <div class="exp-desc">
-        Touch the sensor. A WebAuthn authentication request will invoke your device's
-        biometric hardware — the same sensor your banking app, phone lock screen,
-        and government ID app use. Below you will see exactly what the browser receives,
-        and what a native app receives instead. The difference between these two lists
-        is where your privacy lives or disappears.
+      <div class="exp-label" data-i18n="exp.fingerprint-gate.label">Biometrie · WebAuthn · Nutzeraktion erforderlich</div>
+      <div class="exp-title" data-i18n="exp.fingerprint-gate.title">dein Fingerabdruck<br>öffnet alles.</div>
+      <div class="exp-desc" data-i18n="exp.fingerprint-gate.desc">
+        Berühr den Sensor. Eine WebAuthn-Authentifizierungsanfrage ruft die biometrische Hardware
+        deines Geräts auf — denselben Sensor, den deine Banking-App, dein Sperrbildschirm und deine
+        digitale Ausweisapp verwenden. Unten siehst du genau, was der Browser erhält — und was eine
+        native App stattdessen bekommen kann. In der Lücke zwischen diesen Listen lebt deine
+        Privatsphäre — oder verschwindet.
       </div>
     </div>
 
-    <div class="shock">
-      <strong>Your fingerprint template never leaves the secure enclave — in the browser.</strong>
-      Native apps, MDM profiles, and OS-level APIs operate under entirely different rules.
-      India's Aadhaar system has centrally stored fingerprints of 1.4 billion people.
-      China's Social Credit system links biometric data to financial and movement records.
-      The EU's Entry/Exit System began fingerprint collection at all external borders in 2024.
-      The sensor in your phone is neutral. Who calls it — and what they do with the result — is not.
+    <div class="shock" data-i18n="exp.fingerprint-gate.shock">
+      <strong>Deine Fingerabdruckvorlage verlässt die sichere Enklave nie — im Browser.</strong>
+      Native Apps, MDM-Profile und OS-APIs arbeiten unter völlig anderen Regeln.
+      Indiens Aadhaar-System hat zentral Fingerabdrücke von 1,4 Milliarden Menschen gespeichert.
+      Chinas Social-Credit-System verknüpft biometrische Daten mit Finanz- und Bewegungsprotokollen.
+      Das Entry/Exit-System der EU begann 2024 mit der Fingerabdruckerfassung an allen Außengrenzen.
+      Der Sensor in deinem Handy ist neutral. Wer ihn aufruft — und was mit dem Ergebnis geschieht — ist es nicht.
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <button class="exp-btn" id="btn-auth" onclick="runWebAuthn()">◉ touch the sensor</button>
-      <button class="exp-btn" id="btn-reset" onclick="resetState()" style="display:none">↺ reset</button>
+      <button class="exp-btn" id="btn-auth" data-i18n="exp.fingerprint-gate.btn-auth" onclick="runWebAuthn()">&#9673; Sensor berühren</button>
+      <button class="exp-btn" id="btn-reset" onclick="resetState()" style="display:none">&#x21BA; Reset</button>
     </div>
 
     <div class="fp-scanner">
@@ -201,7 +201,7 @@
 
     <div class="exp-info">
       <details>
-        <summary>▶ WebAuthn and the secure enclave</summary>
+        <summary data-i18n="exp.fingerprint-gate.summary">&#x25B6; was gibt WebAuthn tatsächlich preis?</summary>
         <p>WebAuthn (FIDO2) is designed so that biometric data never leaves the device's secure
         enclave — a hardware-isolated cryptographic processor separate from the main CPU.
         When you authenticate, the enclave performs the biometric match internally and returns

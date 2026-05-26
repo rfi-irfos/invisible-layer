@@ -334,6 +334,8 @@
       'card.clipboard-access.desc': 'Any page can silently overwrite your clipboard. One permission dialog and a website can read everything you copy.',
       'card.webrtc-turn.title': 'WebRTC TURN leak',
       'card.webrtc-turn.desc': 'WebRTC exposes your full network topology — local IPs, public IP, and ISP routing — with no permission prompt.',
+      'card.storage-quota.title': 'storage quota',
+      'card.storage-quota.desc': 'Your exact free disk space can identify you across sites — no cookies, no login.',
 
       // experiment strings — canvas-fingerprint
       'exp.canvas-fingerprint.label': 'digital fingerprint · canvas API · no permission needed',
@@ -442,7 +444,7 @@
       'exp.clipboard-access.desc': 'The Async Clipboard API lets websites read and write your clipboard with a single permission. Write access requires no permission at all on most browsers — any page can silently replace what you last copied.',
       'exp.clipboard-access.shock': '<strong>In 2019, researchers found 250 of the Alexa top 1000 websites silently overwrote clipboard contents.</strong> Some retail sites injected coupon codes. Malicious pages substitute cryptocurrency wallet addresses at paste time — the victim copies a real address, pastes, and sends funds to the attacker.',
       'exp.clipboard-access.btn-read': '◉ read clipboard',
-      'exp.clipboard-access.btn-write': '⚠ silent overwrite demo',
+      'exp.clipboard-access.btn-write': '&#x26A0; silent overwrite demo',
       'exp.clipboard-access.summary': '▶ what can websites do with your clipboard?',
 
       // experiment strings — webrtc-turn
@@ -460,6 +462,30 @@
       'exp.storage-quota.shock': '<strong>Your exact disk capacity and free space can identify you across sites.</strong> When you visit two different websites, they both see the exact same byte-for-byte storage quota. Because this number fluctuates as you download or delete files, it creates a continuously updating fingerprint that is unique to your physical device. No cookies required.',
       'exp.storage-quota.btn-start': '◉ measure disk',
       'exp.storage-quota.summary': '▶ how does this work?',
+
+      // experiment strings — face-inference
+      'exp.face-inference.label': 'biometric · camera · user gesture required',
+      'exp.face-inference.title': 'your face<br>is a data stream.',
+      'exp.face-inference.desc': 'Point your camera at your face. A model running entirely inside your browser — no upload, no server, no account — will infer your emotional state, estimate your age and gender, map 68 biometric landmarks, and derive an identity hash from your facial geometry. This experiment transmits nothing. Real-world deployments do not make that promise.',
+      'exp.face-inference.shock': '<strong>Passive face inference is already standard infrastructure.</strong> Airport kiosks, supermarket self-checkouts, digital billboards, ATMs, and smart doorbells routinely estimate age, gender, attention, and emotional state — without disclosure. In the EU this is technically regulated. In practice it runs everywhere, in silence, at 30 frames per second.',
+      'exp.face-inference.btn-start': '&#9673; start camera',
+      'exp.face-inference.summary': '&#x25B6; what is the model actually measuring?',
+
+      // experiment strings — fingerprint-gate
+      'exp.fingerprint-gate.label': 'biometric · WebAuthn · user gesture required',
+      'exp.fingerprint-gate.title': 'your fingerprint<br>unlocks everything.',
+      'exp.fingerprint-gate.desc': 'Touch the sensor. A WebAuthn authentication request will invoke your device\'s biometric hardware — the same sensor your banking app, phone lock screen, and government ID app use. Below you will see exactly what the browser receives, and what a native app receives instead. The difference between these two lists is where your privacy lives or disappears.',
+      'exp.fingerprint-gate.shock': '<strong>Your fingerprint template never leaves the secure enclave — in the browser.</strong> Native apps, MDM profiles, and OS-level APIs operate under entirely different rules. India\'s Aadhaar system has centrally stored fingerprints of 1.4 billion people. China\'s Social Credit system links biometric data to financial and movement records. The EU\'s Entry/Exit System began fingerprint collection at all external borders in 2024. The sensor in your phone is neutral. Who calls it — and what they do with the result — is not.',
+      'exp.fingerprint-gate.btn-auth': '&#9673; touch the sensor',
+      'exp.fingerprint-gate.summary': '&#x25B6; what does WebAuthn actually expose?',
+
+      // experiment strings — body-sensors
+      'exp.body-sensors.label': 'biometric · sensors · user gesture required',
+      'exp.body-sensors.title': 'your body<br>is already transmitting.',
+      'exp.body-sensors.desc': 'The sensors in your phone — accelerometer, gyroscope, microphone — were built for navigation and calls. They have a second function nobody disclosed: inferring what your body is doing and how it is doing it. Activity level, tremor, stress, breathing rate, and heartbeat proxies can all be extracted without specialist hardware. No medical device required. No consent requested.',
+      'exp.body-sensors.shock': '<strong>The Internet of Bodies (IoB) is not a future concept. It is already running.</strong> Wearables, phones, smart home devices, and implantables form a continuous biometric data layer. Insurance companies in the US already price premiums on wearable activity data. Employers in several jurisdictions use smart badge sensors to monitor physical proximity and stress levels. The EU\'s proposed IoB regulatory framework was filed in 2023 and remains unadopted. In the meantime, the data flows.',
+      'exp.body-sensors.btn-start': '&#9673; start sensors',
+      'exp.body-sensors.summary': '&#x25B6; what can phone sensors infer about your body?',
 
       // institutional categories
       'nav.inst.header': 'For Institutions',
@@ -805,6 +831,8 @@
       'card.clipboard-access.desc': 'Jede Seite kann deine Zwischenablage still überschreiben. Ein Erlaubnisdialog und eine Website kann alles lesen, was du kopierst.',
       'card.webrtc-turn.title': 'WebRTC TURN-Leak',
       'card.webrtc-turn.desc': 'WebRTC legt deine gesamte Netzwerktopologie offen — lokale IPs, öffentliche IP und ISP-Routing — ohne Erlaubnisabfrage.',
+      'card.storage-quota.title': 'Speicherquote',
+      'card.storage-quota.desc': 'Dein exakt freier Speicherplatz kann dich über Seiten hinweg identifizieren — ohne Cookies, ohne Login.',
 
       // experiment strings — canvas-fingerprint
       'exp.canvas-fingerprint.label': 'Digitaler Fingerabdruck · Canvas API · keine Erlaubnis nötig',
@@ -913,7 +941,7 @@
       'exp.clipboard-access.desc': 'Die Async Clipboard API erlaubt Websites, deine Zwischenablage mit einer einzigen Erlaubnis zu lesen und zu schreiben. Schreibzugriff benötigt auf den meisten Browsern gar keine Erlaubnis — jede Seite kann stillen, was du zuletzt kopiert hast.',
       'exp.clipboard-access.shock': '<strong>2019 stellten Forscher fest, dass 250 der Alexa-Top-1000-Websites Zwischenspeicherinhalte stillen überschrieben.</strong> Manche Einzelhandelsseiten injizierten Gutscheincodes. Bösartige Seiten ersetzen Kryptowährungs-Wallet-Adressen beim Einfügen — das Opfer kopiert eine echte Adresse und sendet Geld an den Angreifer.',
       'exp.clipboard-access.btn-read': '◉ Zwischenablage lesen',
-      'exp.clipboard-access.btn-write': '⚠ Stilles-Überschreiben-Demo',
+      'exp.clipboard-access.btn-write': '&#x26A0; Stilles-Überschreiben-Demo',
       'exp.clipboard-access.summary': '▶ was können Websites mit deiner Zwischenablage tun?',
 
       // experiment strings — webrtc-turn
@@ -931,6 +959,30 @@
       'exp.storage-quota.shock': '<strong>Deine genaue Festplattenkapazität und dein freier Speicherplatz können dich seitenübergreifend identifizieren.</strong> Wenn du zwei verschiedene Websites besuchst, sehen beide auf das Byte genau dieselbe Speicherquote. Da diese Zahl schwankt, wenn du Dateien herunterlädst oder löschst, entsteht ein sich kontinuierlich aktualisierender Fingerabdruck, der für dein physisches Gerät einzigartig ist. Keine Cookies erforderlich.',
       'exp.storage-quota.btn-start': '◉ speicher messen',
       'exp.storage-quota.summary': '▶ wie funktioniert das?',
+
+      // experiment strings — face-inference
+      'exp.face-inference.label': 'Biometrie · Kamera · Nutzeraktion erforderlich',
+      'exp.face-inference.title': 'dein Gesicht<br>ist ein Datenstrom.',
+      'exp.face-inference.desc': 'Halte die Kamera auf dein Gesicht. Ein Modell, das vollständig in deinem Browser läuft — kein Upload, kein Server, kein Konto — leitet deinen emotionalen Zustand ab, schätzt Alter und Geschlecht, kartiert 68 biometrische Landmarken und erstellt einen Identitäts-Hash aus deiner Gesichtsgeometrie. Dieses Experiment überträgt nichts. Reale Systeme machen dieses Versprechen nicht.',
+      'exp.face-inference.shock': '<strong>Passive Gesichtsinferenz ist bereits Standardinfrastruktur.</strong> Flughafenkioske, Supermarkt-Selbstbedienungskassen, digitale Werbetafeln, Geldautomaten und Smart-Türklingeln schätzen routinemäßig Alter, Geschlecht, Aufmerksamkeit und emotionalen Zustand — ohne Offenlegung. In der EU ist das technisch reguliert. In der Praxis läuft es überall, schweigend, mit 30 Bildern pro Sekunde.',
+      'exp.face-inference.btn-start': '&#9673; Kamera starten',
+      'exp.face-inference.summary': '&#x25B6; was misst das Modell wirklich?',
+
+      // experiment strings — fingerprint-gate
+      'exp.fingerprint-gate.label': 'Biometrie · WebAuthn · Nutzeraktion erforderlich',
+      'exp.fingerprint-gate.title': 'dein Fingerabdruck<br>öffnet alles.',
+      'exp.fingerprint-gate.desc': 'Berühr den Sensor. Eine WebAuthn-Authentifizierungsanfrage ruft die biometrische Hardware deines Geräts auf — denselben Sensor, den deine Banking-App, dein Sperrbildschirm und deine digitale Ausweisapp verwenden. Unten siehst du genau, was der Browser erhält — und was eine native App stattdessen bekommen kann. In der Lücke zwischen diesen Listen lebt deine Privatsphäre — oder verschwindet.',
+      'exp.fingerprint-gate.shock': '<strong>Deine Fingerabdruckvorlage verlässt die sichere Enklave nie — im Browser.</strong> Native Apps, MDM-Profile und OS-APIs arbeiten unter völlig anderen Regeln. Indiens Aadhaar-System hat zentral Fingerabdrücke von 1,4 Milliarden Menschen gespeichert. Chinas Social-Credit-System verknüpft biometrische Daten mit Finanz- und Bewegungsprotokollen. Das Entry/Exit-System der EU begann 2024 mit der Fingerabdruckerfassung an allen Außengrenzen. Der Sensor in deinem Handy ist neutral. Wer ihn aufruft — und was mit dem Ergebnis geschieht — ist es nicht.',
+      'exp.fingerprint-gate.btn-auth': '&#9673; Sensor berühren',
+      'exp.fingerprint-gate.summary': '&#x25B6; was gibt WebAuthn tatsächlich preis?',
+
+      // experiment strings — body-sensors
+      'exp.body-sensors.label': 'Biometrie · Sensoren · Nutzeraktion erforderlich',
+      'exp.body-sensors.title': 'dein Körper<br>sendet bereits.',
+      'exp.body-sensors.desc': 'Die Sensoren deines Handys — Beschleunigungssensor, Gyroskop, Mikrofon — wurden für Navigation und Telefonate gebaut. Sie haben eine zweite Funktion, die niemand offengelegt hat: ableiten, was dein Körper tut und wie er es tut. Aktivitätsniveau, Tremor, Stress, Atemfrequenz und Herzschlag-Proxys können alle ohne Spezialgerät extrahiert werden. Kein Medizingerät erforderlich. Keine Einwilligung angefragt.',
+      'exp.body-sensors.shock': '<strong>Das Internet der Körper (IoB) ist kein Zukunftskonzept. Es läuft bereits.</strong> Wearables, Handys, Smart-Home-Geräte und Implantate bilden eine kontinuierliche biometrische Datenschicht. Versicherungsunternehmen in den USA berechnen bereits Prämien auf Basis von Wearable-Aktivitätsdaten. Arbeitgeber in einigen Ländern nutzen Smart-Badge-Sensoren, um körperliche Nähe und Stressniveaus zu überwachen. Das vorgeschlagene EU-Regulierungsrahmen für das IoB wurde 2023 eingereicht und ist noch nicht verabschiedet. Inzwischen fließen die Daten.',
+      'exp.body-sensors.btn-start': '&#9673; Sensoren starten',
+      'exp.body-sensors.summary': '&#x25B6; was können Handy-Sensoren über deinen Körper ableiten?',
 
       // institutional categories
       'nav.inst.header': 'Für Institutionen',

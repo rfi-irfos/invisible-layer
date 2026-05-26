@@ -81,29 +81,29 @@
   <div class="exp-stage">
 
     <div class="exp-intro">
-      <div class="exp-label">experiment · internet of bodies</div>
-      <div class="exp-title">your body<br>is already transmitting.</div>
-      <div class="exp-desc">
-        The sensors in your phone — accelerometer, gyroscope, microphone — were built for
-        navigation and calls. They have a second function nobody disclosed: inferring what
-        your body is doing and how it is doing it. Activity level, tremor, stress, breathing
-        rate, and heartbeat proxies can all be extracted without specialist hardware.
-        No medical device required. No consent requested.
+      <div class="exp-label" data-i18n="exp.body-sensors.label">Biometrie · Sensoren · Nutzeraktion erforderlich</div>
+      <div class="exp-title" data-i18n="exp.body-sensors.title">dein Körper<br>sendet bereits.</div>
+      <div class="exp-desc" data-i18n="exp.body-sensors.desc">
+        Die Sensoren deines Handys — Beschleunigungssensor, Gyroskop, Mikrofon — wurden für
+        Navigation und Telefonate gebaut. Sie haben eine zweite Funktion, die niemand offengelegt hat:
+        ableiten, was dein Körper tut und wie er es tut. Aktivitätsniveau, Tremor, Stress,
+        Atemfrequenz und Herzschlag-Proxys können alle ohne Spezialgerät extrahiert werden.
+        Kein Medizingerät erforderlich. Keine Einwilligung angefragt.
       </div>
     </div>
 
-    <div class="shock">
-      <strong>The Internet of Bodies (IoB) is not a future concept. It is already running.</strong>
-      Wearables, phones, smart home devices, and implantables form a continuous biometric
-      data layer. Insurance companies in the US already price premiums on wearable activity data.
-      Employers in several jurisdictions use smart badge sensors to monitor physical proximity
-      and stress levels. The EU's proposed IoB regulatory framework was filed in 2023
-      and remains unadopted. In the meantime, the data flows.
+    <div class="shock" data-i18n="exp.body-sensors.shock">
+      <strong>Das Internet der Körper (IoB) ist kein Zukunftskonzept. Es läuft bereits.</strong>
+      Wearables, Handys, Smart-Home-Geräte und Implantate bilden eine kontinuierliche biometrische
+      Datenschicht. Versicherungsunternehmen in den USA berechnen bereits Prämien auf Basis von
+      Wearable-Aktivitätsdaten. Arbeitgeber in einigen Ländern nutzen Smart-Badge-Sensoren,
+      um körperliche Nähe und Stressniveaus zu überwachen. Das vorgeschlagene EU-Regulierungsrahmen
+      für das IoB wurde 2023 eingereicht und ist noch nicht verabschiedet. Inzwischen fließen die Daten.
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <button class="exp-btn" id="btn-start" onclick="startSensors()">◉ start sensors</button>
-      <button class="exp-btn stop" id="btn-stop" onclick="stopSensors()" style="display:none">■ stop</button>
+      <button class="exp-btn" id="btn-start" data-i18n="exp.body-sensors.btn-start" onclick="startSensors()">&#9673; Sensoren starten</button>
+      <button class="exp-btn stop" id="btn-stop" data-i18n="btn.stop" onclick="stopSensors()" style="display:none">&#9632; Stopp</button>
     </div>
 
     <div class="body-grid" id="body-grid" style="display:none">
@@ -175,7 +175,7 @@
 
     <div class="exp-info">
       <details>
-        <summary>▶ which sensors and what they can actually measure</summary>
+        <summary data-i18n="exp.body-sensors.summary">&#x25B6; was können Handy-Sensoren über deinen Körper ableiten?</summary>
         <p>All readings on this page use sensors that require no special permission on Android
         and are gated only by a generic motion permission prompt on iOS 13+.</p>
         <ul style="font-size:0.72rem;color:var(--dim);line-height:1.9;padding-left:20px;margin-top:6px">

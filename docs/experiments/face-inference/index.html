@@ -106,27 +106,28 @@
   <div class="exp-stage">
 
     <div class="exp-intro">
-      <div class="exp-label">experiment · face inference</div>
-      <div class="exp-title">your face<br>is a data stream.</div>
-      <div class="exp-desc">
-        Point your camera at your face. A model running entirely inside your browser —
-        no upload, no server, no account — will infer your emotional state, estimate your age
-        and gender, map 68 biometric landmarks, and derive an identity hash from your facial geometry.
-        This experiment transmits nothing. Real-world deployments do not make that promise.
+      <div class="exp-label" data-i18n="exp.face-inference.label">biometric · camera · user gesture required</div>
+      <div class="exp-title" data-i18n="exp.face-inference.title">dein Gesicht<br>ist ein Datenstrom.</div>
+      <div class="exp-desc" data-i18n="exp.face-inference.desc">
+        Halte die Kamera auf dein Gesicht. Ein Modell, das vollständig in deinem Browser läuft —
+        kein Upload, kein Server, kein Konto — leitet deinen emotionalen Zustand ab, schätzt Alter
+        und Geschlecht, kartiert 68 biometrische Landmarken und erstellt einen Identitäts-Hash aus
+        deiner Gesichtsgeometrie. Dieses Experiment überträgt nichts. Reale Systeme machen dieses
+        Versprechen nicht.
       </div>
     </div>
 
-    <div class="shock">
-      <strong>Passive face inference is already standard infrastructure.</strong>
-      Airport kiosks, supermarket self-checkouts, digital billboards, ATMs, and smart doorbells
-      routinely estimate age, gender, attention, and emotional state — without disclosure.
-      In the EU this is technically regulated. In practice it runs everywhere, in silence,
-      at 30 frames per second.
+    <div class="shock" data-i18n="exp.face-inference.shock">
+      <strong>Passive Gesichtsinferenz ist bereits Standardinfrastruktur.</strong>
+      Flughafenkioske, Supermarkt-Selbstbedienungskassen, digitale Werbetafeln, Geldautomaten und
+      Smart-Türklingeln schätzen routinemäßig Alter, Geschlecht, Aufmerksamkeit und emotionalen Zustand —
+      ohne Offenlegung. In der EU ist das technisch reguliert. In der Praxis läuft es überall,
+      schweigend, mit 30 Bildern pro Sekunde.
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <button class="exp-btn" id="btn-start" onclick="startInference()">◉ start camera</button>
-      <button class="exp-btn stop" id="btn-stop" onclick="stopInference()" style="display:none">■ stop</button>
+      <button class="exp-btn" id="btn-start" data-i18n="exp.face-inference.btn-start" onclick="startInference()">&#9673; Kamera starten</button>
+      <button class="exp-btn stop" id="btn-stop" data-i18n="btn.stop" onclick="stopInference()" style="display:none">&#9632; Stopp</button>
     </div>
 
     <div id="load-msg" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--dim);display:none;padding:4px 0">
@@ -183,7 +184,7 @@
 
     <div class="exp-info">
       <details>
-        <summary>▶ what is the model actually measuring?</summary>
+        <summary data-i18n="exp.face-inference.summary">&#x25B6; was misst das Modell wirklich?</summary>
         <p>Three neural networks run in sequence on every frame:</p>
         <ul style="font-size:0.72rem;color:var(--dim);line-height:1.9;padding-left:20px;margin-top:6px">
           <li><strong style="color:#fff">Face detector</strong> — locates bounding boxes at multiple scales. Sub-30ms on modern hardware.</li>
