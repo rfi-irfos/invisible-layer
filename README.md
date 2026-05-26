@@ -1,6 +1,6 @@
 # invisible layer
 
-![experiments](https://img.shields.io/badge/experiments-40-22d3ee?style=flat&labelColor=0f172a)
+![experiments](https://img.shields.io/badge/experiments-44-22d3ee?style=flat&labelColor=0f172a)
 ![sensors](https://img.shields.io/badge/sensors-25%2B-a78bfa?style=flat&labelColor=0f172a)
 ![fingerprints](https://img.shields.io/badge/fingerprints_exposed-yours-ef4444?style=flat&labelColor=0f172a)
 ![languages](https://img.shields.io/badge/languages-EN_%C2%B7_DE_%C2%B7_FR-f59e0b?style=flat&labelColor=0f172a)
@@ -40,7 +40,7 @@ Not an app. Not a product. Not a company with a privacy policy nobody reads. A m
 
 ## what this is
 
-37 browser-based experiments that use your phone's built-in sensors and browser APIs to reveal the hidden layers of physical reality — and one profile page that shows you exactly how you look to the systems that are watching.
+44 browser-based experiments that use your phone's built-in sensors and browser APIs to reveal the hidden layers of physical reality — and one profile page that shows you exactly how you look to the systems that are watching.
 
 No app install. No account. No server. Everything runs locally in your browser.
 
@@ -96,6 +96,13 @@ The profile page answers a different question: *what do they already know about 
 | [retroreflector finder](docs/experiments/retroreflector/) | camera + flash | live |
 | [sky polarization](docs/experiments/sky-polarization/) | camera | live |
 
+### biometric & body
+| experiment | sensor | status |
+|---|---|---|
+| [face inference](docs/experiments/face-inference/) | camera (MediaPipe face mesh) | live |
+| [fingerprint gate](docs/experiments/fingerprint-gate/) | fingerprint / WebAuthn API | live |
+| [body sensors](docs/experiments/body-sensors/) | accelerometer + gyro | live |
+
 ### the meta layer — what you reveal
 | experiment | sensor | status |
 |---|---|---|
@@ -107,6 +114,7 @@ The profile page answers a different question: *what do they already know about 
 | [font enumeration](docs/experiments/font-enumeration/) | font API | live |
 | [network timing](docs/experiments/network-timing/) | fetch timing | live |
 | [the full picture](docs/experiments/the-meta/) | everything | live |
+| [your digital profile](docs/experiments/the-profile/) | all APIs | live |
 
 ### digital fingerprint
 | experiment | sensor | status |
