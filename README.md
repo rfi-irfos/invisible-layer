@@ -264,3 +264,7 @@ That is 9 streams out of the above.
 *The data brokers have a 450-million-point behavioral model on you.*
 *You now have one URL to start deleting it.*
 *Seems like a fair trade.*
+
+## Contributors
+
+Built by the RFI-IRFOS core team — see [CONTRIBUTORS.md](CONTRIBUTORS.md).
