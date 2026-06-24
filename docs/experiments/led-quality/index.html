@@ -135,8 +135,8 @@
 
     <div class="stat-row">
       <div class="stat-cell"><span class="stat-val" id="stat-cct">—</span><span class="stat-lbl">CCT (K)</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-red">—</span><span class="stat-lbl">red ratio %</span></div>
       <div class="stat-cell"><span class="stat-val" id="stat-blue">—</span><span class="stat-lbl">blue ratio %</span></div>
-      <div class="stat-cell"><span class="stat-val" id="stat-green">—</span><span class="stat-lbl">green ratio %</span></div>
     </div>
 
     <div class="spec-canvas-wrap" style="aspect-ratio:3/1">
@@ -222,6 +222,10 @@ async function startLED() {
     videoEl = document.createElement('video');
     videoEl.srcObject = stream;
     videoEl.playsInline = true;
+    videoEl.style.cssText = 'width:100%;border-radius:8px;border:1px solid var(--border);margin-bottom:8px;display:block';
+    // Insert viewfinder before the canvas so user can aim at the light source
+    const canvasWrap = document.querySelector('.spec-canvas-wrap');
+    canvasWrap.parentElement.insertBefore(videoEl, canvasWrap);
     await videoEl.play();
     running = true;
     document.getElementById('btn-start').style.display = 'none';
@@ -239,6 +243,7 @@ function stopLED() {
   running = false;
   if (animId) cancelAnimationFrame(animId);
   if (stream) stream.getTracks().forEach(t => t.stop());
+  if (videoEl && videoEl.parentElement) videoEl.parentElement.removeChild(videoEl);
   document.getElementById('btn-start').style.display = 'inline-flex';
   document.getElementById('btn-stop').style.display = 'none';
   document.getElementById('cri-verdict').textContent = 'stopped';
@@ -313,8 +318,8 @@ function updateAnalysis(rp, gp, bp, rRaw, gRaw, bRaw) {
   document.getElementById('cri-verdict').style.color = criEst >= 90 ? 'var(--green)' : criEst >= 80 ? 'var(--cyan)' : criEst >= 70 ? 'var(--amber)' : 'var(--red)';
 
   document.getElementById('stat-cct').textContent = cct + 'K';
+  document.getElementById('stat-red').textContent = (rp * 100).toFixed(1) + '%';
   document.getElementById('stat-blue').textContent = (bp * 100).toFixed(1) + '%';
-  document.getElementById('stat-green').textContent = (gp * 100).toFixed(1) + '%';
 
   document.getElementById('q-type').textContent = lightType;
   document.getElementById('q-cct').textContent = cct + 'K — ' + (cct < 3500 ? 'warm' : cct < 5000 ? 'neutral' : 'cool daylight');
@@ -347,9 +352,9 @@ function drawSpectrum(rp, gp, bp) {
 
   // R, G, B channel bars
   const bars = [
-    { pct: 1 - rp, x: W * 0.85, color: 'rgba(248,113,113,0.9)', label: 'R' + (rp*100).toFixed(0)+'%' },
-    { pct: 1 - gp, x: W * 0.45, color: 'rgba(0,255,65,0.9)',    label: 'G' + (gp*100).toFixed(0)+'%' },
-    { pct: 1 - bp, x: W * 0.15, color: 'rgba(34,211,238,0.9)',  label: 'B' + (bp*100).toFixed(0)+'%' },
+    { pct: rp, x: W * 0.85, color: 'rgba(248,113,113,0.9)', label: 'R' + (rp*100).toFixed(0)+'%' },
+    { pct: gp, x: W * 0.45, color: 'rgba(0,255,65,0.9)',    label: 'G' + (gp*100).toFixed(0)+'%' },
+    { pct: bp, x: W * 0.15, color: 'rgba(34,211,238,0.9)',  label: 'B' + (bp*100).toFixed(0)+'%' },
   ];
   bars.forEach(bar => {
     const bw = 28;

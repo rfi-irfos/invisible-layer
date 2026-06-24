@@ -149,7 +149,8 @@
   </div>
 </div>
 <script>
-let running = false, heading = 0, prevHeading = 0, anomalyCount = 0;
+let running = false, heading = 0, anomalyCount = 0;
+let _compassEventName = null; // tracks which event we actually registered
 const historyBuf = new Array(200).fill(0);
 let histHead = 0;
 const JUMP_THRESHOLD = 10; // degrees
@@ -170,6 +171,33 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
+// Module-level handler reference so stopCompass can removeEventListener
+function _compassHandler(e) {
+  if (!running) return;
+  let h = 0;
+  if (e.webkitCompassHeading != null) {
+    h = e.webkitCompassHeading;
+  } else if (e.alpha != null) {
+    h = 360 - e.alpha;
+  }
+  h = ((h % 360) + 360) % 360;
+
+  let diff = Math.abs(h - heading);
+  if (diff > 180) diff = 360 - diff;
+
+  if (diff > JUMP_THRESHOLD) {
+    anomalyCount++;
+    document.getElementById('stat-anomalies').textContent = anomalyCount;
+    document.getElementById('stat-jump').textContent = diff.toFixed(0) + '°';
+    flashAnomaly();
+  }
+
+  heading = h;
+  historyBuf[histHead % historyBuf.length] = h;
+  histHead++;
+  updateDisplay(h, diff);
+}
+
 function startCompass() {
   const go = () => {
     running = true;
@@ -178,37 +206,11 @@ function startCompass() {
     document.getElementById('heading-status').textContent = 'walk slowly · watch for jumps';
     document.getElementById('heading-status').style.color = 'var(--cyan)';
 
-    const handler = (e) => {
-      if (!running) return;
-      // webkitCompassHeading on iOS, 360 - alpha on Android
-      let h = 0;
-      if (e.webkitCompassHeading != null) {
-        h = e.webkitCompassHeading;
-      } else if (e.alpha != null) {
-        h = 360 - e.alpha;
-      }
-      h = ((h % 360) + 360) % 360;
-
-      // detect jump
-      let diff = Math.abs(h - heading);
-      if (diff > 180) diff = 360 - diff;
-
-      if (diff > JUMP_THRESHOLD) {
-        anomalyCount++;
-        document.getElementById('stat-anomalies').textContent = anomalyCount;
-        document.getElementById('stat-jump').textContent = diff.toFixed(0) + '°';
-        flashAnomaly();
-      }
-
-      heading = h;
-      historyBuf[histHead % historyBuf.length] = h;
-      histHead++;
-
-      updateDisplay(h, diff);
-    };
-
-    window.addEventListener('deviceorientationabsolute', handler, true);
-    window.addEventListener('deviceorientation', handler, true);
+    // Prefer absolute heading; fall back to relative if not supported
+    _compassEventName = ('ondeviceorientationabsolute' in window)
+      ? 'deviceorientationabsolute'
+      : 'deviceorientation';
+    window.addEventListener(_compassEventName, _compassHandler, true);
     requestAnimationFrame(renderLoop);
   };
 
@@ -223,6 +225,7 @@ function startCompass() {
 
 function stopCompass() {
   running = false;
+  if (_compassEventName) window.removeEventListener(_compassEventName, _compassHandler, true);
   document.getElementById('btn-start').style.display = 'inline-flex';
   document.getElementById('btn-stop').style.display = 'none';
   document.getElementById('heading-status').textContent = 'stopped';
@@ -352,12 +355,27 @@ function drawHistory() {
   const ordered = new Array(n);
   for (let i = 0; i < n; i++) ordered[i] = historyBuf[(histHead + i) % n];
 
-  // heading line
+  // heading line - break the path on circular wrap (e.g. 359->1) to avoid full-height spike
   hctx.beginPath();
+  let penDown = false;
   ordered.forEach((h, i) => {
     const x = (i / (n - 1)) * W;
     const y = H * 0.1 + (H * 0.8) * (h / 360);
-    i === 0 ? hctx.moveTo(x, y) : hctx.lineTo(x, y);
+    if (!penDown) {
+      hctx.moveTo(x, y);
+      penDown = true;
+    } else {
+      const prev = ordered[i - 1];
+      const jump = Math.abs(h - prev);
+      if (jump > 180) {
+        // wrap discontinuity — lift pen
+        hctx.stroke();
+        hctx.beginPath();
+        hctx.moveTo(x, y);
+      } else {
+        hctx.lineTo(x, y);
+      }
+    }
   });
   hctx.strokeStyle = 'rgba(34,211,238,0.7)';
   hctx.lineWidth = 1.5;

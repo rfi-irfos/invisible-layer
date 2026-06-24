@@ -182,6 +182,10 @@ const magBuf = new Array(BUF_LEN).fill(0);
 let bufHead = 0;
 let taps = 0, lastTap = 0, capturing = false, captureFrame = [];
 
+// Measure actual sample rate at runtime instead of hardcoding 100
+let SR = 60; // conservative default
+let srCount = 0, srT0 = null;
+
 const waveCanvas = document.getElementById('wave-canvas');
 const fftCanvas  = document.getElementById('fft-canvas');
 const wctx = waveCanvas.getContext('2d');
@@ -228,6 +232,11 @@ function stopResonance() {
 
 function onMotion(e) {
   if (!running || !e.accelerationIncludingGravity) return;
+  // Calibrate sample rate from first 3 seconds of data
+  if (srT0 === null) srT0 = Date.now();
+  srCount++;
+  const elapsed = (Date.now() - srT0) / 1000;
+  if (elapsed >= 3 && srCount > 30) SR = Math.round(srCount / elapsed);
   const rx = e.accelerationIncludingGravity.x || 0;
   const ry = e.accelerationIncludingGravity.y || 0;
   const rz = e.accelerationIncludingGravity.z || 0;
@@ -272,12 +281,14 @@ function dft(signal, targetHz, sampleRate) {
 
 function analyzeCapture() {
   if (captureFrame.length < 20) return;
-  const SR = 100; // approximate accelerometer sample rate
+  // Skip first 4 samples (tap transient) so the ring-down dominates the FFT
+  const frame = captureFrame.slice(4);
+  if (frame.length < 10) return;
   const maxHz = 50;
   let peakAmp = 0, peakHz = 0;
   const spectrum = [];
   for (let hz = 1; hz <= maxHz; hz++) {
-    const amp = dft(captureFrame, hz, SR);
+    const amp = dft(frame, hz, SR);
     spectrum.push(amp);
     if (amp > peakAmp) { peakAmp = amp; peakHz = hz; }
   }
@@ -312,8 +323,8 @@ function analyzeCapture() {
     fctx.fillStyle = `hsla(${hue},70%,55%,0.8)`;
     fctx.fillRect(i * barW, H - h, barW - 0.5, h);
   });
-  // Peak marker
-  fctx.fillStyle = 'var(--red)';
+  // Peak marker — canvas ignores CSS vars, use literal color
+  fctx.fillStyle = '#f87171';
   fctx.font = '9px monospace';
   fctx.textAlign = 'center';
   fctx.fillText(peakHz + 'Hz', (peakHz - 1) * barW + barW / 2, H - (peakAmp / maxS) * H * 0.85 - 5);
