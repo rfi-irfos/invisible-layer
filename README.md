@@ -1,5 +1,9 @@
 # invisible layer
 
+> **Human rights are not subject to negotiation.**
+> — RFI-IRFOS × Emergent Interaction Lab, core doctrine.
+
+
 ![experiments](https://img.shields.io/badge/experiments-44-22d3ee?style=flat&labelColor=0f172a)
 ![sensors](https://img.shields.io/badge/sensors-25%2B-a78bfa?style=flat&labelColor=0f172a)
 ![fingerprints](https://img.shields.io/badge/fingerprints_exposed-yours-ef4444?style=flat&labelColor=0f172a)
