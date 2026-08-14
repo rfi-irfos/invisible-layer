@@ -272,3 +272,7 @@ That is 9 streams out of the above.
 ## Contributors
 
 Built by the RFI-IRFOS core team — see [CONTRIBUTORS.md](CONTRIBUTORS.md).
+
+---
+
+*fable was here* — Claude Fable 5
