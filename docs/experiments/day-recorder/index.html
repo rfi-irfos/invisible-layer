@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>document.documentElement.dataset.theme=localStorage.getItem('il-theme')||'dark';</script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Day recorder — invisible layer</title>
+<meta name="theme-color" content="#0f172a"/>
+<link rel="manifest" href="manifest.webmanifest"/>
+<link rel="apple-touch-icon" href="../../../assets/icons/icon-192x192.png"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<link rel="stylesheet" href="../../../assets/css/base.css"/>
+<link rel="stylesheet" href="../../../assets/css/experiment.css"/>
+<style>
+.live-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.live-cell { background: var(--surface); padding: 9px 12px; display: flex; flex-direction: column; gap: 2px; }
+.live-cell .k { font-size: 0.56rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.live-cell .v { font-family: var(--font-mono); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.opts { display: flex; flex-wrap: wrap; gap: 14px; width: 100%; font-size: 0.7rem; color: var(--dim); align-items: center; }
+.opts label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.opts select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; font-family: var(--font-mono); font-size: 0.7rem; }
+.status-line { width: 100%; font-size: 0.68rem; letter-spacing: 0.06em; color: var(--dim); min-height: 1.2em; }
+.event-log { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.event-header { padding: 8px 14px; font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--border); }
+.event-body { max-height: 190px; overflow-y: auto; }
+.event-item { padding: 6px 14px; font-size: 0.64rem; color: var(--dim); display: flex; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.event-item .et { flex-shrink: 0; opacity: 0.55; font-variant-numeric: tabular-nums; }
+.event-item .em { flex: 1; color: var(--text); }
+.export-row { display: flex; gap: 8px; flex-wrap: wrap; width: 100%; }
+.export-row .exp-btn { flex: 1 1 auto; justify-content: center; }
+</style>
+</head>
+<body>
+<div class="exp-shell">
+
+  <header class="exp-header">
+    <div class="exp-header-left">
+      <div class="exp-breadcrumb">
+        <a href="../../../">invisible layer</a> / <strong>day recorder</strong>
+      </div>
+    </div>
+    <button class="exp-theme-btn" onclick="(function(){var T=['dark','light','hc'],d=document.documentElement,c=d.dataset.theme||'dark',n=T[(T.indexOf(c)+1)%3];d.dataset.theme=n;localStorage.setItem('il-theme',n)})()" title="toggle theme" aria-label="toggle theme"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+    <a class="exp-close" href="../../../" title="close">✕</a>
+  </header>
+
+  <div class="exp-body">
+  <div class="exp-stage">
+
+    <div class="exp-intro">
+      <div class="exp-label">experiment 45 · all sensors</div>
+      <div class="exp-title">record yourself.<br>the whole day.</div>
+      <div class="exp-desc">
+        Start the recorder, keep the phone with you, and let it write down what a
+        website is allowed to know about your day: how you move, how the phone is held,
+        magnetic field, light, battery, network, screen state. Everything stays in this
+        browser. When you are done, export two CSV files: a per-second sample table and a
+        process-mining event log (<code>case_id, activity, timestamp</code>).
+      </div>
+    </div>
+
+    <div class="shock">
+      <strong>this is the same data a tracking SDK collects in the background.</strong>
+      The difference: you hold the file. Open the event log and look at what it says about
+      when you sat, walked, charged, slept and picked the phone up.
+      Browsers freeze sensors when the screen locks, so keep the recorder in the foreground
+      with the screen on (a charger helps). Every gap is logged as an event of its own.
+    </div>
+
+    <div class="opts">
+      <label>sample every
+        <select id="opt-interval">
+          <option value="1">1 s</option>
+          <option value="5" selected>5 s</option>
+          <option value="10">10 s</option>
+          <option value="30">30 s</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="opt-geo"/> location (GPS)</label>
+      <label><input type="checkbox" id="opt-mic"/> sound level (no audio saved)</label>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%;align-items:center;">
+      <button class="exp-btn" id="btn-start" onclick="startRecording()">◉ start recording</button>
+      <button class="exp-btn stop" id="btn-stop" onclick="stopRecording()" style="display:none">■ stop</button>
+    </div>
+    <div class="status-line" id="status">idle</div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><span class="stat-val" id="stat-rows">0</span><span class="stat-lbl">samples stored</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-events">0</span><span class="stat-lbl">events stored</span></div>
+      <div class="stat-cell"><span class="stat-val" id="stat-uptime">0s</span><span class="stat-lbl">this session</span></div>
+    </div>
+
+    <div class="live-grid" id="live">
+      <div class="live-cell"><span class="k">activity (heuristic)</span><span class="v" id="lv-activity">–</span></div>
+      <div class="live-cell"><span class="k">phone pose</span><span class="v" id="lv-pose">–</span></div>
+      <div class="live-cell"><span class="k">linear accel rms</span><span class="v" id="lv-lin">–</span></div>
+      <div class="live-cell"><span class="k">rotation rate</span><span class="v" id="lv-rot">–</span></div>
+      <div class="live-cell"><span class="k">magnetic field</span><span class="v" id="lv-mag">–</span></div>
+      <div class="live-cell"><span class="k">light</span><span class="v" id="lv-light">–</span></div>
+      <div class="live-cell"><span class="k">battery</span><span class="v" id="lv-batt">–</span></div>
+      <div class="live-cell"><span class="k">network</span><span class="v" id="lv-net">–</span></div>
+    </div>
+
+    <div class="event-log">
+      <div class="event-header">event log · newest first</div>
+      <div class="event-body" id="event-body">
+        <div class="event-item"><span class="em" style="color:var(--dim)">no events yet</span></div>
+      </div>
+    </div>
+
+    <div class="export-row">
+      <button class="exp-btn" onclick="exportCsv('events')">⇩ events.csv</button>
+      <button class="exp-btn" onclick="exportCsv('samples')">⇩ samples.csv</button>
+      <button class="exp-btn" onclick="exportCsv('sessions')">⇩ sessions.csv</button>
+      <button class="exp-btn" id="btn-share" onclick="shareAll()" style="display:none">⇪ share all</button>
+      <button class="exp-btn stop" onclick="clearData()">✕ delete all data</button>
+    </div>
+    <div class="status-line" id="storage-line"></div>
+
+    <div class="exp-info">
+      <details>
+        <summary>▶ what is in the files?</summary>
+        <p><code>samples.csv</code>: one row per sample interval. Motion channels are aggregated over the
+        interval (mean of gravity-including acceleration, mean/rms/max of linear acceleration,
+        mean rotation rate), orientation and magnetometer are the last reading, plus light, battery,
+        charging, network type, screen orientation, tab visibility and the optional GPS and sound level.
+        Empty cells mean the sensor does not exist on this device or browser.</p>
+        <p><code>events.csv</code>: state changes only, ready for process mining. Columns:
+        <code>case_id</code> (local day), <code>activity</code>, <code>timestamp</code> (UTC, ISO 8601),
+        <code>session_id</code>, <code>detail</code>. Activities are
+        <code>activity: still | handling | moving</code>,
+        <code>pose: flat face up | flat face down | upright | landscape | tilted</code>,
+        <code>screen: visible | hidden</code>, <code>power: charging | discharging</code>,
+        <code>network: online | offline</code>, <code>light: dark | dim | bright</code>,
+        <code>recording: started | stopped | gap | resumed | interrupted</code>.
+        A new state is only emitted after it has held for three samples, and its timestamp is
+        the first sample of that state.</p>
+        <p>The activity labels come from simple thresholds on motion magnitude. They are a heuristic and
+        vary by device, so check them against your own day before trusting them.</p>
+        <p>Pose signs follow Android. On iOS the accelerometer axes are inverted in some versions, so
+        "face up" and "face down" can be swapped.</p>
+      </details>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── config ────────────────────────────────────────────────────────────────
+const DB_NAME = 'il-day-recorder';
+const GAP_FACTOR = 2.5;          // a tick later than 2.5 x interval counts as a gap
+const DWELL = { activity: 3, pose: 3, light: 3 };
+const SAMPLE_COLS = [
+  'ts_utc', 'ts_unix_ms', 'session_id', 'interval_s', 'visible', 'motion_n',
+  'accg_x', 'accg_y', 'accg_z', 'lin_rms', 'lin_mean', 'lin_max',
+  'rot_alpha', 'rot_beta', 'rot_gamma', 'rot_mag',
+  'orient_alpha', 'orient_beta', 'orient_gamma',
+  'mag_x', 'mag_y', 'mag_z', 'mag_uT', 'light_lux',
+  'battery_level', 'charging', 'net_online', 'net_type', 'net_downlink_mbps', 'net_rtt_ms',
+  'screen_orientation', 'lat', 'lon', 'geo_accuracy_m', 'speed_ms', 'mic_db',
+  'activity', 'pose'
+];
+const EVENT_COLS = ['case_id', 'activity', 'timestamp', 'session_id', 'detail'];
+const SESSION_COLS = ['session_id', 'start_utc', 'end_utc', 'last_sample_utc', 'interval_s', 'timezone', 'tz_offset_min', 'user_agent', 'sensors', 'options'];
+
+// ── IndexedDB ─────────────────────────────────────────────────────────────
+let dbp = null;
+function db() {
+  if (!dbp) dbp = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const d = req.result;
+      d.createObjectStore('samples', { autoIncrement: true });
+      d.createObjectStore('events', { autoIncrement: true });
+      d.createObjectStore('sessions', { keyPath: 'session_id' });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return dbp;
+}
+function tx(stores, mode, fn) {
+  return db().then(d => new Promise((resolve, reject) => {
+    const t = d.transaction(stores, mode);
+    const out = fn(t);
+    t.oncomplete = () => resolve(out && out.result !== undefined ? out.result : out);
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error);
+  }));
+}
+const getAll = (store) => db().then(d => new Promise((resolve, reject) => {
+  const r = d.transaction(store).objectStore(store).getAll();
+  r.onsuccess = () => resolve(r.result);
+  r.onerror = () => reject(r.error);
+}));
+const countOf = (store) => db().then(d => new Promise((resolve, reject) => {
+  const r = d.transaction(store).objectStore(store).count();
+  r.onsuccess = () => resolve(r.result);
+  r.onerror = () => reject(r.error);
+}));
+
+// ── helpers ───────────────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+const iso = (ms) => new Date(ms).toISOString();
+const r4 = (v) => (v == null || !isFinite(v)) ? '' : Math.round(v * 10000) / 10000;
+const caseOf = (ms) => new Date(ms - new Date(ms).getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const fmtDur = (s) => s < 60 ? s + 's' : s < 3600 ? Math.floor(s / 60) + 'm ' + (s % 60) + 's'
+  : Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
+function setStatus(msg, color) { const e = $('status'); e.textContent = msg; e.style.color = color || 'var(--dim)'; }
+
+// ── recorder state ────────────────────────────────────────────────────────
+let rec = null; // live session, null when idle
+const latest = {
+  visible: 1, orient: null, mag: null, light: null, battery: null, charging: null,
+  net: null, screenOrientation: null, geo: null, mic: null
+};
+let agg = newAgg();
+const grav = { x: 0, y: 0, z: 0 };
+let sampleBuf = [], eventBuf = [];
+const states = {};
+let teardown = [];
+
+function newAgg() { return { n: 0, gx: 0, gy: 0, gz: 0, lm: 0, lm2: 0, lmax: 0, ra: 0, rb: 0, rg: 0, rm: 0 }; }
+
+// ── event log ─────────────────────────────────────────────────────────────
+function emit(activity, ts, detail) {
+  if (!rec) return;
+  const ev = { case_id: caseOf(ts), activity, timestamp: iso(ts), session_id: rec.id, detail: detail || '' };
+  eventBuf.push(ev);
+  showEvent(ev);
+}
+function showEvent(ev) {
+  const body = $('event-body');
+  if (body.children.length === 1 && !body.children[0].querySelector('.et')) body.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'event-item';
+  const t = document.createElement('span'); t.className = 'et'; t.textContent = ev.timestamp.slice(11, 19) + 'Z';
+  const m = document.createElement('span'); m.className = 'em'; m.textContent = ev.activity + (ev.detail ? ' · ' + ev.detail : '');
+  row.append(t, m);
+  body.insertBefore(row, body.firstChild);
+  while (body.children.length > 40) body.removeChild(body.lastChild);
+}
+// Emit a state change once the new value has held for `dwell` observations.
+// The event carries the timestamp of the first observation of the new state.
+function observe(key, label, val, ts, dwell) {
+  if (val == null) return;
+  const s = states[key] || (states[key] = { cur: null, cand: null, count: 0, since: 0 });
+  if (val === s.cur) { s.cand = null; s.count = 0; return; }
+  if (val !== s.cand) { s.cand = val; s.count = 1; s.since = ts; } else { s.count++; }
+  if (s.count >= dwell) {
+    s.cur = val; s.cand = null; s.count = 0;
+    emit(label + ': ' + val, s.since);
+  }
+}
+
+// ── sensors ───────────────────────────────────────────────────────────────
+function onMotion(e) {
+  const g = e.accelerationIncludingGravity;
+  if (!g || g.x == null) return;
+  let lx, ly, lz;
+  const a = e.acceleration;
+  if (a && a.x != null) { lx = a.x; ly = a.y; lz = a.z; }
+  else { // fallback: high-pass the gravity-including signal
+    grav.x = 0.9 * grav.x + 0.1 * g.x; grav.y = 0.9 * grav.y + 0.1 * g.y; grav.z = 0.9 * grav.z + 0.1 * g.z;
+    lx = g.x - grav.x; ly = g.y - grav.y; lz = g.z - grav.z;
+  }
+  const lm = Math.hypot(lx, ly, lz);
+  agg.n++; agg.gx += g.x; agg.gy += g.y; agg.gz += g.z;
+  agg.lm += lm; agg.lm2 += lm * lm; if (lm > agg.lmax) agg.lmax = lm;
+  const r = e.rotationRate;
+  if (r && r.alpha != null) {
+    agg.ra += r.alpha; agg.rb += r.beta; agg.rg += r.gamma;
+    agg.rm += Math.hypot(r.alpha, r.beta, r.gamma);
+  }
+}
+function onOrient(e) { latest.orient = { a: e.alpha, b: e.beta, g: e.gamma }; }
+function onVisibility() {
+  latest.visible = document.visibilityState === 'visible' ? 1 : 0;
+  if (!rec) return;
+  emit('screen: ' + (latest.visible ? 'visible' : 'hidden'), Date.now());
+  if (latest.visible) requestWakeLock();
+  flush();
+}
+function onScreenOrientation() {
+  latest.screenOrientation = (screen.orientation && screen.orientation.type) || null;
+}
+
+async function requestMotionPermissions() {
+  const out = { motion: 'unsupported', orientation: 'unsupported' };
+  if (typeof DeviceMotionEvent !== 'undefined') {
+    out.motion = 'granted';
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      try { out.motion = await DeviceMotionEvent.requestPermission(); } catch (e) { out.motion = 'denied'; }
+    }
+  }
+  if (typeof DeviceOrientationEvent !== 'undefined') {
+    out.orientation = 'granted';
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try { out.orientation = await DeviceOrientationEvent.requestPermission(); } catch (e) { out.orientation = 'denied'; }
+    }
+  }
+  return out;
+}
+
+function startGenericSensor(name, opts, onReading) {
+  if (!(name in window)) return false;
+  try {
+    const s = new window[name](opts);
+    s.addEventListener('reading', () => onReading(s));
+    s.addEventListener('error', () => {});
+    s.start();
+    teardown.push(() => { try { s.stop(); } catch (e) {} });
+    return true;
+  } catch (e) { return false; }
+}
+
+async function startBattery() {
+  if (!navigator.getBattery) return false;
+  try {
+    const b = await navigator.getBattery();
+    const upd = () => { latest.battery = b.level; latest.charging = b.charging ? 1 : 0; };
+    const onCharge = () => {
+      upd();
+      if (rec) emit('power: ' + (b.charging ? 'charging' : 'discharging'), Date.now(), Math.round(b.level * 100) + '%');
+    };
+    upd();
+    b.addEventListener('chargingchange', onCharge);
+    b.addEventListener('levelchange', upd);
+    teardown.push(() => { b.removeEventListener('chargingchange', onCharge); b.removeEventListener('levelchange', upd); });
+    return true;
+  } catch (e) { return false; }
+}
+
+function readNet() {
+  const c = navigator.connection;
+  latest.net = {
+    online: navigator.onLine ? 1 : 0,
+    type: c ? (c.type || c.effectiveType || '') : '',
+    down: c && c.downlink != null ? c.downlink : null,
+    rtt: c && c.rtt != null ? c.rtt : null
+  };
+}
+function onNetChange() {
+  const before = latest.net && latest.net.online;
+  readNet();
+  if (rec && before !== latest.net.online) emit('network: ' + (latest.net.online ? 'online' : 'offline'), Date.now(), latest.net.type);
+}
+
+async function startMic() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AC();
+    const an = ctx.createAnalyser(); an.fftSize = 2048;
+    ctx.createMediaStreamSource(stream).connect(an);
+    const buf = new Float32Array(an.fftSize);
+    // Only an RMS level is kept. No audio is stored or transmitted.
+    const iv = setInterval(() => {
+      an.getFloatTimeDomainData(buf);
+      let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i];
+      latest.mic = 20 * Math.log10(Math.sqrt(s / buf.length) + 1e-9);
+    }, 500);
+    teardown.push(() => { clearInterval(iv); stream.getTracks().forEach(t => t.stop()); ctx.close(); });
+    return true;
+  } catch (e) { return false; }
+}
+
+function startGeo() {
+  if (!navigator.geolocation) return false;
+  const id = navigator.geolocation.watchPosition(
+    (p) => { latest.geo = { lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy, speed: p.coords.speed }; },
+    () => {}, { enableHighAccuracy: true, maximumAge: 5000 });
+  teardown.push(() => navigator.geolocation.clearWatch(id));
+  return true;
+}
+
+let wakeLock = null;
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator) || !rec) return false;
+  try { wakeLock = await navigator.wakeLock.request('screen'); return true; } catch (e) { return false; }
+}
+
+// ── classification (heuristic) ────────────────────────────────────────────
+function classifyActivity(linRms, rotMag) {
+  if (linRms < 0.05 && rotMag < 3) return 'still';
+  if (linRms < 0.8) return 'handling';
+  return 'moving';
+}
+function classifyPose(gx, gy, gz) {
+  const G = 9.81;
+  if (Math.abs(gz) > 0.85 * G) return gz > 0 ? 'flat face up' : 'flat face down';
+  if (Math.abs(gy) > 0.7 * G) return 'upright';
+  if (Math.abs(gx) > 0.7 * G) return 'landscape';
+  return 'tilted';
+}
+function classifyLight(lux) { return lux < 10 ? 'dark' : lux < 200 ? 'dim' : 'bright'; }
+
+// ── tick ──────────────────────────────────────────────────────────────────
+function tick() {
+  if (!rec) return;
+  const now = Date.now();
+  const gap = now - rec.lastTick;
+  if (gap > GAP_FACTOR * rec.intervalMs) {
+    emit('recording: gap', rec.lastTick, Math.round(gap / 1000) + 's without data');
+    emit('recording: resumed', now);
+    rec.gaps++;
+  }
+  rec.lastTick = now;
+
+  const n = agg.n;
+  const row = {
+    ts_utc: iso(now), ts_unix_ms: now, session_id: rec.id, interval_s: rec.intervalMs / 1000,
+    visible: latest.visible, motion_n: n
+  };
+  let activity = '', pose = '';
+  if (n > 0) {
+    const gx = agg.gx / n, gy = agg.gy / n, gz = agg.gz / n;
+    const linMean = agg.lm / n, linRms = Math.sqrt(agg.lm2 / n), rotMag = agg.rm / n;
+    Object.assign(row, {
+      accg_x: r4(gx), accg_y: r4(gy), accg_z: r4(gz),
+      lin_rms: r4(linRms), lin_mean: r4(linMean), lin_max: r4(agg.lmax),
+      rot_alpha: r4(agg.ra / n), rot_beta: r4(agg.rb / n), rot_gamma: r4(agg.rg / n), rot_mag: r4(rotMag)
+    });
+    activity = classifyActivity(linRms, rotMag);
+    pose = classifyPose(gx, gy, gz);
+    observe('activity', 'activity', activity, now, DWELL.activity);
+    observe('pose', 'pose', pose, now, DWELL.pose);
+  }
+  if (latest.orient) Object.assign(row, { orient_alpha: r4(latest.orient.a), orient_beta: r4(latest.orient.b), orient_gamma: r4(latest.orient.g) });
+  if (latest.mag) Object.assign(row, { mag_x: r4(latest.mag.x), mag_y: r4(latest.mag.y), mag_z: r4(latest.mag.z), mag_uT: r4(Math.hypot(latest.mag.x, latest.mag.y, latest.mag.z)) });
+  if (latest.light != null) {
+    row.light_lux = r4(latest.light);
+    observe('light', 'light', classifyLight(latest.light), now, DWELL.light);
+  }
+  if (latest.battery != null) { row.battery_level = r4(latest.battery); row.charging = latest.charging; }
+  if (latest.net) Object.assign(row, { net_online: latest.net.online, net_type: latest.net.type, net_downlink_mbps: r4(latest.net.down), net_rtt_ms: r4(latest.net.rtt) });
+  row.screen_orientation = latest.screenOrientation || '';
+  if (latest.geo) Object.assign(row, { lat: latest.geo.lat, lon: latest.geo.lon, geo_accuracy_m: r4(latest.geo.acc), speed_ms: r4(latest.geo.speed) });
+  if (latest.mic != null) row.mic_db = r4(latest.mic);
+  row.activity = activity; row.pose = pose;
+
+  sampleBuf.push(row);
+  rec.rows++;
+  agg = newAgg();
+  renderLive(row, activity, pose);
+  flush(); // one small write per tick: a hard kill loses at most one interval
+}
+
+function renderLive(row, activity, pose) {
+  $('lv-activity').textContent = activity || '–';
+  $('lv-pose').textContent = pose || '–';
+  $('lv-lin').textContent = row.lin_rms !== undefined ? row.lin_rms + ' m/s²' : '–';
+  $('lv-rot').textContent = row.rot_mag !== undefined ? row.rot_mag + ' °/s' : '–';
+  $('lv-mag').textContent = row.mag_uT !== undefined ? row.mag_uT + ' µT' : 'n/a';
+  $('lv-light').textContent = row.light_lux !== undefined ? row.light_lux + ' lx' : 'n/a';
+  $('lv-batt').textContent = row.battery_level !== undefined ? Math.round(row.battery_level * 100) + '%' + (row.charging ? ' ⚡' : '') : 'n/a';
+  $('lv-net').textContent = row.net_online !== undefined ? (row.net_online ? 'online' : 'offline') + (row.net_type ? ' · ' + row.net_type : '') : 'n/a';
+  $('stat-uptime').textContent = fmtDur(Math.floor((Date.now() - rec.start) / 1000));
+}
+
+// ── persistence ───────────────────────────────────────────────────────────
+let flushing = Promise.resolve();
+function flush() {
+  const s = sampleBuf, e = eventBuf;
+  sampleBuf = []; eventBuf = [];
+  const meta = rec ? { id: rec.id, last: rec.lastTick } : null;
+  if (!s.length && !e.length && !meta) return flushing;
+  flushing = flushing.then(() => tx(['samples', 'events', 'sessions'], 'readwrite', (t) => {
+    const ss = t.objectStore('samples'), es = t.objectStore('events');
+    s.forEach(x => ss.add(x)); e.forEach(x => es.add(x));
+    if (meta) {
+      const sr = t.objectStore('sessions').get(meta.id);
+      sr.onsuccess = () => { if (sr.result) { sr.result.last_sample_utc = iso(meta.last); t.objectStore('sessions').put(sr.result); } };
+    }
+  })).then(refreshCounts).catch(err => setStatus('storage error: ' + err, 'var(--red)'));
+  return flushing;
+}
+async function refreshCounts() {
+  $('stat-rows').textContent = await countOf('samples');
+  $('stat-events').textContent = await countOf('events');
+  if (navigator.storage && navigator.storage.estimate) {
+    const est = await navigator.storage.estimate();
+    $('storage-line').textContent = 'browser storage used: ' + (est.usage / 1048576).toFixed(1) + ' MB'
+      + (est.quota ? ' of ' + Math.round(est.quota / 1048576) + ' MB' : '');
+  }
+}
+
+// A session that never got a clean stop (app killed, battery died) is closed
+// at its last stored sample so the event log shows where the data ends.
+async function closeOrphans() {
+  const sessions = await getAll('sessions');
+  const orphans = sessions.filter(s => !s.end_utc);
+  for (const s of orphans) {
+    const last = Date.parse(s.last_sample_utc || s.start_utc);
+    s.end_utc = iso(last);
+    await tx(['sessions', 'events'], 'readwrite', (t) => {
+      t.objectStore('sessions').put(s);
+      t.objectStore('events').add({ case_id: caseOf(last), activity: 'recording: interrupted', timestamp: iso(last), session_id: s.session_id, detail: 'no clean stop, app closed or killed' });
+    });
+  }
+}
+
+// ── start / stop ──────────────────────────────────────────────────────────
+async function startRecording() {
+  if (rec) return;
+  $('btn-start').style.display = 'none';
+  setStatus('requesting sensor access…');
+  await closeOrphans();
+
+  const perms = await requestMotionPermissions();
+  if (perms.motion !== 'granted' && perms.orientation !== 'granted') {
+    setStatus('motion sensors unavailable or denied. Allow motion access in the browser or device settings.', 'var(--red)');
+    $('btn-start').style.display = 'inline-flex';
+    return;
+  }
+
+  const intervalMs = parseInt($('opt-interval').value, 10) * 1000;
+  const useGeo = $('opt-geo').checked, useMic = $('opt-mic').checked;
+  const now = Date.now();
+  rec = { id: 'S' + now.toString(36), start: now, lastTick: now, intervalMs, rows: 0, gaps: 0, timer: null };
+  agg = newAgg(); sampleBuf = []; eventBuf = [];
+  Object.keys(states).forEach(k => delete states[k]);
+  latest.visible = document.visibilityState === 'visible' ? 1 : 0;
+
+  const sensors = { devicemotion: perms.motion, deviceorientation: perms.orientation };
+  if (perms.motion === 'granted') window.addEventListener('devicemotion', onMotion);
+  if (perms.orientation === 'granted') window.addEventListener('deviceorientation', onOrient);
+  sensors.magnetometer = startGenericSensor('Magnetometer', { frequency: 10 }, (s) => { latest.mag = { x: s.x, y: s.y, z: s.z }; }) ? 'active' : 'unavailable';
+  sensors.ambient_light = startGenericSensor('AmbientLightSensor', { frequency: 2 }, (s) => { latest.light = s.illuminance; }) ? 'active' : 'unavailable';
+  sensors.battery = (await startBattery()) ? 'active' : 'unavailable';
+  sensors.network = navigator.connection ? 'active' : 'online_flag_only';
+  sensors.geolocation = useGeo ? (startGeo() ? 'active' : 'unavailable') : 'off';
+  sensors.microphone_level = useMic ? ((await startMic()) ? 'active' : 'denied_or_unavailable') : 'off';
+  sensors.wake_lock = (await requestWakeLock()) ? 'active' : 'unavailable';
+
+  readNet(); onScreenOrientation();
+  window.addEventListener('online', onNetChange);
+  window.addEventListener('offline', onNetChange);
+  if (navigator.connection) navigator.connection.addEventListener('change', onNetChange);
+  document.addEventListener('visibilitychange', onVisibility);
+  window.addEventListener('pagehide', flush);
+  if (screen.orientation) screen.orientation.addEventListener('change', onScreenOrientation);
+  teardown.push(() => {
+    window.removeEventListener('devicemotion', onMotion);
+    window.removeEventListener('deviceorientation', onOrient);
+    window.removeEventListener('online', onNetChange);
+    window.removeEventListener('offline', onNetChange);
+    if (navigator.connection) navigator.connection.removeEventListener('change', onNetChange);
+    document.removeEventListener('visibilitychange', onVisibility);
+    window.removeEventListener('pagehide', flush);
+    if (screen.orientation) screen.orientation.removeEventListener('change', onScreenOrientation);
+    if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+  });
+
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+  await tx('sessions', 'readwrite', (t) => t.objectStore('sessions').put({
+    session_id: rec.id, start_utc: iso(now), end_utc: '', last_sample_utc: iso(now),
+    interval_s: intervalMs / 1000, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    tz_offset_min: -new Date().getTimezoneOffset(), user_agent: navigator.userAgent,
+    sensors: JSON.stringify(sensors), options: JSON.stringify({ geo: useGeo, mic: useMic })
+  }));
+  emit('recording: started', now, Object.entries(sensors).filter(([, v]) => v === 'active' || v === 'granted').map(([k]) => k).join(' '));
+
+  rec.timer = setInterval(tick, intervalMs);
+  $('btn-stop').style.display = 'inline-flex';
+  setStatus('recording · keep this screen open · session ' + rec.id, 'var(--green)');
+  flush();
+}
+
+async function stopRecording() {
+  if (!rec) return;
+  clearInterval(rec.timer);
+  const now = Date.now();
+  tick();
+  emit('recording: stopped', now, rec.rows + ' samples, ' + rec.gaps + ' gaps');
+  const id = rec.id;
+  teardown.forEach(f => f()); teardown = [];
+  await flush();
+  rec = null; // after the final flush so it still carries the session metadata
+  await tx('sessions', 'readwrite', (t) => {
+    const r = t.objectStore('sessions').get(id);
+    r.onsuccess = () => { r.result.end_utc = iso(now); t.objectStore('sessions').put(r.result); };
+  });
+  $('btn-stop').style.display = 'none';
+  $('btn-start').style.display = 'inline-flex';
+  setStatus('stopped · export your files below');
+  refreshCounts();
+}
+
+// ── export ────────────────────────────────────────────────────────────────
+function csvCell(v) {
+  if (v === undefined || v === null) return '';
+  const s = String(v);
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function toCsv(cols, rows) {
+  const lines = [cols.join(',')];
+  for (const r of rows) lines.push(cols.map(c => csvCell(r[c])).join(','));
+  return lines.join('\n') + '\n';
+}
+async function buildCsv(kind) {
+  if (rec) await flush();
+  if (kind === 'samples') return toCsv(SAMPLE_COLS, await getAll('samples'));
+  if (kind === 'events') {
+    const rows = await getAll('events');
+    rows.sort((a, b) => a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0);
+    return toCsv(EVENT_COLS, rows);
+  }
+  return toCsv(SESSION_COLS, await getAll('sessions'));
+}
+const fileName = (kind) => 'day-recorder_' + kind + '_' + new Date().toISOString().slice(0, 10) + '.csv';
+
+async function exportCsv(kind) {
+  const csv = await buildCsv(kind);
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName(kind);
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+async function shareAll() {
+  const files = [];
+  for (const k of ['events', 'samples', 'sessions']) {
+    files.push(new File([await buildCsv(k)], fileName(k), { type: 'text/csv' }));
+  }
+  try { await navigator.share({ files, title: 'day recorder export' }); } catch (e) { /* cancelled */ }
+}
+async function clearData() {
+  if (!confirm('Delete all recorded samples, events and sessions from this browser?')) return;
+  if (rec) await stopRecording();
+  await tx(['samples', 'events', 'sessions'], 'readwrite', (t) => {
+    ['samples', 'events', 'sessions'].forEach(n => t.objectStore(n).clear());
+  });
+  $('event-body').innerHTML = '<div class="event-item"><span class="em" style="color:var(--dim)">no events yet</span></div>';
+  refreshCounts();
+}
+
+// ── boot ──────────────────────────────────────────────────────────────────
+(async function boot() {
+  if (!window.indexedDB) { setStatus('this browser has no IndexedDB, recording is not possible', 'var(--red)'); return; }
+  if (navigator.canShare && navigator.canShare({ files: [new File(['x'], 'x.csv', { type: 'text/csv' })] })) $('btn-share').style.display = '';
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
+  try { await closeOrphans(); await refreshCounts(); } catch (e) { setStatus('storage error: ' + e, 'var(--red)'); }
+})();
+</script>
+</body>
+</html>
